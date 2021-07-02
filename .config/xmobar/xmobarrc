@@ -1,0 +1,41 @@
+Config { font = "xft:JetBrains Mono:pixelsize=27"
+       , additionalFonts = []
+       , borderColor = "black"
+       , border = TopB
+       , bgColor = "black"
+       , fgColor = "grey"
+       , alpha = 255
+       , position = Top
+       , textOffset = -1
+       , iconOffset = -1
+       , lowerOnStart = True
+       , pickBroadest = False
+       , persistent = False
+       , hideOnStart = False
+       , iconRoot = "."
+       , allDesktops = True
+       , overrideRedirect = True
+       , commands = [ Run Weather "UKLL" ["-t","<station>: <tempC>C",
+                                          "-L","18","-H","25",
+                                          "--normal","green",
+                                          "--high","red",
+                                          "--low","lightblue"] 36000
+                    , Run Network "enx001fb532f54a" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "Eth: <rx>Kb|<tx>Kb"] 10
+                    , Run Network "wlp2s0" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "WiFi: <rx>Kb|<tx>Kb"] 10
+                    , Run Wireless "wlp2s0" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<essid> <quality>"] 10
+                    , Run Cpu ["-L","3","-H","50", "--normal","green","--high","red"] 10
+                    , Run Memory ["-t","Mem: <usedratio>%"] 10
+                    , Run Swap [] 100
+                    , Run Date "%a %b %_d %Y %H:%M:%S" "date" 10
+                    , Run Com "xkblayout-state" ["print", "%s"] "layout" 10
+                    , Run Com "/bin/bash" ["-c", "~/scripts/get-volume.sh"] "myvolume" 10
+                    , Run Com "/bin/bash" ["-c", "upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}'"] "batery" 10
+                    , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh"] "vpn" 10
+                    , Run StdinReader
+                    ]
+       , sepChar = "%"
+       , alignSep = "}{"
+       , template = " %cpu% | %memory% * %swap% | %enx001fb532f54a% - %wlp2s0%(%wlp2s0wi%) - VPN: %vpn% }\
+                    \ %StdinReader% \
+                    \{ <fc=#ee9a00>%date%</fc> | %layout% | %myvolume% | %UKLL% | %batery% "
+       }

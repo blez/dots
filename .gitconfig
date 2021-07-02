@@ -1,0 +1,71 @@
+[user]
+    name = paval
+	email = pkasko-ua@singlestore.com
+[push]
+	default = simple
+[alias]
+	st = status
+	cl = clone
+	ci = commit
+	cm = commit -m
+	cma = commit -a -m
+	ca = commit --amend
+	amend = commit --amend
+	caa = commit -a --amend -C HEAD
+	filelog = log -u
+	fl = log -u
+	ai = add --interactive
+	co = checkout
+	br = branch 
+	bra = branch -ra
+	al = add --all
+    
+#list commands
+	le = log --oneline --decorate
+	ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
+	ls1 = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate
+	lds = log --pretty=format:"%C(yellow)%h\\ %C(green)%ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short --graph
+	ls = log --pretty=format:"%C(green)%h\\ %C(yellow)[%ad]%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
+	lc  = "!f() { git ll "$1"^.."$1"; }; f"
+	lnc = log --pretty=format:"%h\\ %s\\ [%cn]"
+	lg = log --graph --decorate --oneline --abbrev-commit --all
+	
+#list all aliases
+	la = "!git config -l | grep alias | cut -c 7-"
+	diff = diff --word-diff
+	d = diff --word-diff
+	dc = diff --cached
+
+#list modified files in last commit
+	dl = "!git ll -1"
+	
+#diff last commit
+	dlc = diff --cached HEAD^
+	dr  = "!f() { git diff -w "$1"^.."$1"; }; f"
+	diffr  = "!f() { git diff "$1"^.."$1"; }; f"
+	branch = branch -ra
+
+#reset commands
+	r = reset
+	r1 = reset HEAD^
+	r2 = reset HEAD^^
+	rh = reset --hard
+	rh1 = reset HEAD^ --hard
+	rh2 = reset HEAD^^ --hard
+
+#git svn
+	svnr = svn rebase
+	svnd = svn dcommit
+	svnl = svn log --oneline --show-commit
+# }}}
+[merge "ours"]
+	driver = true
+[pager]
+       diff = diff-so-fancy | less --tabs=1,5 -RFX
+
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[core]
+	editor = vim
+[github]
+	user = blez
