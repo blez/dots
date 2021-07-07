@@ -190,6 +190,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm .|. shiftMask, xK_i    ),  spawn "~/scripts/playerctl.sh next")
 
     -- Bluetooth devices
+    -- requires `sudo apt-get install bluez-tools`
     , ((modm, xK_b                   ), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh pause)\"")
     , ((modm .|. shiftMask, xK_b     ), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh play)\"")
 
