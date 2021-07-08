@@ -53,6 +53,9 @@
       :map lsp-mode-map
       :m "<f3>" #'lsp-workspace-restart)
 
+(with-eval-after-load 'company
+    (define-key company-active-map (kbd "<tab>") nil))
+
 ;; setup lsp + other linters
 (add-hook! 'lsp-after-initialize-hook
   (run-hooks (intern (format "%s-lsp-hook" major-mode))))
