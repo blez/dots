@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: wrapf
+# key: wrf
+# --
+if err != nil {
+   errors.Wrapf(err, "$1", $0)
+}

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: wrap
+# key: wrp
+# --
+if err != nil {
+   errors.Wrap(err, "$0")
+}
