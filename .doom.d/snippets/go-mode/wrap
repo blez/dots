@@ -3,5 +3,5 @@
 # key: wrp
 # --
 if err != nil {
-   errors.Wrap(err, "$0")
+   return errors.Wrap(err, "$0")
 }
