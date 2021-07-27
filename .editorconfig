@@ -9,6 +9,10 @@ indent_size = 4
 [*.sh]
 indent_style = space
 indent_size = 4
+shell_variant = bash
 
 [*.go]
+indent_style = tab
+
+[Makefile.*]
 indent_style = tab

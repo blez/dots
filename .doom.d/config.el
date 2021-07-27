@@ -92,6 +92,7 @@
                                                                   (right-fringe . 3)))))
 
 ;; (setq shfmt-arguments '("-bn" "-ci" "-s"))
+(setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
 (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))

@@ -185,9 +185,9 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
     , ((modm, xK_equal), spawn "pactl set-sink-volume @DEFAULT_SINK@ +2%")
 
     -- Playerctl
-    , ((modm .|. shiftMask, xK_o    ),  spawn "~/scripts/playerctl.sh play")
+    , ((modm .|. shiftMask, xK_i    ),  spawn "~/scripts/playerctl.sh play")
     , ((modm .|. shiftMask, xK_u    ),  spawn "~/scripts/playerctl.sh prev")
-    , ((modm .|. shiftMask, xK_i    ),  spawn "~/scripts/playerctl.sh next")
+    , ((modm .|. shiftMask, xK_o    ),  spawn "~/scripts/playerctl.sh next")
 
     -- Bluetooth devices
     -- requires `sudo apt-get install bluez-tools`
