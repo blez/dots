@@ -14,5 +14,5 @@ shell_variant = bash
 [*.go]
 indent_style = tab
 
-[Makefile.*]
+[Makefile*]
 indent_style = tab

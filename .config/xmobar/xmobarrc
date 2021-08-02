@@ -21,8 +21,8 @@ Config { font = "xft:JetBrains Mono:pixelsize=27"
                                           "--high","red",
                                           "--low","lightblue"] 36000
                     , Run Network "enx001fb532f54a" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "Eth: <rx>Kb|<tx>Kb"] 10
-                    , Run Network "wlp2s0" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "WiFi: <rx>Kb|<tx>Kb"] 10
-                    , Run Wireless "wlp2s0" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<essid> <quality>"] 10
+                    , Run Network "wlp0s20f3" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "WiFi: <rx>Kb|<tx>Kb"] 10
+                    , Run Wireless "wlp0s20f3" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<essid> <quality>"] 10
                     , Run Cpu ["-L","3","-H","50", "--normal","green","--high","red"] 10
                     , Run Memory ["-t","Mem: <usedratio>%"] 10
                     , Run Swap [] 100
@@ -35,7 +35,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=27"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = " %cpu% | %memory% * %swap% | %enx001fb532f54a% - %wlp2s0%(%wlp2s0wi%) - VPN: %vpn% }\
+       , template = " %cpu% | %memory% * %swap% | %enx001fb532f54a% - %wlp0s20f3%(%wlp0s20f3wi%) - VPN: %vpn% }\
                     \ %StdinReader% \
                     \{ <fc=#ee9a00>%date%</fc> | %layout% | %myvolume% | %UKLL% | %batery% "
        }
