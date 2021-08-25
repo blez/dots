@@ -34,7 +34,8 @@ sudo apt -y install vim \
     bat \
     fzf \
     ranger \
-    ncdu
+    ncdu \
+    pavucontrol
 
 # zsh
 if ! zsh --version; then

@@ -369,6 +369,7 @@ myStartupHook = do
     spawnOnce "~/.screenlayout/lenovo.sh"
     spawnOnce "nitrogen --restore &"
     spawnOnce "compton &"
+    spawnOnce "dunst &"
     spawnOnce "/usr/local/bin/emacs &"
 
 ------------------------------------------------------------------------
