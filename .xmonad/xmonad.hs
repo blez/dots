@@ -370,6 +370,7 @@ myStartupHook = do
     spawnOnce "nitrogen --restore &"
     spawnOnce "compton &"
     spawnOnce "dunst &"
+    spawnOnce "xfce4-power-manager &"
     spawnOnce "/usr/local/bin/emacs &"
 
 ------------------------------------------------------------------------

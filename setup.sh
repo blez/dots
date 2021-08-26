@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# vim
 sudo apt update
 sudo apt -y install vim \
     curl \
@@ -29,13 +28,17 @@ sudo apt -y install vim \
     libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
     libncurses-dev libxpm-dev automake autoconf \
     libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
+    libtool-bin \
     fd-find \
     editorconfig \
     bat \
     fzf \
     ranger \
     ncdu \
-    pavucontrol
+    pavucontrol \
+    pcmanfm \
+    ncdu \
+    xfce4-power-manager
 
 # zsh
 if ! zsh --version; then
