@@ -71,7 +71,7 @@ if [ ! -f "$HOME/.nerd-fonts" ]; then
     cd
     git clone https://github.com/ryanoasis/nerd-fonts
     cd nerd-fonts
-    sudo ./install.sh
+    ./install.sh
     rm -rf "$HOME/nerd-fonts"
     touch "$HOME/.nerd-fonts"
     cd

@@ -10,6 +10,7 @@ export GOROOT=/usr/local/go
 # doom
 export PATH=~/.emacs.d/bin:$PATH
 export PATH=~/.diff-so-fancy:$PATH
+export PATH=~/.arcanist/bin/:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -17,6 +18,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # Go
 export GOPATH=~/go
 
+export EDITOR='vim'
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
