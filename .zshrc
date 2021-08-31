@@ -51,7 +51,7 @@ eval "$(starship init zsh)"
 
 alias lsf="ls | fzf"
 
-# alias soundonjb="pacmd set-card-profile bluez_card.C0_28_8D_27_C1_56 a2dp_sink"
+alias hel="cd ~/helios"
 alias rt="cd $PROOT"
 alias k="kubectl"
 

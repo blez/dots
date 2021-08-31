@@ -2,6 +2,8 @@
 set -euo pipefail
 
 sudo apt update
+sudo apt upgrade
+sudo apt autoremove
 sudo apt -y install vim \
     curl \
     git \
@@ -38,7 +40,9 @@ sudo apt -y install vim \
     pavucontrol \
     pcmanfm \
     ncdu \
-    xfce4-power-manager
+    xfce4-power-manager \
+    shellcheck \
+    deluge
 
 # zsh
 if ! zsh --version; then
