@@ -11,6 +11,7 @@ export GOROOT=/usr/local/go
 export PATH=~/.emacs.d/bin:$PATH
 export PATH=~/.diff-so-fancy:$PATH
 export PATH=~/.arcanist/bin/:$PATH
+export PATH=~/.local/bin/:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -50,6 +51,7 @@ source $ZSH/oh-my-zsh.sh
 eval "$(starship init zsh)"
 
 alias lsf="ls | fzf"
+alias rc="vim ~/.zshrc"
 
 alias hel="cd ~/helios"
 alias rt="cd $PROOT"
