@@ -4,45 +4,47 @@ set -euo pipefail
 sudo apt update
 sudo apt upgrade
 sudo apt autoremove
-sudo apt -y install vim \
-    curl \
-    git \
-    xclip \
-    direnv \
-    cmake \
-    pkg-config \
-    libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
-    python3 \
-    compton \
-    dunst \
-    rofi \
-    xmonad libghc-xmonad-contrib-dev xmobar \
-    i3lock \
-    pulseaudio \
-    flameshot \
-    nitrogen \
-    bluez \
+sudo apt -y install \
     alsa-utils \
-    playerctl \
-    libnotify-bin \
-    texinfo \
-    build-essential \
-    libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
-    libncurses-dev libxpm-dev automake autoconf \
-    libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
-    libtool-bin \
-    fd-find \
-    editorconfig \
     bat \
+    bluez \
+    build-essential \
+    cmake \
+    compton \
+    curl \
+    direnv \
+    deluge \
+    dmenu \
+    dunst \
+    editorconfig \
+    fd-find \
+    flameshot \
     fzf \
-    ranger \
+    git \
+    i3lock \
+    libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
+    libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
+    libncurses-dev libxpm-dev automake autoconf \
+    libnotify-bin \
+    libtool-bin \
+    libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
+    lxappearance \
     ncdu \
+    nitrogen \
     pavucontrol \
     pcmanfm \
-    ncdu \
-    xfce4-power-manager \
+    pkg-config \
+    playerctl \
+    pulseaudio pulseaudio-utils pulseaudio-module-bluetooth \
+    python3 \
+    ranger \
+    rofi \
     shellcheck \
-    deluge
+    texinfo \
+    vim \
+    xclip \
+    xfce4-power-manager \
+    xmonad libghc-xmonad-contrib-dev xmobar
 
 # zsh
 if ! zsh --version; then
@@ -53,12 +55,12 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
     sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
-if [ ! -d $HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions ]; then
-    git clone https://github.com/zsh-users/zsh-autosuggestions.git $HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
 fi
 
-if [ ! -d $HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ]; then
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 fi
 
 if ! xkblayout-state print format; then
@@ -83,9 +85,9 @@ fi
 
 if ! cargo --version; then
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    echo "Do 'source $HOME/.cargo/env' and rerun script"
+    exit 0
 fi
-
-source $HOME/.cargo/env
 
 if [ ! -f /usr/local/bin/alacritty ]; then
     cd "$HOME"
@@ -98,8 +100,8 @@ if [ ! -f /usr/local/bin/alacritty ]; then
     sudo cp extra/logo/alacritty-term.svg /usr/share/pixmaps/Alacritty.svg
     sudo desktop-file-install extra/linux/Alacritty.desktop
     sudo update-desktop-database
-    mkdir -p ${ZDOTDIR:-~}/.zsh_functions
-    cp extra/completions/_alacritty ${ZDOTDIR:-~}/.zsh_functions/_alacritty
+    mkdir -p "${ZDOTDIR:-~}/.zsh_functions"
+    cp extra/completions/_alacritty "${ZDOTDIR:-~}/.zsh_functions/_alacritty"
 
     cd "$HOME"
     rm -rf ./alacritty
@@ -112,11 +114,11 @@ fi
 
 # ssh
 if [ ! -f ~/.ssh/id_ed25519 ]; then
-        ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
-        eval "$(ssh-agent -s)"
-        ssh-add ~/.ssh/id_ed25519
+    ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_ed25519
 fi
-xclip -selection clipboard < ~/.ssh/id_ed25519.pub
+xclip -selection clipboard <~/.ssh/id_ed25519.pub
 read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 
 if ! emacs --version; then
@@ -129,16 +131,16 @@ if ! emacs --version; then
     ./autogen.sh
     ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
     make bootstrap
-    make -j$(nproc)
+    make -j "$(nproc)"
     sudo make install
 
     cd "$HOME"
     rm -rf ./emacs
 fi
 
-if [ ! -d $HOME/.diff-so-fancy ]; then
+if [ ! -d "$HOME/.diff-so-fancy" ]; then
     cd
-    git clone git@github.com:so-fancy/diff-so-fancy.git $HOME/.diff-so-fancy
+    git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
 fi
 
 # dots
@@ -147,7 +149,7 @@ if [ ! -d "$HOME/dots" ]; then
     git clone --bare git@github.com:blez/dots.git "$HOME/dots"
 
     function dots {
-        /usr/bin/git --git-dir=$HOME/dots/ --work-tree=$HOME $@
+        /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" "$@"
     }
 
     mkdir -p "$HOME/.config-backup"
