@@ -2,8 +2,7 @@
 set -euo pipefail
 
 sudo apt update
-sudo apt upgrade
-sudo apt autoremove
+sudo apt full-upgrade
 sudo apt -y install \
     alsa-utils \
     bat \
