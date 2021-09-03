@@ -19,3 +19,6 @@ tag_symbol = "🏷 "
 [gcloud]
 disabled = true
 
+[nodejs]
+disabled = true
+
