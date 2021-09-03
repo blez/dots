@@ -52,8 +52,12 @@ eval "$(starship init zsh)"
 
 alias lsf="ls | fzf"
 alias rc="vim ~/.zshrc"
+alias sp="~/setup.sh"
+alias spe="vim ~/setup.sh"
 
 alias hel="cd ~/helios"
+
+alias blez="cd ~/blez"
 alias rt="cd $PROOT"
 alias k="kubectl"
 

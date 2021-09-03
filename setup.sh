@@ -135,6 +135,8 @@ if ! emacs --version; then
     sudo make install
 
     cd "$HOME"
+    curl https://raw.githubusercontent.com/jeetelongname/doom-banners/master/splashes/emacs/emacs-e-logo.png \
+        -o ~/.emacs-e-logo.png -s
     rm -rf ./emacs
 fi
 

@@ -27,6 +27,7 @@
 ;; `load-theme' function. This is the default:
 ;; (setq doom-theme 'doom-dark+)
 (setq doom-theme 'doom-dark+)
+(setq fancy-splash-image "~/.emacs-e-logo.png")
 
 (map! :n "R" #'evil-multiedit-match-all)
 (map! :after neotree
