@@ -49,6 +49,8 @@
 (map! :after flycheck
       :map flycheck-mode-map
       :m "<f6>" #'flycheck-buffer)
+(map! :map lsp-mode-map
+      :m "<f7>" #'lsp-ui-doc-show)
 (global-unset-key (kbd "<f3>"))
 (map! :after flycheck
       :map lsp-mode-map
@@ -80,6 +82,7 @@
   (add-hook 'yaml-mode-hook #'olivetti-mode)
   (add-hook 'rustic-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
+
 (after! undo-tree
   (setq undo-tree-auto-save-history nil))
 
@@ -99,7 +102,7 @@
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))
 (add-to-list 'auto-mode-alist '("Makefile.*" . makefile-mode))
-
+(add-to-list '+format-on-save-enabled-modes 'yaml-mode 'append)
 
 (setq rustic-lsp-server 'rust-analyzer)
 

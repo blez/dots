@@ -41,6 +41,7 @@ sudo apt -y install \
     shellcheck \
     texinfo \
     vim \
+    vlc \
     xclip \
     xfce4-power-manager \
     xmonad libghc-xmonad-contrib-dev xmobar
