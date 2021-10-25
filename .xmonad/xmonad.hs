@@ -50,7 +50,7 @@ myFont = "xft:SauceCodePro Nerd Font Mono:regular:size=14:antialias=true:hinting
 
 --
 myTerminal :: [Char]
-myTerminal      = "alacritty"
+myTerminal = "alacritty"
 
 -- Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool

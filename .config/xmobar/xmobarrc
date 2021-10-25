@@ -1,4 +1,4 @@
-Config { font = "xft:JetBrains Mono:pixelsize=27"
+Config { font = "xft:JetBrains Mono:pixelsize=20"
        , additionalFonts = []
        , borderColor = "black"
        , border = TopB
