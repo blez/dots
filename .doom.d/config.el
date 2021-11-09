@@ -30,7 +30,7 @@
 (setq doom-theme 'doom-dark+)
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
-(map! :n "R" #'evil-multiedit-match-all)
+;; (map! :n "R" #'evil-multiedit-match-all)
 (map! :after neotree
       :map neotree-mode-map
       :m "h" #'+neotree/collapse-or-up)
@@ -65,14 +65,16 @@
   (run-hooks (intern (format "%s-lsp-hook" major-mode))))
 (defun go-flycheck-setup ()
   (flycheck-add-next-checker 'lsp 'golangci-lint))
-(add-hook 'go-mode-lsp-hook
-          #'go-flycheck-setup)
+(defun go-lsp-setup ()
+  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator"]))))
+(add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
+(add-hook 'go-mode-lsp-hook #'go-lsp-setup)
 (add-hook! lsp-mode
   (defalias '+lookup/references 'lsp-find-references))
 
-(use-package! evil-multiedit
-  :config
-  (evil-multiedit-default-keybinds))
+;; (use-package! evil-multiedit
+;;  :config
+;;  (evil-multiedit-default-keybinds))
 (use-package! makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))
