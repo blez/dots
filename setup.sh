@@ -35,7 +35,9 @@ sudo apt -y install \
     pkg-config \
     playerctl \
     pulseaudio pulseaudio-utils pulseaudio-module-bluetooth \
+    pipenv \
     python3 \
+    python3-pip \
     ranger \
     rofi \
     shellcheck \
@@ -174,5 +176,10 @@ if ! doom version; then
     git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
     ~/.emacs.d/bin/doom install
 fi
+
+pip install --upgrade pyflakes
+pip install isort
+pip install nose
+pip install -U pytest
 
 echo "Done."
