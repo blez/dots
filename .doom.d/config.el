@@ -56,6 +56,13 @@
 (map! :after flycheck
       :map lsp-mode-map
       :m "<f3>" #'lsp-workspace-restart)
+(defun previous-func ()
+    (interactive)
+    (end-of-defun)
+    (end-of-defun)
+    (beginning-of-defun))
+(map! :m "M-j" #'previous-func)
+(map! :m "M-k" #'beginning-of-defun)
 
 (with-eval-after-load 'company
     (define-key company-active-map (kbd "<tab>") nil))

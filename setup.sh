@@ -21,6 +21,7 @@ sudo apt -y install \
     fzf \
     git \
     i3lock \
+    libffi-dev libffi7 libgmp-dev libgmp10  libncurses5 libtinfo5 \
     libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
     libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
     libncurses-dev libxpm-dev automake autoconf \

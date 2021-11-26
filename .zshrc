@@ -101,3 +101,4 @@ fi
 
 fpath+=${ZDOTDIR:-~}/.zsh_functions
 eval "$(direnv hook zsh)"
+[ -f "/home/pkasko-ua/.ghcup/env" ] && source "/home/pkasko-ua/.ghcup/env" # ghcup-env
