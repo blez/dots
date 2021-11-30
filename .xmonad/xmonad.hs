@@ -355,7 +355,7 @@ myManageHook = composeAll
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
-myFadeHook = composeAll [ opaque, isUnfocused --> transparency 0.2 ]
+myFadeHook = composeAll [ opaque, isUnfocused --> transparency 0.1 ]
 myLogHook :: X()
 myLogHook = fadeWindowsLogHook myFadeHook
 
@@ -382,6 +382,7 @@ myStartupHook = do
 
 -- Run xmonad with the settings you specify. No need to modify this.
 --
+main :: IO()
 main = do
     xmproc <- spawnPipe "xmobar ~/.config/xmobar/xmobarrc"
     xmonad $ ewmh def {

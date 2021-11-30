@@ -6,4 +6,4 @@ tar -xf ~/Downloads/telegram.tar.xz -C ~/Downloads
 sudo mv ~/Downloads/Telegram/* /usr/local/bin
 rm ~/Downloads/telegram.tar.xz
 rm -rf ~/Downloads/Telegram
-echo "Telegram was updates"
+echo "Telegram was updated"
