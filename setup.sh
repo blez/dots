@@ -7,6 +7,7 @@ sudo apt -y install \
     alsa-utils \
     bat \
     bluez \
+    bluez-tools \
     build-essential \
     cmake \
     compton \
@@ -22,6 +23,7 @@ sudo apt -y install \
     git \
     i3lock \
     libffi-dev libffi7 libgmp-dev libgmp10  libncurses5 libtinfo5 \
+    libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
     libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
     libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
     libncurses-dev libxpm-dev automake autoconf \

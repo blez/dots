@@ -30,6 +30,9 @@
 (setq doom-theme 'doom-dark+)
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
+(general-auto-unbind-keys :off)
+(remove-hook 'doom-after-init-modules-hook #'general-auto-unbind-keys)
+
 ;; (map! :n "R" #'evil-multiedit-match-all)
 (map! :after neotree
       :map neotree-mode-map
@@ -73,7 +76,7 @@
 (defun go-flycheck-setup ()
   (flycheck-add-next-checker 'lsp 'golangci-lint))
 (defun go-lsp-setup ()
-  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration"]))))
+  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster"]))))
 (add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
 (add-hook 'go-mode-lsp-hook #'go-lsp-setup)
 (add-hook! lsp-mode
