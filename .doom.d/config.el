@@ -3,7 +3,6 @@
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
-
 ;; Some functionality uses this to identify you, e.g. GPG configuration, email
 ;; clients, file templates and snippets.
 (setq user-full-name "blez"
@@ -29,9 +28,6 @@
 ;; (setq doom-theme 'doom-dark+)
 (setq doom-theme 'doom-dark+)
 (setq fancy-splash-image "~/.emacs-e-logo.png")
-
-(general-auto-unbind-keys :off)
-(remove-hook 'doom-after-init-modules-hook #'general-auto-unbind-keys)
 
 ;; (map! :n "R" #'evil-multiedit-match-all)
 (map! :after neotree

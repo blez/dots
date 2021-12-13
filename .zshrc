@@ -57,6 +57,7 @@ alias spe="vim ~/setup.sh"
 
 alias hel="cd ~/helios"
 
+alias dw="cd ~/Downloads"
 alias blez="cd ~/blez"
 alias rt="cd $PROOT"
 alias k="kubectl"
