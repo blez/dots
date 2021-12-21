@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: debug print
+# key: dln
+# --
+fmt.Println("DEBUG", "$0")
