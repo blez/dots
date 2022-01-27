@@ -30,6 +30,7 @@
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
 ;; (map! :n "R" #'evil-multiedit-match-all)
+;; (map! :map evil-multiedit-mode-map :i "R" #'evil-multiedit-match-all)
 (map! :after neotree
       :map neotree-mode-map
       :m "h" #'+neotree/collapse-or-up)

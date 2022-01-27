@@ -11,7 +11,7 @@
 (package! evil-commentary)
 (package! evil-indent-plus)
 (package! evil-surround)
-;; (package! evil-multiedit)
+(package! evil-multiedit)
 (package! protobuf-mode)
 (package! makefile-executor)
 (package! dockerfile-mode)
