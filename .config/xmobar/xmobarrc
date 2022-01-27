@@ -35,7 +35,16 @@ Config { font = "xft:JetBrains Mono:pixelsize=20"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = " %cpu% | %memory% * %swap% | %enx001fb532f54a% - %wlp0s20f3%(%wlp0s20f3wi%) - VPN: %vpn% }\
+       , template = " <box type=Bottom width=2 mb=2 color=green><fc=green>%cpu%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=#ff6c6b><fc=#ff6c6b>%memory%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=#ff6c6b><fc=#ff6c6b>%swap%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2>%enx001fb532f54a%</box> \
+                    \ <box type=Bottom width=2 mb=2>WiFi: %wlp0s20f3%(%wlp0s20f3wi%)</box> \
+                    \ <box type=Bottom width=2 mb=2>VPN: %vpn%</box> }\
                     \ %StdinReader% \
-                    \{ <fc=#ee9a00>%date%</fc> | %layout% | %myvolume% | %UKLL% | %batery% "
+                    \{ <box type=Bottom width=2 mb=2 color=#ee9a00><fc=#ee9a00>%date%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2>%layout%</box> \
+                    \ <box type=Bottom width=2 mb=2>%myvolume%</box> \
+                    \ <box type=Bottom width=2 mb=2>%UKLL%</box> \
+                    \ <box type=Bottom width=2 mb=2>%batery%</box> "
        }
