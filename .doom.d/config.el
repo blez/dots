@@ -56,6 +56,28 @@
 (map! :after flycheck
       :map lsp-mode-map
       :m "<f3>" #'lsp-workspace-restart)
+
+(map! :m "C-M-k" #'drag-stuff-up)
+(map! :m "C-M-j" #'drag-stuff-down)
+
+(defun current-line-empty-p ()
+  (save-excursion
+    (beginning-of-line)
+    (looking-at-p "[[:space:]]*$")))
+(defun move-previous-line ()
+  (interactive)
+  (forward-line -1)
+    (if (current-line-empty-p)
+        (kill-line)))
+(defun move-next-line ()
+  (interactive)
+  (beginning-of-line)
+  (+evil/insert-newline-above 1)
+  (forward-line 1))
+
+(map! :m "C-j" #'move-next-line)
+(map! :m "C-k" #'move-previous-line)
+
 (defun previous-func ()
     (interactive)
     (end-of-defun)
