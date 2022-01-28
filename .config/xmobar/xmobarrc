@@ -1,4 +1,4 @@
-Config { font = "xft:JetBrains Mono:pixelsize=20"
+Config { font = "xft:JetBrains Mono:pixelsize=21"
        , additionalFonts = []
        , borderColor = "black"
        , border = TopB
@@ -31,6 +31,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=20"
                     , Run Com "/bin/bash" ["-c", "~/scripts/get-volume.sh"] "myvolume" 10
                     , Run Com "/bin/bash" ["-c", "upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}'"] "batery" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh"] "vpn" 10
+                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '{{ artist }} - {{ title }}'"] "music" 10
                     , Run StdinReader
                     ]
        , sepChar = "%"
@@ -38,11 +39,12 @@ Config { font = "xft:JetBrains Mono:pixelsize=20"
        , template = " <box type=Bottom width=2 mb=2 color=green><fc=green>%cpu%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ff6c6b><fc=#ff6c6b>%memory%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ff6c6b><fc=#ff6c6b>%swap%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2>%enx001fb532f54a%</box> \
-                    \ <box type=Bottom width=2 mb=2>WiFi: %wlp0s20f3%(%wlp0s20f3wi%)</box> \
-                    \ <box type=Bottom width=2 mb=2>VPN: %vpn%</box> }\
+                    \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>%enx001fb532f54a%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>WiFi: %wlp0s20f3%(%wlp0s20f3wi%)</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>VPN: %vpn%</fc></box> }\
                     \ %StdinReader% \
-                    \{ <box type=Bottom width=2 mb=2 color=#ee9a00><fc=#ee9a00>%date%</fc></box> \
+                    \{<box type=Bottom width=2 mb=2 color=#229c73><fc=#229c73>%music%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=#ee9a00><fc=#ee9a00>%date%</fc></box> \
                     \ <box type=Bottom width=2 mb=2>%layout%</box> \
                     \ <box type=Bottom width=2 mb=2>%myvolume%</box> \
                     \ <box type=Bottom width=2 mb=2>%UKLL%</box> \
