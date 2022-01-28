@@ -31,7 +31,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
                     , Run Com "/bin/bash" ["-c", "~/scripts/get-volume.sh"] "myvolume" 10
                     , Run Com "/bin/bash" ["-c", "upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}'"] "batery" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh"] "vpn" 10
-                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '{{ artist }} - {{ title }}'"] "music" 10
+                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '{{ artist }} - {{ title }}' || true"] "music" 10
                     , Run StdinReader
                     ]
        , sepChar = "%"
