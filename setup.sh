@@ -3,6 +3,7 @@ set -euo pipefail
 
 sudo apt update
 sudo apt full-upgrade
+sudo apt autoremove
 sudo apt -y install \
     alsa-utils \
     bat \
@@ -31,6 +32,8 @@ sudo apt -y install \
     libtool-bin \
     libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
     lxappearance \
+    meson \
+    ninja-build \
     ncdu \
     nitrogen \
     pavucontrol \
@@ -66,6 +69,18 @@ fi
 
 if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+fi
+
+if ! picom --version; then
+    cd "$HOME"
+    git clone git@github.com:yshui/picom.git
+    cd picom
+    git submodule update --init --recursive
+    meson --buildtype=release . build
+    ninja -C build
+    sudo ninja -C build install
+    cd "$HOME"
+    rm -rf ./picom
 fi
 
 if ! xkblayout-state print format; then
