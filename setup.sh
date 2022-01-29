@@ -6,6 +6,8 @@ sudo apt full-upgrade
 sudo apt autoremove
 sudo apt -y install \
     alsa-utils \
+    autoconf \
+    automake \
     bat \
     bluez \
     bluez-tools \
@@ -27,7 +29,10 @@ sudo apt -y install \
     libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
     libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
     libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
-    libncurses-dev libxpm-dev automake autoconf \
+    librust-gdk-sys-dev libgtk-3-dev libgtk-layer-shell-dev libpango1.0-dev \
+    librust-gdk-pixbuf-sys-dev libcairo2-dev libcairo-gobject2 librust-gio-sys-dev \
+    librust-glib-sys-dev librust-gobject-sys-dev \
+    libncurses-dev libxpm-dev \
     libnotify-bin \
     libtool-bin \
     libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
@@ -52,7 +57,8 @@ sudo apt -y install \
     vlc \
     xclip \
     xfce4-power-manager \
-    xmonad libghc-xmonad-contrib-dev xmobar
+    xmobar \
+    xmonad libghc-xmonad-contrib-dev
 
 # zsh
 if ! zsh --version; then
@@ -91,6 +97,17 @@ if ! xkblayout-state print format; then
     sudo mv xkblayout-state /usr/local/bin
     cd
     rm -rf xkblayout-state
+fi
+
+if [ ! -d "$HOME/.font-awesome" ]; then
+    cd "$HOME"
+    curl -LO https://use.fontawesome.com/releases/v5.15.4/fontawesome-free-5.15.4-desktop.zip
+    unzip fontawesome-free-5.15.4-desktop.zip
+    mv fontawesome-free-5.15.4-desktop .font-awesome
+    sudo rm -rf /usr/share/fonts/font-awesome
+    sudo cp -r .font-awesome /usr/share/fonts/font-awesome
+    fc-cache -f -v
+    rm  fontawesome-free-5.15.4-desktop.zip
 fi
 
 if [ ! -f "$HOME/.nerd-fonts" ]; then

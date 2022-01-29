@@ -1,5 +1,8 @@
 Config { font = "xft:JetBrains Mono:pixelsize=21"
-       , additionalFonts = []
+       , additionalFonts = [ "xft:Mononoki:pixelsize=11:antialias=true:hinting=true"
+                           , "xft:Font Awesome 5 Free Solid:pixelsize=21"
+                           , "xft:Font Awesome 5 Brands:pixelsize=21"
+                           ]
        , borderColor = "black"
        , border = TopB
        , bgColor = "black"
@@ -20,18 +23,18 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
                                           "--normal","green",
                                           "--high","red",
                                           "--low","lightblue"] 36000
-                    , Run Network "enx001fb532f54a" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "Eth: <rx>Kb|<tx>Kb"] 10
+                    , Run Network "enx001fb532f54a" ["-t", "<fn=2>\xf796</fn>: <rx>Kb|<tx>Kb", "-L","0","-H","32", "--normal","green","--high","red"] 10
                     , Run Network "wlp0s20f3" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "WiFi: <rx>Kb|<tx>Kb"] 10
                     , Run Wireless "wlp0s20f3" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<essid> <quality>"] 10
-                    , Run Cpu ["-L","3","-H","50", "--normal","green","--high","red"] 10
-                    , Run Memory ["-t","Mem: <usedratio>%"] 10
+                    , Run Cpu ["-t", "<fn=2>\xf2db</fn>: <total>%", "-L","3","-H","50", "--normal","green","--high","red"] 10
+                    , Run Memory ["-t","RAM: <usedratio>%"] 10
                     , Run Swap [] 100
                     , Run Date "%a %b %_d %Y %H:%M:%S" "date" 10
-                    , Run Com "xkblayout-state" ["print", "%s"] "layout" 10
-                    , Run Com "/bin/bash" ["-c", "~/scripts/get-volume.sh"] "myvolume" 10
-                    , Run Com "/bin/bash" ["-c", "upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}'"] "batery" 10
+                    , Run Com "xkblayout-state" ["print", "<fn=2>\xf0ac</fn> %s"] "layout" 10
+                    , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
+                    , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf241</fn> $(upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}')\""] "batery" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh"] "vpn" 10
-                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '{{ artist }} - {{ title }}' || true"] "music" 10
+                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' || true"] "music" 10
                     , Run StdinReader
                     ]
        , sepChar = "%"
@@ -45,7 +48,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
                     \ %StdinReader% \
                     \{<box type=Bottom width=2 mb=2 color=#229c73><fc=#229c73>%music%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ee9a00><fc=#ee9a00>%date%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2>%layout%</box> \
+                    \ <box type=Bottom width=2 mb=2 color=#c416bf><fc=#c416bf>%layout%</fc></box> \
                     \ <box type=Bottom width=2 mb=2>%myvolume%</box> \
                     \ <box type=Bottom width=2 mb=2>%UKLL%</box> \
                     \ <box type=Bottom width=2 mb=2>%batery%</box> "
