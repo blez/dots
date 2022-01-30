@@ -87,6 +87,7 @@ myNormalBorderColor = "#000000"
 
 -- myFocusedBorderColor = "#ff0000"
 myFocusedBorderColor = "#33a38f"
+
 -- myFocusedBorderColor = "#ffffff"
 
 -- myFocusedBorderColor = "#000000"

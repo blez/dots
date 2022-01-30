@@ -24,9 +24,9 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
                                           "--high","red",
                                           "--low","lightblue"] 36000
                     , Run Network "enx001fb532f54a" ["-t", "<fn=2>\xf796</fn>: <rx>Kb|<tx>Kb", "-L","0","-H","32", "--normal","green","--high","red"] 10
-                    , Run Network "wlp0s20f3" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "WiFi: <rx>Kb|<tx>Kb"] 10
-                    , Run Wireless "wlp0s20f3" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<essid> <quality>"] 10
-                    , Run Cpu ["-t", "<fn=2>\xf2db</fn>: <total>%", "-L","3","-H","50", "--normal","green","--high","red"] 10
+                    , Run Network "wlp0s20f3" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "<rx>Kb|<tx>Kb"] 10
+                    , Run Wireless "wlp0s20f3" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<fn=2>\xf1eb</fn> <essid> <quality>"] 10
+                    , Run Cpu ["-t", "CPU: <total>%", "-L","3","-H","50", "--normal","green","--high","red"] 10
                     , Run Memory ["-t","RAM: <usedratio>%"] 10
                     , Run Swap [] 100
                     , Run Date "%a %b %_d %Y %H:%M:%S" "date" 10
@@ -39,12 +39,11 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = " <icon=haskell_20.xpm/> \
-                    \ <box type=Bottom width=2 mb=2 color=green><fc=green>%cpu%</fc></box> \
+       , template = " <box type=Bottom width=2 mb=2 color=green><fc=green>%cpu%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ff6c6b><fc=#ff6c6b>%memory%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ff6c6b><fc=#ff6c6b>%swap%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>%enx001fb532f54a%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>WiFi: %wlp0s20f3%(%wlp0s20f3wi%)</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>%wlp0s20f3wi% %wlp0s20f3%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=#ba9e20><fc=#ba9e20>VPN: %vpn%</fc></box> }\
                     \ %StdinReader% \
                     \{<box type=Bottom width=2 mb=2 color=#229c73><fc=#229c73>%music%</fc></box> \
