@@ -1,2 +1,3 @@
 VPN,$HOME/.config/rofi/vpn.sh
+WiFi,$HOME/.config/rofi/wifi.sh
 Search,$HOME/.config/rofi/search.sh
