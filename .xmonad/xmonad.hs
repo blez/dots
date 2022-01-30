@@ -57,7 +57,7 @@ myClickJustFocuses = False
 -- Width of the window border in pixels.
 --
 myBorderWidth :: Dimension
-myBorderWidth = 2
+myBorderWidth = 3
 
 -- modMask lets you specify which modkey you want to use. The default
 -- is mod1Mask ("left alt").  You may also consider using mod3Mask
@@ -83,14 +83,11 @@ myExtraWorkspaces = [(xK_0, "0:web")]
 
 -- Border colors for unfocused and focused windows, respectively.
 --
-myNormalBorderColor = "#000000"
+-- myNormalBorderColor = "#000000"
+myNormalBorderColor = "#ffffff"
 
 -- myFocusedBorderColor = "#ff0000"
 myFocusedBorderColor = "#33a38f"
-
--- myFocusedBorderColor = "#ffffff"
-
--- myFocusedBorderColor = "#000000"
 
 myAdditionalKeys =
   [ ((myModMask, key), (windows $ W.greedyView ws))
