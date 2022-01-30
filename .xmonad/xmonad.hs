@@ -338,7 +338,7 @@ myManageHook =
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
 --
-myFadeHook = composeAll [opaque, isUnfocused --> transparency 0.1]
+myFadeHook = composeAll [opaque, isUnfocused --> transparency 0.2]
 
 myLogHook :: X ()
 myLogHook = fadeWindowsLogHook myFadeHook
