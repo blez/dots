@@ -1,7 +1,7 @@
-Config { font = "xft:JetBrains Mono:pixelsize=21"
-       , additionalFonts = [ "xft:Mononoki:pixelsize=21:antialias=true:hinting=true"
-                           , "xft:Font Awesome 5 Free Solid:pixelsize=21"
-                           , "xft:Font Awesome 5 Brands:pixelsize=21"
+Config { font = "xft:JetBrains Mono:pixelsize=22"
+       , additionalFonts = [ "xft:Mononoki:pixelsize=22:antialias=true:hinting=true"
+                           , "xft:Font Awesome 5 Free Solid:pixelsize=22"
+                           , "xft:Font Awesome 5 Brands:pixelsize=22"
                            ]
        , borderColor = "black"
        , border = TopB
