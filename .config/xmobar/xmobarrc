@@ -18,11 +18,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
        , allDesktops = True
        , overrideRedirect = True
        , iconRoot = ".xmonad/xpm/"
-       , commands = [ Run Weather "UKLL" ["-t","<fn=2>\xf76b</fn> <station>: <tempC>C",
-                                          "-L","18","-H","25",
-                                          "--normal","green",
-                                          "--high","red",
-                                          "--low","lightblue"] 36000
+       , commands = [ Run Weather "UKLL" ["-t","<fn=2>\xf76b</fn> <station>: <tempC>°C", "-L","18","-H","25", "--high","red"] 36000
                     , Run Network "enx001fb532f54a" ["-t", "<fn=2>\xf796</fn>: <rx>Kb|<tx>Kb", "-L","0","-H","32", "--normal","green","--high","red"] 10
                     , Run Network "wlp0s20f3" ["-L","0","-H","32", "--normal","green","--high","red", "-t", "<rx>Kb|<tx>Kb"] 10
                     , Run Wireless "wlp0s20f3" ["-L","40","-H","70","--normal","yellow","--high","green","--low","red","-t","<fn=2>\xf1eb</fn> <essid> <quality>"] 10
