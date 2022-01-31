@@ -18,7 +18,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
        , allDesktops = True
        , overrideRedirect = True
        , iconRoot = ".xmonad/xpm/"
-       , commands = [ Run Weather "UKLL" ["-t","<station>: <tempC>C",
+       , commands = [ Run Weather "UKLL" ["-t","<fn=2>\xf76b</fn> <station>: <tempC>C",
                                           "-L","18","-H","25",
                                           "--normal","green",
                                           "--high","red",
@@ -29,12 +29,12 @@ Config { font = "xft:JetBrains Mono:pixelsize=21"
                     , Run Cpu ["-t", "CPU: <total>%", "-L","3","-H","50", "--high","red"] 10
                     , Run Memory ["-t","RAM: <usedratio>%"] 10
                     , Run Swap [] 100
-                    , Run Date "%a %b %_d %Y %H:%M:%S" "date" 10
+                    , Run Date "<fn=2>\xf017</fn> %a %b %_d %Y %H:%M:%S" "date" 10
                     , Run Com "xkblayout-state" ["print", "<fn=2>\xf0ac</fn> %s"] "layout" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf241</fn> $(upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}')\""] "batery" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh"] "vpn" 10
-                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,65)}' || true"] "music" 10
+                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
                     , Run StdinReader
                     ]
        , sepChar = "%"
