@@ -355,7 +355,8 @@ myStartupHook :: X ()
 myStartupHook = do
   spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "~/.screenlayout/lenovo.sh"
-  spawnOnce "nitrogen --restore &"
+  -- spawnOnce "nitrogen --restore &"
+  spawnOnce "xargs xwallpaper --stretch < ~/wallpapers/wall"
   spawnOnce "picom --experimental-backends"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
@@ -394,10 +395,10 @@ main = do
               <+> dynamicLogWithPP
                 xmobarPP
                   { ppOutput = hPutStrLn xmproc,
-                    ppCurrent = xmobarColor "#98be65" "" . wrap "[" "]", -- Current workspace in xmobar
-                    ppVisible = xmobarColor "#98be65" "", -- Visible but not current workspace
-                    ppHidden = xmobarColor "#82AAFF" "" . wrap "*" "", -- Hidden workspaces in xmobar
-                    ppHiddenNoWindows = xmobarColor "#c792ea" "", -- Hidden workspaces (no windows)
+                    ppCurrent = xmobarColor "red" "" . wrap "[" "]", -- Current workspace in xmobar
+                    ppVisible = xmobarColor "white" "", -- Visible but not current workspace
+                    ppHidden = xmobarColor "white" "" . wrap "*" "", -- Hidden workspaces in xmobar
+                    ppHiddenNoWindows = xmobarColor "white" "", -- Hidden workspaces (no windows)
                     ppSep = " | ", -- Separators in xmobar
                     ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!", -- Urgent workspace
                     -- , ppTitle = xmobarColor "#b3afc2" "" . shorten 60     -- Title of active window in xmobar

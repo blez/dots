@@ -55,6 +55,7 @@ sudo apt -y install \
     texinfo \
     vim \
     vlc \
+    xwallpaper \
     xclip \
     xfce4-power-manager \
     xmobar \
