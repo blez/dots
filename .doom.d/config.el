@@ -29,8 +29,6 @@
 (setq doom-theme 'doom-dark+)
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
-;; (map! :n "R" #'evil-multiedit-match-all)
-;; (map! :map evil-multiedit-mode-map :i "R" #'evil-multiedit-match-all)
 (map! :after neotree
       :map neotree-mode-map
       :m "h" #'+neotree/collapse-or-up)
@@ -59,6 +57,9 @@
 
 (map! :m "C-M-k" #'drag-stuff-up)
 (map! :m "C-M-j" #'drag-stuff-down)
+
+(map! :n "J" #'evil-mc-make-cursor-move-next-line)
+(map! :n "K" #'evil-mc-make-cursor-move-prev-line)
 
 (defun current-line-empty-p ()
   (save-excursion
