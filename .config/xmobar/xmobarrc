@@ -31,6 +31,7 @@ Config { font = "xft:JetBrains Mono:pixelsize=22"
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf241</fn> $(upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}')\""] "batery" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
                     , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
+                    , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(($(apt list --upgradable 2>/dev/null | wc -l) - 2))"] "upd" 600
                     , Run StdinReader
                     ]
        , sepChar = "%"
@@ -40,7 +41,8 @@ Config { font = "xft:JetBrains Mono:pixelsize=22"
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%swap%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%enx001fb532f54a%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%wlp0s20f3wi% %wlp0s20f3%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%vpn%</fc></box> }\
+                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%vpn%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%upd%</fc></box> } \
                     \ %StdinReader% \
                     \{<box type=Bottom width=2 mb=2 color=red><fc=white>%music%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%date%</fc></box> \
