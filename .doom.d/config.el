@@ -96,7 +96,7 @@
 (defun go-flycheck-setup ()
   (flycheck-add-next-checker 'lsp 'golangci-lint))
 (defun go-lsp-setup ()
-  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster"]))))
+  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"]))))
 (add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
 (add-hook 'go-mode-lsp-hook #'go-lsp-setup)
 (add-hook! lsp-mode
