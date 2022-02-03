@@ -77,9 +77,20 @@ myModMask = mod4Mask
 -- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
 --
 myWorkspaces :: [String]
-myWorkspaces = ["1:dev", "2:term", "3", "4", "5", "6", "7", "8", "9:chat"] ++ (map snd myExtraWorkspaces)
+myWorkspaces =
+  [ "<icon=Emacs.xpm/>",
+    "<icon=Terminal.xpm/>",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "<icon=Chat.xpm/>"
+  ]
+    ++ (map snd myExtraWorkspaces)
 
-myExtraWorkspaces = [(xK_0, "0:web")]
+myExtraWorkspaces = [(xK_0, "<icon=Chrome.xpm/>")]
 
 -- Border colors for unfocused and focused windows, respectively.
 --
@@ -395,9 +406,9 @@ main = do
               <+> dynamicLogWithPP
                 xmobarPP
                   { ppOutput = hPutStrLn xmproc,
-                    ppCurrent = xmobarColor "red" "" . wrap "[" "]", -- Current workspace in xmobar
+                    ppCurrent = xmobarColor "red" "" . wrap "> " "", -- Current workspace in xmobar
                     ppVisible = xmobarColor "white" "", -- Visible but not current workspace
-                    ppHidden = xmobarColor "white" "" . wrap "*" "", -- Hidden workspaces in xmobar
+                    ppHidden = xmobarColor "white" "" . wrap "|" "", -- Hidden workspaces in xmobar
                     ppHiddenNoWindows = xmobarColor "white" "", -- Hidden workspaces (no windows)
                     ppSep = " | ", -- Separators in xmobar
                     ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!", -- Urgent workspace
