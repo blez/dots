@@ -340,7 +340,7 @@ myStartupHook = do
   spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "~/.screenlayout/lenovo.sh"
   -- spawnOnce "nitrogen --restore &"
-  spawnOnce "xargs xwallpaper --stretch < ~/wallpapers/wall"
+  spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
   spawnOnce "picom --experimental-backends"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
