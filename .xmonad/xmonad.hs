@@ -36,46 +36,24 @@ import XMonad.Util.EZConfig (additionalKeys)
 import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 
--- The preferred terminal program, which is used in a binding below and by
--- certain contrib modules.
-
 myFont :: String
 myFont = "xft:SauceCodePro Nerd Font Mono:regular:size=14:antialias=true:hinting=true"
 
---
 myTerminal :: [Char]
 myTerminal = "alacritty"
 
--- Whether focus follows the mouse pointer.
 myFocusFollowsMouse :: Bool
 myFocusFollowsMouse = True
 
--- Whether clicking on a window to focus also passes the click to the window
 myClickJustFocuses :: Bool
 myClickJustFocuses = False
 
--- Width of the window border in pixels.
---
 myBorderWidth :: Dimension
 myBorderWidth = 3
 
--- modMask lets you specify which modkey you want to use. The default
--- is mod1Mask ("left alt").  You may also consider using mod3Mask
--- ("right alt"), which does not conflict with emacs keybindings. The
--- "windows key" is usually mod4Mask.
---
 myModMask :: KeyMask
 myModMask = mod4Mask
 
--- The default number of workspaces (virtual screens) and their names.
--- By default we use numeric strings, but any string may be used as a
--- workspace name. The number of workspaces is determined by the length
--- of this list.
---
--- A tagging example:
---
--- > workspaces = ["web", "irc", "code" ] ++ map show [4..9]
---
 myWorkspaces :: [String]
 myWorkspaces =
   [ "<icon=Emacs.xpm/>",
@@ -92,9 +70,6 @@ myWorkspaces =
 
 myExtraWorkspaces = [(xK_0, "<icon=Chrome.xpm/>")]
 
--- Border colors for unfocused and focused windows, respectively.
---
--- myNormalBorderColor = "#000000"
 myNormalBorderColor = "#ffffff"
 
 -- myFocusedBorderColor = "#ff0000"
@@ -108,9 +83,6 @@ myAdditionalKeys =
          | (key, ws) <- myExtraWorkspaces
        ]
 
-------------------------------------------------------------------------
--- Key bindings. Add, modify or remove key bindings here.
---
 myKeys conf@(XConfig {XMonad.modMask = modm}) =
   M.fromList $
     -- launch a terminal
@@ -180,6 +152,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm .|. shiftMask, xK_b), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh play)\""),
       --take a screenshot of entire display
       ((0, xK_Print), spawn "flameshot gui"),
+      ((modm, xK_Print), spawn "flameshot full -p ~/Pictures/"),
       -- Quit xmonad
       ((modm .|. shiftMask, xK_q), io (exitWith ExitSuccess)),
       -- Restart xmonad
