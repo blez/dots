@@ -96,15 +96,15 @@
 (defun go-flycheck-setup ()
   (flycheck-add-next-checker 'lsp 'golangci-lint))
 (defun go-lsp-setup ()
-  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"]))))
+  (lsp-register-custom-settings '(
+                                     ("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"])
+                                     ("gopls.experimentalWorkspaceModule" t)
+                                     )))
 (add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
 (add-hook 'go-mode-lsp-hook #'go-lsp-setup)
 (add-hook! lsp-mode
   (defalias '+lookup/references 'lsp-find-references))
 
-;; (use-package! evil-multiedit
-;;  :config
-;;  (evil-multiedit-default-keybinds))
 (use-package! makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))
@@ -139,6 +139,10 @@
 
 (setq rustic-lsp-server 'rust-analyzer)
 
+;; (setq projectile-project-root-functions '(projectile-root-top-down)
+;;         projectile-project-root-files
+;;         '(".projectile" "go.mod" ".git"))
+
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
@@ -147,7 +151,6 @@
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type 'relative)
 (add-hook 'protobuf-mode-hook #'display-line-numbers-mode)
-(setq projectile-project-search-path '("~/go/src/github.com/blez/" "~/go/src/github.com/percona/" "~/go/src/github.com/Percona-Lab/"))
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
 ;; - `load!' for loading external *.el files relative to this one
