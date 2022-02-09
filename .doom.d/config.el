@@ -91,6 +91,7 @@
     (define-key company-active-map (kbd "<tab>") nil))
 
 ;; setup lsp + other linters
+(setenv "GOPATH" "/home/pkasko-ua/go/") ;; TMP
 (add-hook! 'lsp-after-initialize-hook
   (run-hooks (intern (format "%s-lsp-hook" major-mode))))
 (defun go-flycheck-setup ()
@@ -98,7 +99,6 @@
 (defun go-lsp-setup ()
   (lsp-register-custom-settings '(
                                      ("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"])
-                                     ("gopls.experimentalWorkspaceModule" t)
                                      )))
 (add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
 (add-hook 'go-mode-lsp-hook #'go-lsp-setup)
@@ -138,10 +138,6 @@
 (add-to-list '+format-on-save-enabled-modes 'yaml-mode 'append)
 
 (setq rustic-lsp-server 'rust-analyzer)
-
-;; (setq projectile-project-root-functions '(projectile-root-top-down)
-;;         projectile-project-root-files
-;;         '(".projectile" "go.mod" ".git"))
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
