@@ -97,11 +97,14 @@
 (defun go-flycheck-setup ()
   (flycheck-add-next-checker 'lsp 'golangci-lint))
 (defun go-lsp-setup ()
-  (lsp-register-custom-settings '(
-                                     ("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"])
-                                     )))
+  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"]))))
 (add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
 (add-hook 'go-mode-lsp-hook #'go-lsp-setup)
+
+(add-hook 'sh-mode-lsp-hook #'sh-flycheck-setup)
+(defun sh-flycheck-setup ()
+  (flycheck-add-next-checker 'lsp 'sh-bash 'sh-shellcheck))
+
 (add-hook! lsp-mode
   (defalias '+lookup/references 'lsp-find-references))
 
@@ -128,9 +131,9 @@
         ivy-posframe-parameters (append ivy-posframe-parameters '((left-fringe . 3)
                                                                   (right-fringe . 3)))))
 
-;; (setq shfmt-arguments '("-bn" "-ci" "-s"))
-(setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
-(add-hook 'sh-mode-hook 'shfmt-on-save-mode)
+(put '+format-with 'safe-local-variable 'symbolp)
+;; (setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
+;; (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))

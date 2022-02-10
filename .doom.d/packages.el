@@ -16,7 +16,7 @@
 (package! dockerfile-mode)
 (package! browse-at-remote)
 (package! groovy-mode)
-(package! shfmt)
+;; (package! shfmt)
 (package! string-inflection)
 (package! centered-window)
 (package! olivetti)
