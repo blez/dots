@@ -118,6 +118,8 @@
   (add-hook 'rustic-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
+(beacon-mode 1)
+
 (after! undo-tree
   (setq undo-tree-auto-save-history nil))
 

@@ -20,6 +20,7 @@
 (package! string-inflection)
 (package! centered-window)
 (package! olivetti)
+(package! beacon)
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;(package! some-package)
