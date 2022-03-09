@@ -146,10 +146,15 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm .|. shiftMask, xK_i), spawn "~/scripts/playerctl.sh play"),
       ((modm .|. shiftMask, xK_u), spawn "~/scripts/playerctl.sh prev"),
       ((modm .|. shiftMask, xK_o), spawn "~/scripts/playerctl.sh next"),
+      ((0, xF86XK_AudioPause), spawn "~/scripts/playerctl.sh play"),
+      ((0, xF86XK_AudioPlay), spawn "~/scripts/playerctl.sh play"),
+      ((0, xF86XK_AudioNext), spawn "~/scripts/playerctl.sh next"),
+      ((0, xF86XK_AudioPrev), spawn "~/scripts/playerctl.sh prev"),
       -- Bluetooth devices
       -- requires `sudo apt-get install bluez-tools`
       ((modm, xK_b), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh pause)\""),
       ((modm .|. shiftMask, xK_b), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh play)\""),
+
       --take a screenshot of entire display
       ((0, xK_Print), spawn "flameshot gui"),
       ((modm, xK_Print), spawn "flameshot full -p ~/Pictures/"),
