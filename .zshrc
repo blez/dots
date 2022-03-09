@@ -19,7 +19,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # Go
 export GOPATH=~/go
 
-export EDITOR='vim'
+export EDITOR='emacs -nw'
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
@@ -51,9 +51,9 @@ source $ZSH/oh-my-zsh.sh
 eval "$(starship init zsh)"
 
 alias lsf="ls | fzf"
-alias rc="vim ~/.zshrc"
+alias rc="emacs -nw ~/.zshrc"
 alias sp="~/setup.sh"
-alias spe="vim ~/setup.sh"
+alias spe="emacs -nw ~/setup.sh"
 
 alias hel="cd ~/helios"
 
@@ -61,6 +61,7 @@ alias dw="cd ~/Downloads"
 alias blez="cd ~/blez"
 alias rt="cd $PROOT"
 alias k="kubectl"
+alias em="emacs -nw"
 
 alias gr="git pull -r"
 alias gcm="git cm"
