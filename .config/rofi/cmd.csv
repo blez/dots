@@ -1,3 +1,4 @@
 VPN,$HOME/.config/rofi/vpn.sh
 WiFi,$HOME/.config/rofi/wifi.sh
+Bluetooth,$HOME/.config/rofi/blue.sh
 Search,$HOME/.config/rofi/search.sh
