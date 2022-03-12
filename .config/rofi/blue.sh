@@ -21,11 +21,17 @@ main() {
 
     if [ -n "$device" ]; then
         if echo "$device" | grep -q "\*"; then
-            bluetoothctl disconnect "${devices[$device]}" || notify-send --app-name "Rofi" "Failed to disconnected from $device"
-            notify-send --app-name "Rofi" "Disconnected from $device"
+            if [[ $(bluetoothctl disconnect "${devices[$device]}") ]]; then
+                notify-send --app-name "Rofi" "Disconnected from $device"
+            else
+                notify-send --app-name "Rofi" "Failed to disconnected from $device"
+            fi
         else
-            bluetoothctl connect "${devices[$device]}" || notify-send --app-name "Rofi" "Failed to connected to $device"
-            notify-send --app-name "Rofi" "Connected to $device"
+            if [[ $(bluetoothctl connect "${devices[$device]}") ]]; then
+                notify-send --app-name "Rofi" "Connected to $device"
+            else
+                notify-send --app-name "Rofi" "Failed to connected to $device"
+            fi
         fi
     else
         exit
