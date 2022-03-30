@@ -23,21 +23,36 @@ sudo apt -y install \
     fd-find \
     flameshot \
     fzf \
+    gawk \
+    g++ \
     git \
     i3lock \
-    libffi-dev libffi7 libgmp-dev libgmp10  libncurses5 libtinfo5 \
+    libarchive-dev \
+    libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
     libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
     libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
     libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
     librust-gdk-sys-dev libgtk-3-dev libgtk-layer-shell-dev libpango1.0-dev \
+    libwxgtk3.0-gtk3-dev \
     librust-gdk-pixbuf-sys-dev libcairo2-dev libcairo-gobject2 librust-gio-sys-dev \
     librust-glib-sys-dev librust-gobject-sys-dev \
+    libneon27-dev \
     libncurses-dev libxpm-dev \
+    libpcre3-dev \
+    libspdlog-dev \
+    libnfs-dev \
     libnotify-bin \
+    libsmbclient-dev \
+    libssh-dev \
+    libssl-dev \
     libtool-bin \
+    libuchardet-dev \
+    libxerces-c-dev \
+    libxi-dev \
     libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
     lxappearance \
     meson \
+    m4 \
     ninja-build \
     ncdu \
     nitrogen \
@@ -108,7 +123,7 @@ if [ ! -d "$HOME/.font-awesome" ]; then
     sudo rm -rf /usr/share/fonts/font-awesome
     sudo cp -r .font-awesome /usr/share/fonts/font-awesome
     fc-cache -f -v
-    rm  fontawesome-free-5.15.4-desktop.zip
+    rm fontawesome-free-5.15.4-desktop.zip
 fi
 
 if [ ! -f "$HOME/.nerd-fonts" ]; then
