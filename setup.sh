@@ -174,6 +174,15 @@ fi
 xclip -selection clipboard <~/.ssh/id_ed25519.pub
 read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 
+if ! node --version; then
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+    sudo apt-get install -y nodejs
+fi
+
+if ! bash-language-server --version; then
+    npm i -g bash-language-server
+fi
+
 if ! emacs --version; then
     cd "$HOME"
     rm -rf ./emacs || :

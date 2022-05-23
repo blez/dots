@@ -11,7 +11,7 @@
 (package! evil-commentary)
 (package! evil-indent-plus)
 (package! evil-surround)
-(package! protobuf-mode)
+;; (package! protobuf-mode)
 (package! makefile-executor)
 (package! dockerfile-mode)
 (package! browse-at-remote)

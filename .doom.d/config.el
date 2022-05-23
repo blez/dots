@@ -46,9 +46,16 @@
       :m "<f9>" #'flycheck-previous-error)
 (map! :after flycheck
       :map flycheck-mode-map
+      :m "<f11>" #'lsp-ui-flycheck-list)
+(map! :after flycheck
+      :map flycheck-mode-map
       :m "<f6>" #'flycheck-buffer)
 (map! :map lsp-mode-map
       :m "<f7>" #'lsp-ui-doc-show)
+(eval-after-load 'smerge-mode
+  (lambda ()
+    (define-key smerge-mode-map (kbd "C-,") smerge-basic-map)))
+
 (global-unset-key (kbd "<f3>"))
 (map! :after flycheck
       :map lsp-mode-map
@@ -146,6 +153,7 @@
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
+(setq org-roam-directory "~/blez/roam/")
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
