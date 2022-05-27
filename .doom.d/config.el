@@ -122,6 +122,7 @@
   (add-hook 'go-mode-hook #'olivetti-mode)
   (add-hook 'sh-mode-hook #'olivetti-mode)
   (add-hook 'yaml-mode-hook #'olivetti-mode)
+  (add-hook 'org-mode-hook #'olivetti-mode)
   (add-hook 'rustic-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
@@ -150,10 +151,45 @@
 
 (setq rustic-lsp-server 'rust-analyzer)
 
+(exec-path-from-shell-copy-env "SSH_AGENT_PID")
+(exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 (setq org-roam-directory "~/blez/roam/")
+
+;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
+;; (after! mu4e
+;;     (set-email-account! "pavalk6@gmail.com" '(
+;;              (mu4e-sent-folder       . "/[Gmail]/Sent Mail")
+;;              (mu4e-drafts-folder     . "/[Gmail]/Drafts")
+;;              (mu4e-trash-folder      . "/[Gmail]/Trash")
+;;              (mu4e-refile-folder     . "/[Gmail]/All Mail")
+;;              (smtpmail-smtp-user     . "pavalk6@gmail.com"))
+;;         t)
+
+;;   (setq send-mail-function #'smtpmail-send-it
+;;       mu4e-change-filenames-when-moving t
+;;       mu4e-root-maildir "~/Mail"
+;;       message-sendmail-f-is-evil t
+;;       mu4e-update-interval 300
+;;       mu4e-get-mail-command "mbsync -c ~/.config/mu4e/mbsyncrc -a"
+;;       ;; don't need to run cleanup after indexing for gmail
+;;       mu4e-index-cleanup nil
+;;       ;; because gmail uses labels as folders we can use lazy check since
+;;       ;; messages don't really "move"
+;;       mu4e-index-lazy-check t
+;;       mu4e-maildir-shortcuts '(
+;;         ("/Inbox"             . ?i)
+;;         ("/[Gmail]/Sent Mail" . ?s)
+;;         ("/[Gmail]/Trash"     . ?t)
+;;         ("/[Gmail]/Drafts"    . ?d)
+;;         ("/[Gmail]/All Mail"  . ?a))
+;;       )
+;; )
+
+;; (setq mu4e-alert-interesting-mail-query
+;;     (concat "flag:unread maildir:/Inbox" ))
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.

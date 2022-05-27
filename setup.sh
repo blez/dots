@@ -27,6 +27,7 @@ sudo apt -y install \
     g++ \
     git \
     i3lock \
+    isync \
     libarchive-dev \
     libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
     libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
@@ -51,7 +52,9 @@ sudo apt -y install \
     libxi-dev \
     libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
     lxappearance \
+    maildir-utils \
     meson \
+    mu4e \
     m4 \
     ninja-build \
     ncdu \
