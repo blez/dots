@@ -11,6 +11,7 @@ disabled = true
 
 [git_branch]
 symbol = " "
+format = "on [$symbol$branch ](bold #cc0099)"
 
 [git_commit]
 commit_hash_length = 7
