@@ -61,9 +61,6 @@
       :map lsp-mode-map
       :m "<f3>" #'lsp-workspace-restart)
 
-(map! :m "C-M-k" #'drag-stuff-up)
-(map! :m "C-M-j" #'drag-stuff-down)
-
 (map! :n "J" #'evil-mc-make-cursor-move-next-line)
 (map! :n "K" #'evil-mc-make-cursor-move-prev-line)
 
@@ -84,6 +81,12 @@
 
 (map! :m "C-j" #'move-next-line)
 (map! :m "C-k" #'move-previous-line)
+
+(map! :m "C-M-j" #'evil-scroll-line-down)
+(map! :m "C-M-k" #'evil-scroll-line-up)
+
+(map! :m "M-K" #'drag-stuff-up)
+(map! :m "M-J" #'drag-stuff-down)
 
 (defun previous-func ()
     (interactive)
