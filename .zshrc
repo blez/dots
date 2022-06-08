@@ -12,6 +12,8 @@ export PATH=~/.emacs.d/bin:$PATH
 export PATH=~/.diff-so-fancy:$PATH
 export PATH=~/.arcanist/bin/:$PATH
 export PATH=~/.local/bin/:$PATH
+export PATH=/usr/java/jre1.8.0_333/bin/:$PATH
+export PATH=~/flutter/bin/:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"

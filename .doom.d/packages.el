@@ -11,7 +11,7 @@
 (package! evil-commentary)
 (package! evil-indent-plus)
 (package! evil-surround)
-(package! protobuf-mode)
+;; (package! protobuf-mode)
 (package! makefile-executor)
 (package! dockerfile-mode)
 (package! browse-at-remote)
@@ -22,6 +22,7 @@
 (package! olivetti)
 (package! beacon)
 (package! exec-path-from-shell)
+(package! autothemer)
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;(package! some-package)

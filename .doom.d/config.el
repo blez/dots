@@ -24,8 +24,8 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-;; (setq doom-theme 'doom-dark+)
 (setq doom-theme 'doom-dark+)
+
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
 (map! :after neotree
@@ -71,8 +71,8 @@
 (defun move-previous-line ()
   (interactive)
   (forward-line -1)
-    (if (current-line-empty-p)
-        (kill-line)))
+  (if (current-line-empty-p)
+      (kill-line)))
 (defun move-next-line ()
   (interactive)
   (beginning-of-line)
@@ -89,15 +89,15 @@
 (map! :m "M-J" #'drag-stuff-down)
 
 (defun previous-func ()
-    (interactive)
-    (end-of-defun)
-    (end-of-defun)
-    (beginning-of-defun))
+  (interactive)
+  (end-of-defun)
+  (end-of-defun)
+  (beginning-of-defun))
 (map! :m "M-j" #'previous-func)
 (map! :m "M-k" #'beginning-of-defun)
 
 (with-eval-after-load 'company
-    (define-key company-active-map (kbd "<tab>") nil))
+  (define-key company-active-map (kbd "<tab>") nil))
 
 ;; setup lsp + other linters
 (setenv "GOPATH" "/home/pkasko-ua/go/") ;; TMP
@@ -134,14 +134,14 @@
 (after! undo-tree
   (setq undo-tree-auto-save-history nil))
 
-(after! ivy-posframe
-  (setf (alist-get t ivy-posframe-display-functions-alist)
-        #'ivy-posframe-display-at-frame-center)
-  (setf (alist-get 'swiper ivy-posframe-display-functions-alist)
-        #'ivy-posframe-display-at-frame-center)
-  (setq ivy-posframe-border-width 2
-        ivy-posframe-parameters (append ivy-posframe-parameters '((left-fringe . 3)
-                                                                  (right-fringe . 3)))))
+;; (after! ivy-posframe
+;;   (setf (alist-get t ivy-posframe-display-functions-alist)
+;;         #'ivy-posframe-display-at-frame-center)
+;;   (setf (alist-get 'swiper ivy-posframe-display-functions-alist)
+;;         #'ivy-posframe-display-at-frame-bottom-center)
+;;   (setq ivy-posframe-border-width 6
+;;         ivy-posframe-parameters (append ivy-posframe-parameters '((left-fringe . 3)
+;;                                                                   (right-fringe . 3)))))
 
 (put '+format-with 'safe-local-variable 'symbolp)
 ;; (setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
@@ -156,6 +156,9 @@
 
 (exec-path-from-shell-copy-env "SSH_AGENT_PID")
 (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+
+(setq org-clock-sound "~/sounds/bell.wav")
+
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
