@@ -10,14 +10,15 @@ import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.FadeWindows
 import XMonad.Hooks.ManageDocks (ToggleStruts (..), avoidStruts, docksEventHook, manageDocks)
 import XMonad.Hooks.ManageHelpers (doFullFloat, isFullscreen)
+
 import XMonad.Layout.GridVariants (Grid (Grid))
 import XMonad.Layout.LayoutModifier
 import XMonad.Layout.LimitWindows (decreaseLimit, increaseLimit, limitWindows)
-import XMonad.Layout.Magnifier
 import XMonad.Layout.MultiToggle (EOT (EOT), mkToggle, single, (??))
 import qualified XMonad.Layout.MultiToggle as MT (Toggle (..))
 import XMonad.Layout.MultiToggle.Instances (StdTransformers (MIRROR, NBFULL, NOBORDERS))
 import XMonad.Layout.NoBorders
+import XMonad.Layout.MultiColumns
 import XMonad.Layout.Renamed
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.ShowWName
@@ -27,10 +28,10 @@ import XMonad.Layout.Spacing
 import XMonad.Layout.Spiral
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Tabbed
-import XMonad.Layout.ThreeColumns
 import qualified XMonad.Layout.ToggleLayouts as T (ToggleLayout (Toggle), toggleLayouts)
 import XMonad.Layout.WindowArranger (WindowArrangerMsg (..), windowArrange)
 import XMonad.Layout.WindowNavigation
+
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig (additionalKeys)
 import XMonad.Util.Run
@@ -225,38 +226,26 @@ myMouseBindings (XConfig {XMonad.modMask = modm}) =
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
-tall =
-  renamed [Replace "tall"] $
-    windowNavigation $
-      addTabs shrinkText myTabTheme $
-        limitWindows 12 $
-          mySpacing 8 $
-            ResizableTall 1 (3 / 100) (1 / 2) []
+tall = renamed [Replace "tall"]
+    $ windowNavigation
+    $ addTabs shrinkText myTabTheme
+    $ limitWindows 12
+    $ mySpacing 8
+    $ ResizableTall 1 (3/100) (1/2) []
 
--- magnify  = renamed [Replace "magnify"]
---            $ windowNavigation
---            $ addTabs shrinkText myTabTheme
---            $ magnifier
---            $ limitWindows 12
---            $ mySpacing 8
---            $ ResizableTall 1 (3/100) (1/2) []
-monocle =
-  renamed [Replace "monocle"] $
-    windowNavigation $
-      addTabs shrinkText myTabTheme $
-        mySpacing 8 $
-          limitWindows 20 Full
+full = renamed [Replace "full"]
+    $ windowNavigation
+    $ addTabs shrinkText myTabTheme
+    $ limitWindows 20
+    $ mySpacing 8
+    $ Full
 
-grid =
-  renamed [Replace "grid"] $
-    windowNavigation $
-      addTabs shrinkText myTabTheme $
-        limitWindows 12 $
-          mySpacing 8 $
-            Grid (16 / 10)
-
--- tabs     = renamed [Replace "tabs"]
---            $ tabbed shrinkText myTabTheme
+grid = renamed [Replace "grid"]
+    $ windowNavigation
+    $ addTabs shrinkText myTabTheme
+    $ limitWindows 12
+    $ mySpacing 8
+    $ Grid (16 / 10)
 
 -- setting colors for tabs layout and tabs sublayout.
 myTabTheme =
@@ -270,13 +259,9 @@ myTabTheme =
 
 myLayoutHook = avoidStruts $ windowArrange $ smartBorders $ myDefaultLayout
   where
-    myDefaultLayout =
-      tall
-        ||| monocle
+    myDefaultLayout = tall
         ||| grid
-
--- magnify
--- tabs
+        ||| full
 
 ------------------------------------------------------------------------
 -- Window rules:
