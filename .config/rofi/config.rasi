@@ -3,7 +3,7 @@ configuration {
 	width: 30;
 	lines: 10;
 	columns: 1;
-	font: "JetBrains Mono 30";
+	font: "JetBrains Mono Nerd Font 30";
 	bw: 1;
 /*	location: 0;*/
 	padding: 5;

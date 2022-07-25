@@ -329,9 +329,8 @@ myStartupHook :: X ()
 myStartupHook = do
   spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "~/.screenlayout/lenovo.sh"
-  -- spawnOnce "nitrogen --restore &"
   spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
-  spawnOnce "picom --experimental-backends"
+  spawnOnce "picom --config ~/.config/picom.conf --experimental-backends"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
   spawnOnce "/usr/local/bin/emacs &"
