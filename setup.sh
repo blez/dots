@@ -84,6 +84,16 @@ if ! zsh --version; then
     sudo apt -y install zsh
 fi
 
+# ssh
+if [ ! -f ~/.ssh/id_ed25519 ]; then
+    ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_ed25519
+    
+    xclip -selection clipboard <~/.ssh/id_ed25519.pub
+    read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
+fi
+
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
@@ -167,15 +177,6 @@ fi
 if ! starship --version; then
     sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 fi
-
-# ssh
-if [ ! -f ~/.ssh/id_ed25519 ]; then
-    ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_ed25519
-fi
-xclip -selection clipboard <~/.ssh/id_ed25519.pub
-read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 
 if ! node --version; then
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
