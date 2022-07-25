@@ -226,7 +226,6 @@ fi
 
 if ! rg --version; then
     cd
-    rm -rf ~/.emacs.d
     curl -LO https://github.com/BurntSushi/ripgrep/releases/download/12.1.1/ripgrep_12.1.1_amd64.deb
     sudo dpkg -i ripgrep_12.1.1_amd64.deb
     rm ripgrep_12.1.1_amd64.deb
@@ -234,6 +233,7 @@ fi
 
 if ! doom version; then
     cd
+    rm -rf ~/.emacs.d
     git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
     ~/.emacs.d/bin/doom install
 fi
