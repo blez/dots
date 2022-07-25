@@ -184,7 +184,7 @@ if ! node --version; then
 fi
 
 if ! bash-language-server --version; then
-    npm i -g bash-language-server
+    sudo npm i -g bash-language-server
 fi
 
 if ! emacs --version; then
