@@ -12,6 +12,7 @@ sudo apt -y install \
     bluez \
     bluez-tools \
     build-essential \
+    clang \
     cmake \
     compton \
     curl \
