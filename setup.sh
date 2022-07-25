@@ -220,10 +220,6 @@ if [ ! -d "$HOME/dots" ]; then
         /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" "$@"
     }
 
-    mkdir -p "$HOME/.config-backup"
-    echo "Backing up pre-existing dot files."
-    mv "$HOME/.zshrc" "$HOME/.config-backup/"
-
     dots checkout
     dots config status.showUntrackedFiles no
 fi
