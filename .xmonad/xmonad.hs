@@ -38,7 +38,7 @@ import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 
 myFont :: String
-myFont = "xft:SauceCodePro Nerd Font Mono:regular:size=14:antialias=true:hinting=true"
+myFont = "xft:JetBrains Mono Nerd Font:regular:size=14:antialias=true:hinting=true"
 
 myTerminal :: [Char]
 myTerminal = "alacritty"
