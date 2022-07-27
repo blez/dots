@@ -9,6 +9,7 @@ sudo apt -y install \
     autoconf \
     automake \
     bat \
+    btop \
     bluez \
     bluez-tools \
     build-essential \
@@ -52,7 +53,7 @@ sudo apt -y install \
     libxcb-present-dev \
     libxcb-xinerama0-dev \
     libxcb-glx0-dev \
-    libpixman-1-dev\
+    libpixman-1-dev \
     libdbus-1-dev \
     libconfig-dev \
     libgl1-mesa-dev \
@@ -78,6 +79,7 @@ sudo apt -y install \
     meson \
     mu4e \
     m4 \
+    net-tools \
     ninja-build \
     ncdu \
     nitrogen \
@@ -111,7 +113,7 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
     ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/id_ed25519
-    
+
     xclip -selection clipboard <~/.ssh/id_ed25519.pub
     read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 fi
@@ -176,6 +178,20 @@ if ! cargo --version; then
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     echo "Do 'source $HOME/.cargo/env' and rerun script"
     exit 0
+fi
+
+if ! fd --version; then
+    cd
+    rm -rf fd
+
+    git clone https://github.com/sharkdp/fd
+    cd fd
+    cargo build
+    cargo test
+    cargo install --path .
+
+    cd
+    rm -rf fd
 fi
 
 if [ ! -f /usr/local/bin/alacritty ]; then
