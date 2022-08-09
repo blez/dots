@@ -131,6 +131,10 @@
 
 (beacon-mode 1)
 
+;; (use-package! minimap
+;;     :config
+;;     (setq minimap-window-location 'left))
+
 (after! undo-tree
   (setq undo-tree-auto-save-history nil))
 

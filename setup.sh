@@ -22,7 +22,6 @@ sudo apt -y install \
     dmenu \
     dunst \
     editorconfig \
-    fd-find \
     flameshot \
     fzf \
     gawk \

@@ -93,8 +93,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm, xK_p), spawn "rofi -show drun"),
       -- launch gmrun
       ((modm .|. shiftMask, xK_p), spawn "gmrun"),
-      -- launch gmrun
+      -- lock
       ((modm .|. shiftMask, xK_l), spawn "i3lock -i ~/wallpapers/lock.png"),
+      -- sleep
+      ((modm .|. shiftMask, xK_s), spawn "i3lock -i ~/wallpapers/lock.png && systemctl suspend"),
       -- keyboard layout
       ((modm, xK_space), spawn "~/scripts/kb-switch.sh"),
       -- close focused window
