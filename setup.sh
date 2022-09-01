@@ -20,6 +20,7 @@ sudo apt -y install \
     direnv \
     deluge \
     dmenu \
+    dsniff \
     dunst \
     editorconfig \
     flameshot \
@@ -73,6 +74,7 @@ sudo apt -y install \
     libxerces-c-dev \
     libxi-dev \
     libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
+    lldb \
     lxappearance \
     maildir-utils \
     meson \
