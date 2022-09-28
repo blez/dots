@@ -57,9 +57,7 @@
     (define-key smerge-mode-map (kbd "C-,") smerge-basic-map)))
 
 (global-unset-key (kbd "<f3>"))
-(map! :after flycheck
-      :map lsp-mode-map
-      :m "<f3>" #'lsp-workspace-restart)
+(map! :m "<f3>" #'lsp-workspace-restart)
 
 (map! :n "J" #'evil-mc-make-cursor-move-next-line)
 (map! :n "K" #'evil-mc-make-cursor-move-prev-line)
