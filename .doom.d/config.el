@@ -24,7 +24,9 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-dark+)
+;; (setq doom-theme 'doom-dark+)
+(setq doom-theme 'modus-vivendi)
+;; (setq modus-themes-syntax '(faint))
 
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
@@ -124,7 +126,8 @@
   (add-hook 'sh-mode-hook #'olivetti-mode)
   (add-hook 'yaml-mode-hook #'olivetti-mode)
   (add-hook 'org-mode-hook #'olivetti-mode)
-  (add-hook 'rustic-mode-hook #'olivetti-mode))
+  (add-hook 'rustic-mode-hook #'olivetti-mode)
+  (add-hook 'emacs-lisp-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
 (beacon-mode 1)
