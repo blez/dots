@@ -95,6 +95,7 @@ sudo apt -y install \
     ranger \
     rofi \
     shellcheck \
+    systemd-timesyncd \
     texinfo \
     vim \
     vlc \
