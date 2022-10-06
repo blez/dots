@@ -20,8 +20,10 @@ sudo apt -y install \
     direnv \
     deluge \
     dmenu \
+    docbook2x \
     dsniff \
     dunst \
+    dh-autoreconf \
     editorconfig \
     flameshot \
     fzf \
@@ -29,6 +31,7 @@ sudo apt -y install \
     g++ \
     git \
     i3lock \
+    install-info \
     isync \
     libarchive-dev \
     libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
@@ -56,12 +59,14 @@ sudo apt -y install \
     libpixman-1-dev \
     libdbus-1-dev \
     libconfig-dev \
+    libcurl4-gnutls-dev \
     libgl1-mesa-dev \
     libpcre2-dev \
     libpcre3-dev \
     libevdev-dev \
     uthash-dev \
     libev-dev \
+    libexpat1-dev \
     libx11-xcb-dev \
     libspdlog-dev \
     libnfs-dev \
@@ -102,6 +107,7 @@ sudo apt -y install \
     xwallpaper \
     xclip \
     xfce4-power-manager \
+    xmlto \
     xmobar \
     xmonad libghc-xmonad-contrib-dev
 

@@ -3,6 +3,7 @@
 	email = pkasko-ua@singlestore.com
 [push]
 	default = simple
+	autoSetupRemote = true
 [alias]
 	st = status
 	cl = clone
@@ -71,3 +72,5 @@
 	user = blez
 [gitlab]
 	user = pkasko-ua
+[pull]
+	rebase = true
