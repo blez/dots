@@ -2,7 +2,7 @@
     name = paval
 	email = pkasko-ua@singlestore.com
 [push]
-	default = simple
+	default = current
 	autoSetupRemote = true
 [alias]
 	st = status
