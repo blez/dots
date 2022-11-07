@@ -1,8 +1,7 @@
 [user]
     name = paval
-	email = pkasko-ua@singlestore.com
+    email = pkasko-ua@singlestore.com
 [push]
-	default = current
 	autoSetupRemote = true
 [alias]
 	st = status
@@ -20,7 +19,7 @@
 	br = branch 
 	bra = branch -ra
 	al = add --all
-    
+
 #list commands
 	le = log --oneline --decorate
 	ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
