@@ -285,14 +285,15 @@ myManageHook =
   composeAll
     [ className =? "MPlayer" --> doFloat,
       className =? "Gimp" --> doFloat,
+      className =? "Android Emulator - Pixel_3a_API_33_x86_64:5554" --> doFloat,
       resource =? "desktop_window" --> doIgnore,
       resource =? "kdesktop" --> doIgnore,
       className =? "Pavucontrol" --> doFloat,
       className =? "peek" --> doFloat,
       className =? "flameshot" --> doFloat,
       className =? "Slack" --> doShift (myWorkspaces !! 8),
-      className =? "zoom" --> doFloat,
       className =? "Emacs" --> doShift (myWorkspaces !! 0),
+      className =? "zoom" --> doFloat,
       className =? "zoom" --> doShift (myWorkspaces !! 4)
     ]
 

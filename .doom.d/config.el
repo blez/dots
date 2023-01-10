@@ -124,6 +124,7 @@
   :config
   (add-hook 'go-mode-hook #'olivetti-mode)
   (add-hook 'sh-mode-hook #'olivetti-mode)
+  (add-hook 'dart-mode-hook #'olivetti-mode)
   (add-hook 'yaml-mode-hook #'olivetti-mode)
   (add-hook 'org-mode-hook #'olivetti-mode)
   (add-hook 'rustic-mode-hook #'olivetti-mode)

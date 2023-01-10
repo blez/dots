@@ -73,17 +73,12 @@ alias gdf="git diff"
 alias gal="git al"
 alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
+alias lse='exa -l --git --icons --color=always --group-directories-first'
 
 alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
 dots config --local status.showUntrackedFiles no
 
 alias src="source ~/.zshrc"
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/home/paval/google-cloud-sdk/path.zsh.inc' ]; then . '/home/paval/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/home/paval/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/paval/google-cloud-sdk/completion.zsh.inc'; fi
 
 if [ -f ~/.ssh/agent.env ] ; then
     . ~/.ssh/agent.env > /dev/null
@@ -108,3 +103,9 @@ fi
 fpath+=${ZDOTDIR:-~}/.zsh_functions
 eval "$(direnv hook zsh)"
 [ -f "/home/pkasko-ua/.ghcup/env" ] && source "/home/pkasko-ua/.ghcup/env" # ghcup-env
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/pkasko-ua/Downloads/google-cloud-sdk/completion.zsh.inc'; fi

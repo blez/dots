@@ -25,6 +25,7 @@ sudo apt -y install \
     dunst \
     dh-autoreconf \
     editorconfig \
+    exa \
     flameshot \
     fzf \
     gawk \
