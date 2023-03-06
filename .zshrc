@@ -51,6 +51,10 @@ autopair-init
 
 source $ZSH/oh-my-zsh.sh
 
+# Bindings
+bindkey -e
+bindkey \^U backward-kill-line
+
 # Starship
 eval "$(starship init zsh)"
 
@@ -74,6 +78,9 @@ alias gal="git al"
 alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
 alias lse='exa -l --git --icons --color=always --group-directories-first'
+
+alias pbcopy='xclip -selection clipboard'
+alias pbpaste='xclip -selection clipboard -o'
 
 alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
 dots config --local status.showUntrackedFiles no

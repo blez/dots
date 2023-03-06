@@ -143,7 +143,8 @@
        ;;ocaml             ; an objective camel
        (org
            +roam2
-           +pretty)        ; organize your plain life in plain text
+           +pretty
+           +pomodoro)        ; organize your plain life in plain text
        ;;php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional

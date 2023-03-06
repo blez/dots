@@ -249,6 +249,13 @@ grid = renamed [Replace "grid"]
     $ mySpacing 8
     $ Grid (16 / 10)
 
+mirror = renamed [Replace "mirror"]
+    $ windowNavigation
+    $ addTabs shrinkText myTabTheme
+    $ limitWindows 12
+    $ mySpacing 8
+    $ Mirror(Tall 1 (3/100) (3/5))
+
 -- setting colors for tabs layout and tabs sublayout.
 myTabTheme =
   def
@@ -264,6 +271,7 @@ myLayoutHook = avoidStruts $ windowArrange $ smartBorders $ myDefaultLayout
     myDefaultLayout = tall
         ||| grid
         ||| full
+        ||| mirror
 
 ------------------------------------------------------------------------
 -- Window rules:

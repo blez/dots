@@ -48,7 +48,7 @@
       :m "<f9>" #'flycheck-previous-error)
 (map! :after flycheck
       :map flycheck-mode-map
-      :m "<f11>" #'lsp-ui-flycheck-list)
+      :m "<f11>" #'flycheck-list-errors)
 (map! :after flycheck
       :map flycheck-mode-map
       :m "<f6>" #'flycheck-buffer)
@@ -130,6 +130,12 @@
   (add-hook 'rustic-mode-hook #'olivetti-mode)
   (add-hook 'emacs-lisp-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
+
+(use-package! dap-mode
+  :custom
+  (dap-auto-configure-features '(expressions breakpoints))
+  :config
+  (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
 
 (beacon-mode 1)
 
