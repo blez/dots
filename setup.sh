@@ -69,6 +69,7 @@ sudo apt -y install \
     libev-dev \
     libexpat1-dev \
     libx11-xcb-dev \
+    librsvg2-dev \
     libspdlog-dev \
     libnfs-dev \
     libnotify-bin \

@@ -170,6 +170,7 @@
 (exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
 
 (setq org-clock-sound "~/sounds/bell.wav")
+(setq org-hide-emphasis-markers t)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
