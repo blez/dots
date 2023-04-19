@@ -128,6 +128,7 @@
   (add-hook 'yaml-mode-hook #'olivetti-mode)
   (add-hook 'org-mode-hook #'olivetti-mode)
   (add-hook 'rustic-mode-hook #'olivetti-mode)
+  (add-hook 'python-mode-hook #'olivetti-mode)
   (add-hook 'emacs-lisp-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 

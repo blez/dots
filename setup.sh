@@ -291,5 +291,6 @@ pip install --upgrade pyflakes
 pip install isort
 pip install nose
 pip install -U pytest
+pip install python-lsp-server
 
 echo "Done."
