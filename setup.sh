@@ -287,6 +287,7 @@ if ! doom version; then
     ~/.emacs.d/bin/doom install
 fi
 
+python3 -m pip install --upgrade pip
 pip install --upgrade pyflakes
 pip install isort
 pip install nose

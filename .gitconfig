@@ -73,3 +73,16 @@
 	user = pkasko-ua
 [pull]
 	rebase = true
+[safe]
+	directory = /home/pkasko-ua/bcc
+	directory = /home/pkasko-ua/bcc/libbpf-tools/blazesym
+	directory = /home/pkasko-ua/bcc/src/cc/libbpf
+	directory = /home/pkasko-ua/bcc/libbpf-tools/bpftool
+	directory = /home/pkasko-ua/bcc
+	directory = /home/pkasko-ua/bcc/libbpf-tools/blazesym
+	directory = /home/pkasko-ua/bcc/src/cc/libbpf
+	directory = /home/pkasko-ua/bcc/libbpf-tools/bpftool
+	directory = /home/pkasko-ua/bcc
+	directory = /home/pkasko-ua/bcc/libbpf-tools/blazesym
+	directory = /home/pkasko-ua/bcc/src/cc/libbpf
+	directory = /home/pkasko-ua/bcc/libbpf-tools/bpftool
