@@ -256,6 +256,10 @@ mirror = renamed [Replace "mirror"]
     $ mySpacing 8
     $ Mirror(Tall 1 (3/100) (3/5))
 
+-- tabs = renamed [Replace "tabs"]
+--     $ tabbed shrinkText myTabTheme
+
+
 -- setting colors for tabs layout and tabs sublayout.
 myTabTheme =
   def
@@ -272,6 +276,7 @@ myLayoutHook = avoidStruts $ windowArrange $ smartBorders $ myDefaultLayout
         ||| grid
         ||| full
         ||| mirror
+        -- ||| tabs
 
 ------------------------------------------------------------------------
 -- Window rules:

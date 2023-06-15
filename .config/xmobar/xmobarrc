@@ -27,8 +27,7 @@ Config { font = "xft:JetBrains Mono Nerd Font:pixelsize=22"
                     , Run Date "<fn=2>\xf017</fn> %a %b %_d %Y %H:%M:%S" "date" 10
                     , Run Com "xkblayout-state" ["print", "<fn=2>\xf0ac</fn> %s"] "layout" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
-                    , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf241</fn> $(upower -i $(upower -e | grep 'BAT') | grep -E \"percentage\" | awk '{print $2}')\""] "batery" 10
-                    , Run Com "/bin/bash" ["-c", "upower -i $(upower -e | grep 'BAT') | grep state | awk '{print $2}' | grep -wq charging && echo \"<fn=2>\xf0e7</fn> \" || echo \"\""] "charge" 100
+                    , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "battery" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
                     , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
@@ -50,5 +49,5 @@ Config { font = "xft:JetBrains Mono Nerd Font:pixelsize=22"
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%date%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%layout%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%myvolume%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%charge%%batery%</fc></box> "
+                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%battery%</fc></box> "
        }
