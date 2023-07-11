@@ -27,7 +27,7 @@ Config { font = "xft:JetBrains Mono Nerd Font:pixelsize=22"
                     , Run Date "<fn=2>\xf017</fn> %a %b %_d %Y %H:%M:%S" "date" 10
                     , Run Com "xkblayout-state" ["print", "<fn=2>\xf0ac</fn> %s"] "layout" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
-                    , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "battery" 10
+                    , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "battery" 600
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
                     , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
