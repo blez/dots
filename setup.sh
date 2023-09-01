@@ -13,6 +13,7 @@ sudo apt -y install \
     bluez \
     bluez-tools \
     build-essential \
+    ca-certificates \
     clang \
     cmake \
     compton \
@@ -31,6 +32,7 @@ sudo apt -y install \
     gawk \
     g++ \
     git \
+    gnupg \
     i3lock \
     install-info \
     isync \
@@ -140,9 +142,12 @@ if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 fi
 
+# remove default picom
+sudo rm /usr/bin/picom || :
 if ! picom --version; then
     cd "$HOME"
-    git clone git@github.com:yshui/picom.git
+    #git clone git@github.com:yshui/picom.git
+    git clone git@github.com:sdhand/picom.git
     cd picom
     git checkout "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
     git submodule update --init --recursive
@@ -227,9 +232,15 @@ if ! starship --version; then
     sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 fi
 
-if ! node --version; then
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-    sudo apt-get install -y nodejs
+# https://github.com/nodesource/distributions
+if ! node --version || [[ $(node --version) != v20* ]]; then
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |
+        sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" |
+        sudo tee /etc/apt/sources.list.d/nodesource.list
+    sudo apt-get update
+    sudo apt-get install nodejs -y
 fi
 
 if ! bash-language-server --version; then
@@ -242,6 +253,7 @@ if ! emacs --version; then
 
     git clone git://git.savannah.gnu.org/emacs.git
     cd emacs
+    git checkout emacs-28.2
     make clean
     ./autogen.sh
     ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
@@ -270,7 +282,7 @@ fi
 if ! doom version; then
     cd
     rm -rf ~/.emacs.d
-    git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
+    git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.emacs.d
     ~/.emacs.d/bin/doom install
 fi
 
