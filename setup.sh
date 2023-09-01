@@ -274,7 +274,7 @@ fi
 
 if ! rg --version; then
     cd
-    curl -LO https://github.com/BurntSushi/ripgrep/releases/download/12.1.1/ripgrep_12.1.1_amd64.deb
+    curl -LO https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep_13.0.0_amd64.deb
     sudo dpkg -i ripgrep_12.1.1_amd64.deb
     rm ripgrep_12.1.1_amd64.deb
 fi
