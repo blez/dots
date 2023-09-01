@@ -9,3 +9,5 @@ dots config status.showUntrackedFiles no
 dots checkout
 setup.sh
 ```
+
+Or look at scripts/dotsetup.sh
