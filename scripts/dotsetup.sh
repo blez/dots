@@ -9,6 +9,8 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
     xclip -selection clipboard <~/.ssh/id_ed25519.pub
     read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 fi
+rm "$HOME/.gitignore"
+echo "dots" > "$HOME/.gitignore"
 
 rm -rf "$HOME/dots"
 git clone --bare git@github.com:blez/dots.git "$HOME/dots"
