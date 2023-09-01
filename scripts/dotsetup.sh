@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 set -euo pipefail
 
 if [ ! -f ~/.ssh/id_ed25519 ]; then
