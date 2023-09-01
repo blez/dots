@@ -260,19 +260,6 @@ if [ ! -d "$HOME/.diff-so-fancy" ]; then
     git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
 fi
 
-# dots
-if [ ! -d "$HOME/dots" ]; then
-    cd
-    git clone --bare git@github.com:blez/dots.git "$HOME/dots"
-
-    function dots {
-        /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" "$@"
-    }
-
-    dots checkout
-    dots config status.showUntrackedFiles no
-fi
-
 if ! rg --version; then
     cd
     curl -LO https://github.com/BurntSushi/ripgrep/releases/download/12.1.1/ripgrep_12.1.1_amd64.deb
