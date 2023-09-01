@@ -13,8 +13,6 @@ fi
 rm -rf "$HOME/dots"
 git clone --bare git@github.com:blez/dots.git "$HOME/dots"
 
-alias dots='git --git-dir=$HOME/dots/ --work-tree=$HOME'
-
 function dots {
     /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" "$@"
 }
