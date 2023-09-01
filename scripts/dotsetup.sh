@@ -21,7 +21,7 @@ if dots checkout; then
     echo "Checked out config."
 else
     mkdir -p ~/.config-backup
-    echo "Backing up pre-existing dot files."
+    echo "Removing up pre-existing dot files."
     dots checkout 2>&1 | grep -iEv "error|please|aborting" | awk '{print $1}' | xargs -I{} rm {}
 fi
 
