@@ -27,4 +27,4 @@ else
     batery_image=$'\uf244'
 fi
 
-echo "$charge_image$batery_image $percent%"
+echo "$charge_image$batery_image  $percent%"

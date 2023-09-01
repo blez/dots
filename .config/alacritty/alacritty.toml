@@ -1,0 +1,32 @@
+[colors.normal]
+black = "#000000"
+blue = "#3465a4"
+cyan = "#06989a"
+green = "#4e9a06"
+magenta = "#75507b"
+red = "#cc0000"
+white = "#d3d7cf"
+yellow = "#c4a000"
+
+[colors.primary]
+background = "#000000"
+foreground = "0xd3d7cf"
+
+[env]
+TERM = "xterm-256color"
+
+[font]
+size = 6.5
+
+[font.bold]
+style = "Bold"
+
+[font.bold_italic]
+style = "Bold Italic"
+
+[font.italic]
+style = "Bold Italic"
+
+[font.normal]
+family = "JetBrains Mono Nerd Font"
+style = "Bold"
