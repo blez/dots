@@ -7,4 +7,4 @@ wget -O ~/Downloads/go.tar.gz "https://go.dev/dl/$filename"
 sudo rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf ~/Downloads/go.tar.gz
 rm ~/Downloads/go.tar.gz
-echo "go was updated to $(go version)"
+echo "go was updated to $(/usr/local/go/bin/go version)"

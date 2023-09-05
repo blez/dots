@@ -115,16 +115,10 @@ sudo apt -y install \
     xmobar \
     xmonad libghc-xmonad-contrib-dev
 
-if [ "$GDMSESSION" != "xmonad" ]; then
-    echo "Not Xmonad";
-    echo "You can stop the installation and sign in with Xmonad";
-    echo "Wait for 1 min";
-    sleep 60;
-fi
-
 # zsh
 if ! zsh --version; then
     sudo apt -y install zsh
+    /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
 fi
 
 # ssh
@@ -153,10 +147,11 @@ fi
 sudo rm /usr/bin/picom || :
 if ! picom --version; then
     cd "$HOME"
+    rm -rf picom || :
     #git clone git@github.com:yshui/picom.git
     git clone git@github.com:sdhand/picom.git
     cd picom
-    git checkout "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
+    git checkout -b "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
     git submodule update --init --recursive
     meson --buildtype=release . build
     ninja -C build
@@ -260,7 +255,7 @@ if ! emacs --version; then
 
     git clone git://git.savannah.gnu.org/emacs.git
     cd emacs
-    git checkout emacs-28.2
+    git checkout -b emacs-28.2
     make clean
     ./autogen.sh
     ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
@@ -282,8 +277,8 @@ fi
 if ! rg --version; then
     cd
     curl -LO https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep_13.0.0_amd64.deb
-    sudo dpkg -i ripgrep_12.1.1_amd64.deb
-    rm ripgrep_12.1.1_amd64.deb
+    sudo dpkg -i ripgrep_13.0.0_amd64.deb
+    rm ripgrep_13.0.0_amd64.deb
 fi
 
 if ! doom version; then
