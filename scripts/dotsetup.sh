@@ -2,14 +2,15 @@
 set -eu
 
 if [ ! -f ~/.ssh/id_ed25519 ]; then
+    sudo apt install xclip
     ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/id_ed25519
-
-    xclip -selection clipboard <~/.ssh/id_ed25519.pub
-    read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 fi
-
+    
+xclip -selection clipboard <~/.ssh/id_ed25519.pub
+read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
+    
 rm -f "$HOME/.gitignore" || :
 echo "dots" > "$HOME/.gitignore"
 
