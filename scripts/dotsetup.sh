@@ -10,10 +10,10 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
     read -n 1 -s -r -p "ssh key was copied. Add it to github. Press any key to continue"
 fi
 
-rm "$HOME/.gitignore" || :
+rm -f "$HOME/.gitignore" || :
 echo "dots" > "$HOME/.gitignore"
 
-rm -rf "$HOME/dots"
+rm -rf "$HOME/dots" || :
 git clone --bare git@github.com:blez/dots.git "$HOME/dots"
 
 function dots {
