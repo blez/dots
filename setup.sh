@@ -115,6 +115,13 @@ sudo apt -y install \
     xmobar \
     xmonad libghc-xmonad-contrib-dev
 
+if [ "$GDMSESSION" != "xmonad" ]; then
+    echo "Not Xmonad";
+    echo "You can stop the installation and sign in with Xmonad";
+    echo "Wait for 1 min";
+    sleep 60;
+fi
+
 # zsh
 if ! zsh --version; then
     sudo apt -y install zsh
