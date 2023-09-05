@@ -1,14 +1,14 @@
-Config { font = "xft:JetBrains Mono Nerd Font:pixelsize=22"
-       , additionalFonts = [ "xft:Mononoki Nerd Font:pixelsize=22:antialias=true:hinting=true"
-                           , "xft:Font Awesome 5 Free Solid:pixelsize=22"
-                           , "xft:Font Awesome 5 Brands:pixelsize=22"
+Config { font = "JetBrains Mono Nerd Font 15"
+       , additionalFonts = [ "Mononoki Nerd Font 15"
+                           , "Font Awesome 5 Free Solid 15"
+                           , "Font Awesome 5 Brands 15"
                            ]
        , borderColor = "black"
        , border = TopB
        , bgColor = "black"
        , fgColor = "grey"
        , alpha = 255
-       , position = Top
+       , position = TopH 35
        , textOffset = -1
        , iconOffset = -1
        , lowerOnStart = True
@@ -18,7 +18,7 @@ Config { font = "xft:JetBrains Mono Nerd Font:pixelsize=22"
        , allDesktops = True
        , overrideRedirect = True
        , iconRoot = ".xmonad/xpm/"
-       , commands = [ Run Network "enp0s31f6" ["-t", "<fn=2>\xf6ff</fn> <fn=2>\xf063</fn> <rx>Kb <fn=2>\xf062</fn> <tx>Kb"] 10
+       , commands = [Run Network "enp6s0" ["-t", "<fn=2>\xf6ff</fn> <fn=2>\xf063</fn> <rx>Kb <fn=2>\xf062</fn> <tx>Kb"] 10
                     , Run Network "wlp0s20f3" ["-t", "<rx>Kb|<tx>Kb"] 10
                     , Run Wireless "wlp0s20f3" ["-t","<fn=2>\xf1eb</fn> <essid> <quality>"] 10
                     , Run Cpu ["-t", "CPU: <total>%"] 10
@@ -36,10 +36,10 @@ Config { font = "xft:JetBrains Mono Nerd Font:pixelsize=22"
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = " <box type=Bottom width=2 mb=2 color=red><fc=white>%cpu%</fc></box> \
+       , template = "<box type=Bottom width=2 mb=2 color=red><fc=white>%cpu%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%memory%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%swap%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%enx001fb532f54a%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%enp6s0%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%wlp0s20f3wi% %wlp0s20f3%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%vpn%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%blue%</fc></box> \

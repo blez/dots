@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ -z "$(ls -A /sys/class/power_supply)" ]; then
+    batery_image=$'\uf240'
+    echo "$batery_image  100%"
+    exit 0
+fi
+
 state=$(upower -i "$(upower -e | grep 'BAT')" | grep state | awk '{print $2}')
 percent=$(upower -i "$(upower -e | grep 'BAT')" | grep -E "percentage" | awk '{print $2}')
 percent=${percent%$"%"}

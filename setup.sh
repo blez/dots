@@ -49,6 +49,7 @@ sudo apt -y install \
     libncurses-dev libxpm-dev \
     libxext-dev \
     libxcb1-dev \
+    libxcb-dpms0-dev \
     libxcb-damage0-dev \
     libxcb-shape0-dev \
     libxcb-render-util0-dev \
@@ -58,6 +59,7 @@ sudo apt -y install \
     libxcb-image0-dev \
     libxcb-present-dev \
     libxcb-xinerama0-dev \
+    libxcb-xrm-dev \
     libxcb-glx0-dev \
     libpixman-1-dev \
     libdbus-1-dev \
@@ -148,8 +150,7 @@ sudo rm /usr/bin/picom || :
 if ! picom --version; then
     cd "$HOME"
     rm -rf picom || :
-    #git clone git@github.com:yshui/picom.git
-    git clone git@github.com:sdhand/picom.git
+    git clone git@github.com:yshui/picom.git
     cd picom
     git checkout -b "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
     git submodule update --init --recursive

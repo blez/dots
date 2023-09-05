@@ -344,7 +344,6 @@ myLogHook = fadeWindowsLogHook myFadeHook
 myStartupHook :: X ()
 myStartupHook = do
   spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
-  spawnOnce "~/.screenlayout/lenovo.sh"
   spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
   spawnOnce "picom --config ~/.config/picom.conf --experimental-backends"
   spawnOnce "dunst &"
@@ -358,7 +357,7 @@ myStartupHook = do
 --
 main :: IO ()
 main = do
-  xmproc <- spawnPipe "xmobar ~/.config/xmobar/xmobarrc"
+  xmproc <- spawnPipe "~/.cabal/bin/xmobar -x 0 ~/.config/xmobar/xmobarrc"
   xmonad $
     ewmh
       def

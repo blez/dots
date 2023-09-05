@@ -1,6 +1,10 @@
 #!/bin/bash
 set -eu
 
+if [ -z "$(ls -A /sys/class/power_supply)" ]; then
+    exit 0
+fi
+
 mapfile -t devices < <(busctl tree 'org.bluez' | grep -Eo "dev_.+" | grep -v '/')
 
 names=()
