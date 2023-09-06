@@ -138,6 +138,8 @@
   :config
   (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
 
+(setq-hook! 'rjsx-mode-hook +format-with-lsp nil)
+
 (beacon-mode 1)
 
 ;; (use-package! minimap

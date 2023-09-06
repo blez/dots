@@ -101,6 +101,7 @@ sudo apt -y install \
     playerctl \
     pulseaudio pulseaudio-utils pulseaudio-module-bluetooth \
     pipenv \
+    protobuf-compiler \
     python3 \
     python3-pip \
     ranger \
@@ -248,6 +249,10 @@ fi
 
 if ! bash-language-server --version; then
     sudo npm i -g bash-language-server
+fi
+
+if ! deno --version; then
+    cargo install deno --locked
 fi
 
 if ! emacs --version; then
