@@ -152,7 +152,7 @@ if ! picom --version; then
     rm -rf picom || :
     git clone git@github.com:yshui/picom.git
     cd picom
-    git checkout -b "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
+    git checkout "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
     git submodule update --init --recursive
     meson --buildtype=release . build
     ninja -C build
@@ -256,7 +256,7 @@ if ! emacs --version; then
 
     git clone git://git.savannah.gnu.org/emacs.git
     cd emacs
-    git checkout -b emacs-28.2
+    git checkout emacs-29.1
     make clean
     ./autogen.sh
     ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
