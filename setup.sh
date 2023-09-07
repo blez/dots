@@ -14,6 +14,7 @@ sudo apt -y install \
     bluez-tools \
     build-essential \
     ca-certificates \
+    cabal-install \
     clang \
     cmake \
     compton \

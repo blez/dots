@@ -41,6 +41,8 @@ plugins=(
   zsh-syntax-highlighting
   extract
   fzf
+  sudo
+  copyfile
 )
 
 # autopair
