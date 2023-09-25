@@ -28,6 +28,7 @@ sudo apt -y install \
     dh-autoreconf \
     editorconfig \
     exa \
+    ffmpeg \
     flameshot \
     fzf \
     gawk \
@@ -301,5 +302,6 @@ pip install isort
 pip install nose
 pip install -U pytest
 pip install python-lsp-server
+python3 -m pip install -U yt-dlp
 
 echo "Done."
