@@ -165,7 +165,6 @@
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))
 (add-to-list 'auto-mode-alist '("Makefile.*" . makefile-mode))
-(add-to-list '+format-on-save-enabled-modes 'yaml-mode 'append)
 
 (setq rustic-lsp-server 'rust-analyzer)
 
