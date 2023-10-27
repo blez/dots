@@ -142,10 +142,6 @@
 
 (beacon-mode 1)
 
-;; (use-package! minimap
-;;     :config
-;;     (setq minimap-window-location 'left))
-
 (after! undo-tree
   (setq undo-tree-auto-save-history nil))
 
@@ -161,6 +157,8 @@
 (put '+format-with 'safe-local-variable 'symbolp)
 ;; (setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
 ;; (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
+
+(set-formatter! 'yamlfmt '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true") :modes '(yaml-mode))
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))

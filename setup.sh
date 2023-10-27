@@ -253,8 +253,21 @@ if ! bash-language-server --version; then
     sudo npm i -g bash-language-server
 fi
 
+if ! rust-analyzer --version; then
+    rustup component add rust-analyzer
+fi
+
 if ! deno --version; then
     cargo install deno --locked
+fi
+
+if ! go version; then
+    ~/scripts/go-update.sh
+    ~/scripts/go-utils.sh
+fi
+
+if ! yamlfmt --version; then
+    go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 fi
 
 if ! emacs --version; then
@@ -301,6 +314,7 @@ pip install --upgrade pyflakes
 pip install isort
 pip install nose
 pip install -U pytest
+pip install black
 pip install python-lsp-server
 python3 -m pip install -U yt-dlp
 
