@@ -19,7 +19,7 @@
 ;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "JetBrains Mono Medium" :size 20))
-(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 25))
+(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 23))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -157,7 +157,7 @@
 (put '+format-with 'safe-local-variable 'symbolp)
 ;; (setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
 ;; (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
-
+(set-formatter! 'shfmt '("shfmt", "-s" "-i" "4" "-ln" "bash") :modes '(sh-mode))
 (set-formatter! 'yamlfmt '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true") :modes '(yaml-mode))
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
@@ -176,6 +176,13 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 (setq org-roam-directory "~/blez/roam/")
+
+(add-hook 'projectile-after-switch-project-hook
+          (lambda ()
+            (message "Current project root: %s" (projectile-project-root))
+            (when (string-prefix-p "/home/pkasko-ua/helios/singlestore.com/helios/" (projectile-project-root))
+              (message "Renaming perspective to 'freya'")
+              (persp-rename "freya"))))
 
 ;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
 ;; (after! mu4e

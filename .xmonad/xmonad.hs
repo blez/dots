@@ -306,7 +306,6 @@ myManageHook =
       className =? "flameshot" --> doFloat,
       className =? "Slack" --> doShift (myWorkspaces !! 8),
       className =? "Emacs" --> doShift (myWorkspaces !! 0),
-      className =? "zoom" --> doFloat,
       className =? "zoom" --> doShift (myWorkspaces !! 4)
     ]
 
