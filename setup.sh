@@ -6,6 +6,7 @@ sudo apt full-upgrade
 sudo apt autoremove
 sudo apt -y install \
     alsa-utils \
+    apache2-utils \
     autoconf \
     automake \
     bat \
@@ -19,8 +20,10 @@ sudo apt -y install \
     cmake \
     compton \
     curl \
-    direnv \
+    default-jre \
+    default-jdk \
     deluge \
+    direnv \
     dmenu \
     docbook2x \
     dsniff \
@@ -111,6 +114,7 @@ sudo apt -y install \
     shellcheck \
     systemd-timesyncd \
     texinfo \
+    tmux \
     vim \
     vlc \
     xwallpaper \

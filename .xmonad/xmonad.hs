@@ -28,6 +28,7 @@ import XMonad.Layout.Spacing
 import XMonad.Layout.Spiral
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Tabbed
+import XMonad.Layout.ThreeColumns
 import qualified XMonad.Layout.ToggleLayouts as T (ToggleLayout (Toggle), toggleLayouts)
 import XMonad.Layout.WindowArranger (WindowArrangerMsg (..), windowArrange)
 import XMonad.Layout.WindowNavigation
@@ -249,6 +250,11 @@ grid = renamed [Replace "grid"]
     $ mySpacing 8
     $ Grid (16 / 10)
 
+threeColMid = renamed [Replace "threeColMid"]
+    $ limitWindows 12
+    $ mySpacing 8
+    $ ThreeColMid 1 (3/100) (1/2)
+
 mirror = renamed [Replace "mirror"]
     $ windowNavigation
     $ addTabs shrinkText myTabTheme
@@ -274,6 +280,7 @@ myLayoutHook = avoidStruts $ windowArrange $ smartBorders $ myDefaultLayout
   where
     myDefaultLayout = tall
         ||| grid
+        ||| threeColMid
         ||| full
         ||| mirror
         -- ||| tabs
