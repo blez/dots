@@ -349,12 +349,13 @@ myLogHook = fadeWindowsLogHook myFadeHook
 -- By default, do nothing.
 myStartupHook :: X ()
 myStartupHook = do
-  spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
+  -- spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
   spawnOnce "picom --config ~/.config/picom.conf --experimental-backends"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
   spawnOnce "/usr/local/bin/emacs &"
+  spawnOnce "/usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.

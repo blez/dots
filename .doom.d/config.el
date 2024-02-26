@@ -64,6 +64,11 @@
 (map! :n "J" #'evil-mc-make-cursor-move-next-line)
 (map! :n "K" #'evil-mc-make-cursor-move-prev-line)
 
+(map! :leader :desc "Transpose frame" "w /" #'transpose-frame)
+(map! :leader :desc "Save buffer" "a a" #'save-buffer)
+(map! :ie "C-h" #'backward-delete-char-untabify)
+(map! :n "C-e" #'doom/forward-to-last-non-comment-or-eol)
+
 (defun current-line-empty-p ()
   (save-excursion
     (beginning-of-line)
@@ -183,6 +188,10 @@
             (when (string-prefix-p "/home/pkasko-ua/helios/singlestore.com/helios/" (projectile-project-root))
               (message "Renaming perspective to 'freya'")
               (persp-rename "freya"))))
+
+(add-hook 'code-review-mode-hook
+          (lambda ()
+            (persp-add-buffer (current-buffer))))
 
 ;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
 ;; (after! mu4e
