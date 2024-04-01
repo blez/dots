@@ -28,7 +28,7 @@
     met_; (tap-hold-next-release 200 ; rmet)
 
     sign (layer-toggle signs)
-    goeq #( : = )
+    goeq #( : = :delay 5)
 )
 
 (deflayer homerowmods

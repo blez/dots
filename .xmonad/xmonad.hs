@@ -355,7 +355,7 @@ myStartupHook = do
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
   spawnOnce "/usr/local/bin/emacs &"
-  spawnOnce "/usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
+  spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.

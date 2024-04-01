@@ -164,6 +164,7 @@
 ;; (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
 (set-formatter! 'shfmt '("shfmt", "-s" "-i" "4" "-ln" "bash") :modes '(sh-mode))
 (set-formatter! 'yamlfmt '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true") :modes '(yaml-mode))
+(set-formatter! 'dockfmt '("dockfmt" "version") :modes '(dockerfile-mode))
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))
@@ -187,11 +188,12 @@
             (message "Current project root: %s" (projectile-project-root))
             (when (string-prefix-p "/home/pkasko-ua/helios/singlestore.com/helios/" (projectile-project-root))
               (message "Renaming perspective to 'freya'")
-              (persp-rename "freya"))))
-
-(add-hook 'code-review-mode-hook
-          (lambda ()
-            (persp-add-buffer (current-buffer))))
+              (persp-rename "freya")
+              (message "Renaming done"))))
+(after! projectile (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
+;; (add-hook 'code-review-mode-hook
+;;           (lambda ()
+;;             (persp-add-buffer (current-buffer))))
 
 ;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
 ;; (after! mu4e

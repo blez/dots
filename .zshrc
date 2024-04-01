@@ -1,7 +1,7 @@
 #sh line
 PROMPT_DIRNAME=3
 
-DEFAULT_USER=`whoami`
+DEFAULT_USER=$(whoami)
 export TERM="xterm-256color"
 export PATH=$PATH:/usr/local/go/bin:~/go/bin:/usr/local/singlestore-toolbox
 export GOPATH=~/go
@@ -9,6 +9,7 @@ export GOROOT=/usr/local/go
 
 # doom
 export PATH=~/.emacs.d/bin:$PATH
+export PATH=~/.config/emacs/bin:$PATH
 export PATH=~/.diff-so-fancy:$PATH
 export PATH=~/.arcanist/bin/:$PATH
 export PATH=~/.local/bin/:$PATH
@@ -90,24 +91,24 @@ dots config --local status.showUntrackedFiles no
 
 alias src="source ~/.zshrc"
 
-if [ -f ~/.ssh/agent.env ] ; then
-    . ~/.ssh/agent.env > /dev/null
-    if ! kill -0 $SSH_AGENT_PID > /dev/null 2>&1; then
-        echo "Stale agent file found. Spawning a new agent. "
-        eval `ssh-agent | tee ~/.ssh/agent.env`
-        ssh-add
-    fi
-else
-    echo "Starting ssh-agent"
-    eval `ssh-agent | tee ~/.ssh/agent.env`
+if [ -f ~/.ssh/agent.env ]; then
+  . ~/.ssh/agent.env >/dev/null
+  if ! kill -0 $SSH_AGENT_PID >/dev/null 2>&1; then
+    echo "Stale agent file found. Spawning a new agent. "
+    eval $(ssh-agent | tee ~/.ssh/agent.env)
     ssh-add
+  fi
+else
+  echo "Starting ssh-agent"
+  eval $(ssh-agent | tee ~/.ssh/agent.env)
+  ssh-add
 fi
 
 #base64 decode
 64dec() {
-    if [ -n "$1" ]; then
-        echo "$1" | base64 -d
-    fi
+  if [ -n "$1" ]; then
+    echo "$1" | base64 -d
+  fi
 }
 
 fpath+=${ZDOTDIR:-~}/.zsh_functions

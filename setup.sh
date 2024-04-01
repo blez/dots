@@ -82,6 +82,7 @@ sudo apt -y install \
     libspdlog-dev \
     libnfs-dev \
     libnotify-bin \
+    libsqlite3-dev \
     libsmbclient-dev \
     libssh-dev \
     libssl-dev \
