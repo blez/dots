@@ -7,6 +7,9 @@ export PATH=$PATH:/usr/local/go/bin:~/go/bin:/usr/local/singlestore-toolbox
 export GOPATH=~/go
 export GOROOT=/usr/local/go
 
+#pnpm
+export PNPM_HOME=~/.local/share/pnpm
+
 # doom
 export PATH=~/.emacs.d/bin:$PATH
 export PATH=~/.config/emacs/bin:$PATH
@@ -16,6 +19,7 @@ export PATH=~/.local/bin/:$PATH
 export PATH=/usr/java/jre1.8.0_333/bin/:$PATH
 export PATH=~/flutter/bin/:$PATH
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+export PATH="$PNPM_HOME:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -24,6 +28,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export GOPATH=~/go
 
 export EDITOR='emacs -nw'
+
 
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1
 

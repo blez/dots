@@ -125,6 +125,7 @@
 (use-package! makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))
+
 (use-package! olivetti
   :config
   (add-hook 'go-mode-hook #'olivetti-mode)
@@ -145,6 +146,12 @@
 
 (setq-hook! 'rjsx-mode-hook +format-with-lsp nil)
 
+(setq lsp-grammarly-server-path "~/.local/share/pnpm/grammarly-languageserver")
+(use-package lsp-grammarly
+  :ensure t
+  :hook (text-mode . (lambda ()
+                       (require 'lsp-grammarly)
+                       (lsp))))
 (beacon-mode 1)
 
 (after! undo-tree
@@ -163,7 +170,8 @@
 ;; (setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
 ;; (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
 (set-formatter! 'shfmt '("shfmt", "-s" "-i" "4" "-ln" "bash") :modes '(sh-mode))
-(set-formatter! 'yamlfmt '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true") :modes '(yaml-mode))
+(set-formatter! 'yamlfmt
+  '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true,retain_line_breaks=true") :modes '(yaml-mode))
 (set-formatter! 'dockfmt '("dockfmt" "version") :modes '(dockerfile-mode))
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
@@ -191,6 +199,15 @@
               (persp-rename "freya")
               (message "Renaming done"))))
 (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
+
+(setq erc-server "irc.libera.chat"
+      erc-nick "blez"
+      erc-user-full-name "blez"
+      erc-track-shorten-start 8
+      erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters"))
+      erc-kill-buffer-on-part t
+      erc-auto-query 'bury)
+
 ;; (add-hook 'code-review-mode-hook
 ;;           (lambda ()
 ;;             (persp-add-buffer (current-buffer))))

@@ -258,6 +258,14 @@ if ! bash-language-server --version; then
     sudo npm i -g bash-language-server
 fi
 
+if ! pnpm --version; then
+    sudo npm install -g @pnpm/exe
+fi
+
+if ! grammarly-languageserver --node-ipc; then
+    pnpm i -g @emacs-grammarly/grammarly-languageserver
+fi
+
 if ! rust-analyzer --version; then
     rustup component add rust-analyzer
 fi

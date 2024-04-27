@@ -1,4 +1,4 @@
-;; -*- no-byte-compile: t; -*-
+                                        ; -*- no-byte-compile: t; -*-
 ;;; $DOOMDIR/packages.el
 
 (package! go-fill-struct)
@@ -21,3 +21,4 @@
 (package! closql)
 (package! org-preview-html)
 (package! transpose-frame)
+(package! lsp-grammarly)
