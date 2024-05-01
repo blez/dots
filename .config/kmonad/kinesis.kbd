@@ -28,7 +28,9 @@
     met_; (tap-hold-next-release 200 ; rmet)
 
     sign (layer-toggle signs)
+
     goeq #( : = :delay 5)
+    rser #( - > :delay 5)
 )
 
 (deflayer homerowmods
@@ -40,5 +42,17 @@
 (deflayer signs
   _    _    _    _    _    _    0    \(   \)   _    _    _    _    _
   _    _    _    _    _    _    "    {   } \_   $    _    _
-  _    _    _    _    _    _    @goeq [   ]   _    _    _
+  _    _    _    _    _    _    @goeq [   ]   @rser  =    _
 )
+
+(deflayer nums
+  _    _    1    2    3    _    _    _   _   _    _    _    _    _
+  _    _    4    5    6    0    _    _   _   _    _    _    _
+  _    7    8    9    _    _    _    _   _   _    _    _
+)
+
+;; (deflayer nums
+;;   _    _    _    _    _    _    _    _   _   _    _    _    _    _
+;;   _    _    _    _    _    _    _    _   _   _    _    _    _
+;;   _    _    _    _    _    _    _    _   _   _    _    _
+;; )
