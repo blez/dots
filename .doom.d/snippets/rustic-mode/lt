@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: let
+# key: lt
+# type: snippet
+# --
+
+let $1 = $2;

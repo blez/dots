@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: prln
+# key: pr
+# type: snippet
+# --
+println!("$0");

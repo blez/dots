@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: letmut
+# key: ltn
+# type: snippet
+# --
+
+let mut $1 = $2;
