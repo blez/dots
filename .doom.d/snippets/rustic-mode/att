@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: attribute
+# key: att
+# type: snippet
+# --
+
+#[$1($2)]
