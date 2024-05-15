@@ -100,6 +100,8 @@
   (beginning-of-defun))
 (map! :m "M-j" #'previous-func)
 (map! :m "M-k" #'beginning-of-defun)
+(map! :n "," #'evil-first-non-blank)
+(map! :n "." #'evil-end-of-line)
 
 (with-eval-after-load 'company
   (define-key company-active-map (kbd "<tab>") nil))
@@ -173,6 +175,7 @@
 (set-formatter! 'yamlfmt
   '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true,retain_line_breaks=true") :modes '(yaml-mode))
 (set-formatter! 'dockfmt '("dockfmt" "version") :modes '(dockerfile-mode))
+(set-formatter! 'rustfmt '("rustfmt" "--edition" "2021") :modes '(rustic-mode))
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))

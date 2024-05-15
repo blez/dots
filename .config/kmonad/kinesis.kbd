@@ -30,20 +30,20 @@
     sign (layer-toggle signs)
 
     goeq #( : = :delay 5)
-    rser #( - > :delay 5)
+    rsar #( - > :delay 5)
     rsrw #( = > :delay 5)
 )
 
 (deflayer homerowmods
     tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
     @sign @met_a @alt_s @ctl_d @sft_f g h @sft_j @ctl_k @alt_l @met_; ' ret
-    lsft z    x    c    v    b    n    m    ,    .    /    rsft
+    esc z    x    c    v    b    n    m    ,    .    /    rsft
 )
 
 (deflayer signs
-  _    _    _    _    _    _    0    \(   \)   _    _    _    _    _
-  _    _    _    _    _    _    "    {   } \_  @rsrw $  _
-  _    _    _    _    _    _    @goeq [   ]   @rser  =    _
+  _    _    _    _    _    _    +    \(   \)   |    _    _    _    _
+  _    _    _    _    _    _    "    {   } \_  @rsrw -  _
+  _    _    _    _    _    _    @goeq [   ]   @rsar  =    _
 )
 
 (deflayer nums
