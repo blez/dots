@@ -67,6 +67,7 @@
 (map! :leader :desc "Transpose frame" "w /" #'transpose-frame)
 (map! :leader :desc "Save buffer" "a a" #'save-buffer)
 (map! :ie "C-h" #'backward-delete-char-untabify)
+(map! :ie "C-d" #'delete-char)
 (map! :n "C-e" #'doom/forward-to-last-non-comment-or-eol)
 
 (defun current-line-empty-p ()
