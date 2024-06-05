@@ -212,6 +212,14 @@
       erc-kill-buffer-on-part t
       erc-auto-query 'bury)
 
+(global-disable-mouse-mode)
+(mapc #'disable-mouse-in-keymap
+      (list evil-motion-state-map
+            evil-normal-state-map
+            evil-visual-state-map
+            evil-insert-state-map))
+
+
 ;; (add-hook 'code-review-mode-hook
 ;;           (lambda ()
 ;;             (persp-add-buffer (current-buffer))))

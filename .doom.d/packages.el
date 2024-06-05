@@ -22,3 +22,4 @@
 (package! org-preview-html)
 (package! transpose-frame)
 (package! lsp-grammarly)
+(package! disable-mouse)
