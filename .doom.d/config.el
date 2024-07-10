@@ -125,6 +125,10 @@
 (add-hook! lsp-mode
   (defalias '+lookup/references 'lsp-find-references))
 
+(add-hook! 'c-mode-hook
+  (if (equal "keymap.c" (file-name-nondirectory buffer-file-name))
+      (setq +format-with :none)))
+
 (use-package! makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))

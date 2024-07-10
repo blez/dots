@@ -330,5 +330,6 @@ pip install -U pytest
 pip install black
 pip install python-lsp-server
 python3 -m pip install -U yt-dlp
+python3 -m pip install --user qmk
 
 echo "Done."
