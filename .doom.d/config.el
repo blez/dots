@@ -145,11 +145,40 @@
   (add-hook 'emacs-lisp-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
+;; (use-package! dap-mode
+;;   (setq dap-auto-configure-features '(sessions locals))
+;;   (setq dap-ui-mode nil)
+;;   (setq dap-ui-controls-mode nil)
+;;   (setq dap-tooltip-mode nil)
+;;   (setq tooltip-mode nil)
+;;   (set-popup-rule! "^\\*Dlv Remote Debug" :ignore t)
+;;   (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
+
+;; (remove-hook 'dap-mode-hook #'dap-ui-mode)
+;; (remove-hook 'dap-mode-hook #'dap-ui-controls-mode)
+;; (remove-hook 'dap-mode-hook #'dap-tooltip-mode)
+
 (use-package! dap-mode
   :custom
-  (dap-auto-configure-features '(expressions breakpoints))
+  (dap-ui-mode nil)
+  (dap-ui-controls-mode nil)
+  (dap-tooltip-mode nil)
+  (tooltip-mode nil)
+  (dap-auto-configure-features '(sessions locals))
   :config
-  (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
+  (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom)
+  (set-popup-rule! "^\\*Dlv Remote Debug" :ignore t)
+  )
+
+;; (after! dap-mode
+;;   (setq dap-ui-mode nil)
+;;   (setq dap-ui-controls-mode nil)
+;;   (setq dap-tooltip-mode nil)
+;;   (setq tooltip-mode nil)
+;;   (setq dap-auto-configure-features '(sessions locals))
+;;   (set-popup-rule! "^\\*Dlv Remote Debug" :ignore t)
+;;   (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
+
 
 (setq-hook! 'rjsx-mode-hook +format-with-lsp nil)
 
@@ -161,8 +190,8 @@
                        (lsp))))
 (beacon-mode 1)
 
-(after! undo-tree
-  (setq undo-tree-auto-save-history nil))
+;; (after! undo-tree
+;;   (setq undo-tree-auto-save-history nil))
 
 ;; (after! ivy-posframe
 ;;   (setf (alist-get t ivy-posframe-display-functions-alist)

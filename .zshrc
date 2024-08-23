@@ -87,6 +87,7 @@ alias gal="git al"
 alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
 alias lse='exa -l --git --icons --color=always --group-directories-first'
+alias kn="k9s"
 
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
@@ -114,6 +115,11 @@ fi
   if [ -n "$1" ]; then
     echo "$1" | base64 -d
   fi
+}
+
+opc() {
+  item=${1}
+  op item get $item --format json | jq -r '.fields[] | select(.id=="password").value' | xclip -selection clipboard
 }
 
 fpath+=${ZDOTDIR:-~}/.zsh_functions
