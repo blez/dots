@@ -190,22 +190,18 @@
                        (lsp))))
 (beacon-mode 1)
 
-;; (after! undo-tree
-;;   (setq undo-tree-auto-save-history nil))
-
-;; (after! ivy-posframe
-;;   (setf (alist-get t ivy-posframe-display-functions-alist)
-;;         #'ivy-posframe-display-at-frame-center)
-;;   (setf (alist-get 'swiper ivy-posframe-display-functions-alist)
-;;         #'ivy-posframe-display-at-frame-bottom-center)
-;;   (setq ivy-posframe-border-width 6
-;;         ivy-posframe-parameters (append ivy-posframe-parameters '((left-fringe . 3)
-;;                                                                   (right-fringe . 3)))))
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("C-e" . 'copilot-accept-completion)
+              ("M-e" . 'copilot-accept-completion-by-word)
+              ("C-n" . 'copilot-next-completion)
+              ("C-p" . 'copilot-previous-completion))
+  :config
+  (add-to-list 'copilot-indentation-alist '(go-mode 2)))
 
 (put '+format-with 'safe-local-variable 'symbolp)
-;; (setq shfmt-arguments '("-s" "-i" "4" "-ln" "bash"))
-;; (add-hook 'sh-mode-hook 'shfmt-on-save-mode)
-(set-formatter! 'shfmt '("shfmt", "-s" "-i" "4" "-ln" "bash") :modes '(sh-mode))
+;; (set-formatter! 'shfmt '("shfmt", "-s" "-i" "4" "-ln" "bash") :modes '(sh-mode))
 (set-formatter! 'yamlfmt
   '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true,retain_line_breaks=true") :modes '(yaml-mode))
 (set-formatter! 'dockfmt '("dockfmt" "version") :modes '(dockerfile-mode))

@@ -23,3 +23,7 @@
 (package! transpose-frame)
 (package! lsp-grammarly)
 (package! disable-mouse)
+(package! codeium :recipe (:host github :repo "Exafunction/codeium.el"))
+(package! cape)
+(package! copilot
+  :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
