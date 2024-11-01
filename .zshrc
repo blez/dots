@@ -29,7 +29,6 @@ export GOPATH=~/go
 
 export EDITOR='emacs -nw'
 
-
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
@@ -88,9 +87,12 @@ alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
 alias lse='exa -l --git --icons --color=always --group-directories-first'
 alias kn="k9s"
+alias dr="emacs -nw ."
 
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
+
+alias myip="curl -s ifconfig.me | curl -s api.ipify.org"
 
 alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
 dots config --local status.showUntrackedFiles no

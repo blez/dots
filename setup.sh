@@ -331,5 +331,6 @@ pip install black
 pip install python-lsp-server
 python3 -m pip install -U yt-dlp
 python3 -m pip install --user qmk
+pip3 install tldr
 
 echo "Done."

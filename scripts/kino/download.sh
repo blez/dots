@@ -30,14 +30,14 @@ video_url=$(echo "$page_content" | grep -oP '<link itemprop="video" value="\K[^"
 if [ -z "$video_url" ]; then
     echo "No <link> tag with itemprop='video' found"
     echo "Please enter a video URL:"
-    read -r video_url
+    read -r m3u8_link
 fi
 
-echo "Found video URL: $video_url"
+# echo "Found video URL: $video_url"
 
-video_page_content=$(curl -s "${common_headers[@]}" "$video_url")
+# video_page_content=$(curl -s "${common_headers[@]}" "$video_url")
 
-m3u8_link=$(echo "$video_page_content" | grep -oP '(https.*?\.m3u8)')
+# m3u8_link=$(echo "$video_page_content" | grep -oP '(https.*?\.m3u8)')
 if [ -z "$m3u8_link" ]; then
     echo "No .m3u8 link found on the page"
     exit 1

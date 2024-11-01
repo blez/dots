@@ -91,8 +91,13 @@
 (map! :m "C-M-j" #'evil-scroll-line-down)
 (map! :m "C-M-k" #'evil-scroll-line-up)
 
-(map! :m "M-K" #'drag-stuff-up)
-(map! :m "M-J" #'drag-stuff-down)
+(use-package! drag-stuff
+  :defer t
+  :init
+  (map! "M-K"    #'drag-stuff-up
+        "M-J"  #'drag-stuff-down
+        "M-H"  #'drag-stuff-left
+        "M-L" #'drag-stuff-right))
 
 (defun previous-func ()
   (interactive)
@@ -232,6 +237,13 @@
               (persp-rename "freya")
               (message "Renaming done"))))
 (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
+
+(setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com" :user "apikey"))
+(map! :leader
+      :prefix "a"
+      :desc "GPTel" "i" #'gptel
+      :desc "GPTel send" "s" #'gptel-send
+      :desc "GPTel Menu" "m" #'gptel-menu)
 
 (setq erc-server "irc.libera.chat"
       erc-nick "blez"
