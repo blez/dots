@@ -238,12 +238,21 @@
               (message "Renaming done"))))
 (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
 
-(setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com" :user "apikey"))
+(setq auth-sources '("~/.authinfo"))
+(setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com"))
 (map! :leader
       :prefix "a"
       :desc "GPTel" "i" #'gptel
       :desc "GPTel send" "s" #'gptel-send
       :desc "GPTel Menu" "m" #'gptel-menu)
+
+(global-disable-mouse-mode)
+(setq disable-mouse-global-mode t)
+(mapc #'disable-mouse-in-keymap
+      (list evil-motion-state-map
+            evil-normal-state-map
+            evil-visual-state-map
+            evil-insert-state-map))
 
 (setq erc-server "irc.libera.chat"
       erc-nick "blez"
@@ -252,14 +261,6 @@
       erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters"))
       erc-kill-buffer-on-part t
       erc-auto-query 'bury)
-
-(global-disable-mouse-mode)
-(mapc #'disable-mouse-in-keymap
-      (list evil-motion-state-map
-            evil-normal-state-map
-            evil-visual-state-map
-            evil-insert-state-map))
-
 
 ;; (add-hook 'code-review-mode-hook
 ;;           (lambda ()
