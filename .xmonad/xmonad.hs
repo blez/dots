@@ -357,6 +357,7 @@ myStartupHook = do
   spawnOnce "/usr/local/bin/emacs &"
   -- spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
   spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/lenovo.kbd &"
+  spawn "timedatectl set-timezone $(myloc)"
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.

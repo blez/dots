@@ -92,7 +92,8 @@ alias dr="emacs -nw ."
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 
-alias myip="curl -s ifconfig.me | curl -s api.ipify.org"
+alias myip="curl -s ifconfig.me || curl -s api.ipify.org"
+alias myloc="curl -s ipinfo.io/$(myip) | jq -r .timezone"
 
 alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
 dots config --local status.showUntrackedFiles no
@@ -127,6 +128,9 @@ opc() {
 fpath+=${ZDOTDIR:-~}/.zsh_functions
 eval "$(direnv hook zsh)"
 [ -f "/home/pkasko-ua/.ghcup/env" ] && source "/home/pkasko-ua/.ghcup/env" # ghcup-env
+
+# Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc'; fi

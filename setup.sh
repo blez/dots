@@ -289,7 +289,7 @@ if ! emacs --version; then
 
     git clone git://git.savannah.gnu.org/emacs.git
     cd emacs
-    git checkout emacs-29.1
+    git checkout emacs-29.4
     make clean
     ./autogen.sh
     ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
@@ -321,6 +321,8 @@ if ! doom version; then
     git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.emacs.d
     ~/.emacs.d/bin/doom install
 fi
+
+rustup component add rust-analyzer
 
 python3 -m pip install --upgrade pip
 pip install --upgrade pyflakes
