@@ -39,6 +39,7 @@ sudo apt -y install \
     git \
     gnupg \
     i3lock \
+    imagemagick \
     install-info \
     isync \
     libarchive-dev \
@@ -123,7 +124,8 @@ sudo apt -y install \
     xfce4-power-manager \
     xmlto \
     xmobar \
-    xmonad libghc-xmonad-contrib-dev
+    xmonad libghc-xmonad-contrib-dev \
+    zoxide
 
 # zsh
 if ! zsh --version; then
@@ -322,7 +324,7 @@ if ! doom version; then
     ~/.emacs.d/bin/doom install
 fi
 
-rustup component add rust-analyzer
+rustup update
 
 python3 -m pip install --upgrade pip
 pip install --upgrade pyflakes

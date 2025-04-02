@@ -37,6 +37,7 @@ import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig (additionalKeys)
 import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
+import System.Posix.Env (setEnv)
 
 myFont :: String
 myFont = "xft:JetBrains Mono Nerd Font:regular:size=14:antialias=true:hinting=true"
@@ -366,6 +367,7 @@ myStartupHook = do
 --
 main :: IO ()
 main = do
+  setEnv "LD_LIBRARY_PATH" "/usr/local/lib/" True
   xmproc <- spawnPipe "~/.cabal/bin/xmobar -x 0 ~/.config/xmobar/xmobarrc"
   xmonad $
     ewmh

@@ -6,6 +6,7 @@ export TERM="xterm-256color"
 export PATH=$PATH:/usr/local/go/bin:~/go/bin:/usr/local/singlestore-toolbox
 export GOPATH=~/go
 export GOROOT=/usr/local/go
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 
 #pnpm
 export PNPM_HOME=~/.local/share/pnpm

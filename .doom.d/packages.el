@@ -30,3 +30,4 @@
 (package! drag-stuff)
 (package! gptel)
 (package! sqlite3)
+(package! aidermacs)

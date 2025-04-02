@@ -66,10 +66,16 @@
 (map! :n "K" #'evil-mc-make-cursor-move-prev-line)
 
 (map! :leader :desc "Transpose frame" "w /" #'transpose-frame)
-(map! :leader :desc "Save buffer" "a a" #'save-buffer)
+(map! :leader
+      (:prefix-map ("a" . "Custom")
+       :desc "Save buffer" "a" #'save-buffer))
 (map! :ie "C-h" #'backward-delete-char-untabify)
 (map! :ie "C-d" #'delete-char)
 (map! :n "C-e" #'doom/forward-to-last-non-comment-or-eol)
+
+(after! dired
+  (map! :map dired-mode-map
+        :n "-" #'dired-do-kill-lines))
 
 (defun current-line-empty-p ()
   (save-excursion
@@ -151,40 +157,40 @@
   (add-hook 'emacs-lisp-mode-hook #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
-;; (use-package! dap-mode
-;;   (setq dap-auto-configure-features '(sessions locals))
-;;   (setq dap-ui-mode nil)
-;;   (setq dap-ui-controls-mode nil)
-;;   (setq dap-tooltip-mode nil)
-;;   (setq tooltip-mode nil)
-;;   (set-popup-rule! "^\\*Dlv Remote Debug" :ignore t)
-;;   (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
-
-;; (remove-hook 'dap-mode-hook #'dap-ui-mode)
-;; (remove-hook 'dap-mode-hook #'dap-ui-controls-mode)
-;; (remove-hook 'dap-mode-hook #'dap-tooltip-mode)
+(use-package! dap-dlv-go
+  :after (go-mode dap-mode)
+  :config
+  (dap-register-debug-template "Remote Debug Go"
+                               (list :type "go"
+                                     :request "attach"
+                                     :mode "remote"
+                                     :name "Remote Debug Go"
+                                     :host "0.0.0.0"
+                                     :port 2345
+                                     :program "${workspaceFolder}")))
 
 (use-package! dap-mode
-  :custom
-  (dap-ui-mode nil)
-  (dap-ui-controls-mode nil)
-  (dap-tooltip-mode nil)
-  (tooltip-mode nil)
-  (dap-auto-configure-features '(sessions locals))
+  :after lsp-mode
   :config
-  (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom)
+  (dap-mode 1)
+  (dap-ui-mode 1)
+  (dap-auto-configure-mode -1)
+  (dap-ui-controls-mode -1)
+  (dap-tooltip-mode -1)
+  (tooltip-mode -1)
+  (setq dap-auto-configure-features '())
+  (set-popup-rule! "^\\*Remote Debug Go.*" :ignore t)
   (set-popup-rule! "^\\*Dlv Remote Debug" :ignore t)
+  ;; (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom)
+  (set-popup-rule! "^\\*dap-ui-locals\\*" :side 'bottom)
+  (remove-hook 'dap-mode-hook #'dap-ui-mode)
+  (remove-hook 'dap-mode-hook #'dap-ui-controls-mode)
+  (add-hook 'dap-stopped-hook
+            (lambda (arg)
+              (interactive)
+              (dap-hydra)
+              ))
   )
-
-;; (after! dap-mode
-;;   (setq dap-ui-mode nil)
-;;   (setq dap-ui-controls-mode nil)
-;;   (setq dap-tooltip-mode nil)
-;;   (setq tooltip-mode nil)
-;;   (setq dap-auto-configure-features '(sessions locals))
-;;   (set-popup-rule! "^\\*Dlv Remote Debug" :ignore t)
-;;   (set-popup-rule! "*Launch File" :size 0.2 :slot -4 :select t :quit t :ttl 0 :side 'bottom))
-
 
 (setq-hook! 'rjsx-mode-hook +format-with-lsp nil)
 
@@ -247,6 +253,14 @@
       :desc "GPTel send" "s" #'gptel-send
       :desc "GPTel Menu" "m" #'gptel-menu)
 
+(use-package aidermacs
+  :config
+  (setenv "ANTHROPIC_API_KEY" (auth-source-pick-first-password :host "api.anthropic.com"))
+  (setenv "OPENAI_API_KEY" (auth-source-pick-first-password :host "api.openai.com"))
+  :custom
+  (aidermacs-use-architect-mode t)
+  (aidermacs-default-model "sonnet"))
+
 (global-disable-mouse-mode)
 (setq disable-mouse-global-mode t)
 (mapc #'disable-mouse-in-keymap
@@ -262,6 +276,10 @@
       erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters"))
       erc-kill-buffer-on-part t
       erc-auto-query 'bury)
+
+;; hotfix
+(after! counsel-projectile
+  (setq counsel-projectile-remove-current-project t))
 
 ;; (add-hook 'code-review-mode-hook
 ;;           (lambda ()
