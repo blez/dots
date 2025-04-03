@@ -243,7 +243,6 @@
               (message "Renaming perspective to 'freya'")
               (persp-rename "freya")
               (message "Renaming done"))))
-(after! projectile (setq projectile-project-root-files-bottom-up (remove ".git" projectile-project-root-files-bottom-up)))
 
 (setq auth-sources '("~/.authinfo"))
 (setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com"))
@@ -276,10 +275,6 @@
       erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters"))
       erc-kill-buffer-on-part t
       erc-auto-query 'bury)
-
-;; hotfix
-(after! counsel-projectile
-  (setq counsel-projectile-remove-current-project t))
 
 ;; (add-hook 'code-review-mode-hook
 ;;           (lambda ()
