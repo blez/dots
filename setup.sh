@@ -38,6 +38,7 @@ sudo apt -y install \
     g++ \
     git \
     gnupg \
+    glslang-tools \
     i3lock \
     imagemagick \
     install-info \
@@ -256,12 +257,22 @@ if ! node --version || [[ $(node --version) != v20* ]]; then
     sudo apt-get install nodejs -y
 fi
 
+sudo npm install -g npm
+
 if ! bash-language-server --version; then
     sudo npm i -g bash-language-server
 fi
 
 if ! pnpm --version; then
     sudo npm install -g @pnpm/exe
+fi
+
+if ! stylelint --version; then
+    sudo npm install -g stylelint
+fi
+
+if ! js-beautify --version; then
+    sudo npm -g install js-beautify
 fi
 
 if ! grammarly-languageserver --node-ipc; then
@@ -283,6 +294,10 @@ fi
 
 if ! yamlfmt --version; then
     go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+fi
+
+if ! dockfmt version; then
+    go install github.com/jessfraz/dockfmt@latest
 fi
 
 if ! emacs --version; then

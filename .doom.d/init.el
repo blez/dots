@@ -115,7 +115,7 @@
        ;;crystal           ; ruby at the speed of c
        ;;csharp            ; unity, .NET, and mono shenanigans
        data              ; config/data formats
-       (dart +flutter +lsp)   ; paint ui and not much else
+       ;; (dart +flutter +lsp)   ; paint ui and not much else
        ;;elixir            ; erlang done right
        ;;elm               ; care for a cup of TEA?
        emacs-lisp        ; drown in parentheses
@@ -126,7 +126,7 @@
        ;;fstar             ; (dependent) types and (monadic) effects and Z3
        ;;gdscript          ; the language you waited for
        (go +lsp +tree-sitter)         ; the hipster dialect
-       (haskell +lsp +tree-sitter)            ; a language that's lazier than I am
+       ;; (haskell +lsp +tree-sitter)            ; a language that's lazier than I am
        ;;hy                ; readability of scheme w/ speed of python
        ;;idris             ;
        (json +tree-sitter)              ; At least it ain't XML
@@ -141,14 +141,14 @@
        ;;lua               ; one-based indices? one-based indices
        markdown            ; writing docs for people to ignore
        ;;nim               ; python + lisp at the speed of c
-       nix                 ; I hereby declare "nix geht mehr!"
+       ;; nix                 ; I hereby declare "nix geht mehr!"
        ;;ocaml             ; an objective camel
        (org
         +roam2
         +pretty
         +pomodoro)        ; organize your plain life in plain text
        ;;php               ; perl's insecure younger brother
-       plantuml          ; diagrams for confusing people more
+       ;; plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional
        (python
         +lsp
