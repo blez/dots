@@ -214,8 +214,8 @@
 
 (put '+format-with 'safe-local-variable 'symbolp)
 ;; (set-formatter! 'shfmt '("shfmt", "-s" "-i" "4" "-ln" "bash") :modes '(sh-mode))
-(set-formatter! 'yamlfmt
-  '("yamlfmt" "-in" "-formatter" "indent=2,indentless_arrays=true,retain_line_breaks=true") :modes '(yaml-mode))
+;; (set-formatter! 'yamlfmt
+;;   '("yamlfmt" "-in" "-formatter" "indent=4,indentless_arrays=true,retain_line_breaks=true") :modes '(yaml-mode))
 (set-formatter! 'dockfmt '("dockfmt" "version") :modes '(dockerfile-mode))
 (set-formatter! 'rustfmt '("rustfmt" "--edition" "2021") :modes '(rustic-mode))
 
@@ -238,11 +238,15 @@
 
 (add-hook 'projectile-after-switch-project-hook
           (lambda ()
-            (message "Current project root: %s" (projectile-project-root))
-            (when (string-prefix-p "/home/pkasko-ua/helios/singlestore.com/helios/" (projectile-project-root))
-              (message "Renaming perspective to 'freya'")
-              (persp-rename "freya")
-              (message "Renaming done"))))
+            (let ((root (projectile-project-root)))
+              (message "Current project root: %s" root)
+              (cond
+               ((string-prefix-p "/home/pkasko-ua/helios/singlestore.com/helios/" root)
+                (message "Renaming perspective to 'backend'")
+                (persp-rename "backend"))
+               ((string-prefix-p "/home/pkasko-ua/helios/singlestore.com/" root)
+                (message "Renaming perspective to 'operator'")
+                (persp-rename "operator"))))))
 
 (setq auth-sources '("~/.authinfo"))
 (setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com"))
