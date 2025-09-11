@@ -32,6 +32,7 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf3fa</fn>' $(~/scripts/blue-connected.sh)"] "blue" 10
+                    , Run Com "/bin/bash" ["-c", "echo $(( ( $(date -d '2025-11-27' +%s) - $(date +%s) ) / 86400 ))"] "countdown" 600
                     , Run StdinReader
                     ]
        , sepChar = "%"
@@ -47,6 +48,7 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     \ %StdinReader% \
                     \{<box type=Bottom width=2 mb=2 color=red><fc=white>%music%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%date%</fc></box> \
+                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%countdown%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%layout%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%myvolume%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%battery%</fc></box> "

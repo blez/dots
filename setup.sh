@@ -39,6 +39,7 @@ sudo apt -y install \
     git \
     gnupg \
     glslang-tools \
+    haskell-stack \
     i3lock \
     imagemagick \
     install-info \

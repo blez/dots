@@ -124,13 +124,14 @@
 (add-hook! 'lsp-after-initialize-hook
   (run-hooks (intern (format "%s-lsp-hook" major-mode))))
 (defun go-flycheck-setup ()
+  (message "Setting up flycheck for Go")
   (flycheck-add-next-checker 'lsp 'golangci-lint))
 (defun go-lsp-setup ()
-  (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"]))))
-(add-hook 'go-mode-lsp-hook #'go-flycheck-setup)
-(add-hook 'go-mode-lsp-hook #'go-lsp-setup)
+  (setq lsp-go-build-flags ["-tags=operator,integration,cluster,debug"]))
+;; (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"]))))
+(add-hook! '(go-mode-lsp-hook go-ts-mode-lsp-hook) #'go-flycheck-setup #'go-lsp-setup)
 
-(add-hook 'sh-mode-lsp-hook #'sh-flycheck-setup)
+(add-hook! '(sh-mode-lsp-hook sh-ts-mode-lsp-hook) #'sh-flycheck-setup)
 (defun sh-flycheck-setup ()
   (flycheck-add-next-checker 'lsp 'sh-bash 'sh-shellcheck))
 
@@ -279,43 +280,6 @@
       erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters"))
       erc-kill-buffer-on-part t
       erc-auto-query 'bury)
-
-;; (add-hook 'code-review-mode-hook
-;;           (lambda ()
-;;             (persp-add-buffer (current-buffer))))
-
-;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/mu4e")
-;; (after! mu4e
-;;     (set-email-account! "pavalk6@gmail.com" '(
-;;              (mu4e-sent-folder       . "/[Gmail]/Sent Mail")
-;;              (mu4e-drafts-folder     . "/[Gmail]/Drafts")
-;;              (mu4e-trash-folder      . "/[Gmail]/Trash")
-;;              (mu4e-refile-folder     . "/[Gmail]/All Mail")
-;;              (smtpmail-smtp-user     . "pavalk6@gmail.com"))
-;;         t)
-
-;;   (setq send-mail-function #'smtpmail-send-it
-;;       mu4e-change-filenames-when-moving t
-;;       mu4e-root-maildir "~/Mail"
-;;       message-sendmail-f-is-evil t
-;;       mu4e-update-interval 300
-;;       mu4e-get-mail-command "mbsync -c ~/.config/mu4e/mbsyncrc -a"
-;;       ;; don't need to run cleanup after indexing for gmail
-;;       mu4e-index-cleanup nil
-;;       ;; because gmail uses labels as folders we can use lazy check since
-;;       ;; messages don't really "move"
-;;       mu4e-index-lazy-check t
-;;       mu4e-maildir-shortcuts '(
-;;         ("/Inbox"             . ?i)
-;;         ("/[Gmail]/Sent Mail" . ?s)
-;;         ("/[Gmail]/Trash"     . ?t)
-;;         ("/[Gmail]/Drafts"    . ?d)
-;;         ("/[Gmail]/All Mail"  . ?a))
-;;       )
-;; )
-
-;; (setq mu4e-alert-interesting-mail-query
-;;     (concat "flag:unread maildir:/Inbox" ))
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.

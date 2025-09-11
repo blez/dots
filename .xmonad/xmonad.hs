@@ -8,7 +8,7 @@ import XMonad.Actions.CycleWS
 import XMonad.Hooks.DynamicLog (PP (..), dynamicLogWithPP, shorten, wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.FadeWindows
-import XMonad.Hooks.ManageDocks (ToggleStruts (..), avoidStruts, docksEventHook, manageDocks)
+import XMonad.Hooks.ManageDocks (ToggleStruts (..), docks, avoidStruts, docksEventHook, manageDocks)
 import XMonad.Hooks.ManageHelpers (doFullFloat, isFullscreen)
 
 import XMonad.Layout.GridVariants (Grid (Grid))
@@ -35,6 +35,7 @@ import XMonad.Layout.WindowNavigation
 
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig (additionalKeys)
+import XMonad.Util.Hacks (fixSteamFlicker)
 import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 import System.Posix.Env (setEnv)
@@ -370,7 +371,7 @@ main = do
   setEnv "LD_LIBRARY_PATH" "/usr/local/lib/" True
   xmproc <- spawnPipe "~/.cabal/bin/xmobar -x 0 ~/.config/xmobar/xmobarrc"
   xmonad $
-    ewmh
+    docks $ ewmhFullscreen . ewmh $
       def
         { -- simple stuff
           terminal = myTerminal,
@@ -388,7 +389,7 @@ main = do
           layoutHook = myLayoutHook,
           startupHook = myStartupHook,
           manageHook = (isFullscreen --> doFullFloat) <+> myManageHook <+> manageDocks,
-          handleEventHook = docksEventHook,
+          -- handleEventHook = docksEventHook,
           logHook =
             myLogHook
               <+> dynamicLogWithPP
