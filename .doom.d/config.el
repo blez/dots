@@ -148,14 +148,16 @@
 
 (use-package! olivetti
   :config
-  (add-hook 'go-mode-hook #'olivetti-mode)
-  (add-hook 'sh-mode-hook #'olivetti-mode)
-  (add-hook 'dart-mode-hook #'olivetti-mode)
-  (add-hook 'yaml-mode-hook #'olivetti-mode)
-  (add-hook 'org-mode-hook #'olivetti-mode)
-  (add-hook 'rustic-mode-hook #'olivetti-mode)
-  (add-hook 'python-mode-hook #'olivetti-mode)
-  (add-hook 'emacs-lisp-mode-hook #'olivetti-mode))
+  (add-hook! '(
+               go-mode-hook go-ts-mode-hook
+               sh-mode-hook sh-ts-mode-hook
+               dart-mode-hook dart-ts-mode-hook
+               yaml-mode-hook yaml-ts-mode-hook
+               org-mode-hook org-ts-mode-hook
+               rustic-mode-hook rustic-ts-mode-hook
+               python-mode-hook python-ts-mode-hook
+               emacs-lisp-mode-hook
+               ) #'olivetti-mode))
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
 (use-package! dap-dlv-go

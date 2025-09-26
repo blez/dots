@@ -37,13 +37,8 @@ export EDITOR='emacs -nw'
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 
-if [[ ! -d ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-vi-mode ]]; then
-    git clone https://github.com/jeffreytse/zsh-vi-mode ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-vi-mode
-fi
-
 plugins=(
     git
-    zsh-vi-mode
     zsh-autosuggestions
     zsh-syntax-highlighting
     extract
@@ -58,25 +53,6 @@ if [[ ! -d ~/.zsh-autopair ]]; then
 fi
 source ~/.zsh-autopair/autopair.zsh
 autopair-init
-
-# vi mode
-bindkey -v
-KEYTIMEOUT=1
-export ZVM_CURSOR_STYLE_ENABLED=true
-export ZVM_VI_INSERT_MODE_STRING="-- INSERT --"
-export ZVM_VI_NORMAL_MODE_STRING="-- NORMAL --"
-export ZVM_VI_VISUAL_MODE_STRING="-- VISUAL --"
-bindkey -M viins '^[f' forward-word
-bindkey -M viins '^[b' backward-word
-bindkey -M viins '^[d' delete-word
-bindkey -M viins '^D' delete-char
-# Configure zsh-autopair for vi-insert mode
-bindkey -M viins '(' autopair-insert
-bindkey -M viins '{' autopair-insert
-bindkey -M viins '[' autopair-insert
-bindkey -M viins '"' autopair-insert
-bindkey -M viins "'" autopair-insert
-bindkey -M viins '`' autopair-insert
 
 source $ZSH/oh-my-zsh.sh
 
