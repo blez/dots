@@ -21,6 +21,7 @@ export PATH=/usr/java/jre1.8.0_333/bin/:$PATH
 export PATH=~/flutter/bin/:$PATH
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export PATH="$PNPM_HOME:$PATH"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"

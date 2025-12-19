@@ -44,6 +44,7 @@ sudo apt -y install \
     imagemagick \
     install-info \
     isync \
+    jq \
     libarchive-dev \
     libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
     libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
@@ -106,6 +107,7 @@ sudo apt -y install \
     nitrogen \
     pavucontrol \
     pcmanfm \
+    poppler-utils \
     pkg-config \
     playerctl \
     pulseaudio pulseaudio-utils pulseaudio-module-bluetooth \
@@ -331,6 +333,14 @@ if ! rg --version; then
     curl -LO https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep_13.0.0_amd64.deb
     sudo dpkg -i ripgrep_13.0.0_amd64.deb
     rm ripgrep_13.0.0_amd64.deb
+fi
+
+if ! yazi --version; then
+    cd
+    git clone https://github.com/sxyazi/yazi.git
+    cd yazi
+    cargo build --release --locked
+    rm -rf ./yazi
 fi
 
 if ! doom version; then

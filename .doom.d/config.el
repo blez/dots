@@ -41,20 +41,25 @@
 (map! :i "C-j" #'next-line)
 (map! :i "C-k" #'previous-line)
 (map! :n "<f5>" #'call-last-kbd-macro)
+
+(after! lsp-mode
+  (setq lsp-diagnostics-provider :flycheck))
+
+(after! magit
+  (set-popup-rule! "^\\*magit-revision:" :side 'bottom :size 0.7)
+  ;; (set-popup-rule! "^\\*magit:.*" :side 'bottom :size 0.4)
+  ;; (set-popup-rule! "^magit-diff:" :side 'bottom :size 0.4)
+  )
+
 (map! :after flycheck
       :map flycheck-mode-map
-      :m "<f12>" #'flycheck-next-error)
-(map! :after flycheck
-      :map flycheck-mode-map
-      :m "<f9>" #'flycheck-previous-error)
-(map! :after flycheck
-      :map flycheck-mode-map
-      :m "<f11>" #'flycheck-list-errors)
-(map! :after flycheck
-      :map flycheck-mode-map
-      :m "<f6>" #'flycheck-buffer)
+      :m "<f12>" #'flycheck-next-error
+      :m "<f9>"  #'flycheck-previous-error
+      :m "<f11>" #'flycheck-list-errors
+      :m "<f6>"  #'flycheck-buffer)
 (map! :map lsp-mode-map
       :m "<f7>" #'lsp-ui-doc-show)
+
 (eval-after-load 'smerge-mode
   (lambda ()
     (define-key smerge-mode-map (kbd "C-,") smerge-basic-map)))
@@ -128,7 +133,6 @@
   (flycheck-add-next-checker 'lsp 'golangci-lint))
 (defun go-lsp-setup ()
   (setq lsp-go-build-flags ["-tags=operator,integration,cluster,debug"]))
-;; (lsp-register-custom-settings '(("gopls.buildFlags" ["-tags=operator,integration,cluster,debug"]))))
 (add-hook! '(go-mode-lsp-hook go-ts-mode-lsp-hook) #'go-flycheck-setup #'go-lsp-setup)
 
 (add-hook! '(sh-mode-lsp-hook sh-ts-mode-lsp-hook) #'sh-flycheck-setup)
