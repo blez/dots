@@ -15,7 +15,6 @@ sudo apt -y install \
     bluez-tools \
     build-essential \
     ca-certificates \
-    cabal-install \
     clang \
     cmake \
     compton \
@@ -127,7 +126,6 @@ sudo apt -y install \
     xclip \
     xfce4-power-manager \
     xmlto \
-    xmobar \
     xmonad libghc-xmonad-contrib-dev \
     zoxide
 
@@ -173,6 +171,19 @@ if ! picom --version; then
     sudo ninja -C build install
     cd "$HOME"
     rm -rf ./picom
+fi
+
+if ! ghcup --version; then
+    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+fi
+
+if ! cabal --version; then
+    ghcup install --set cabal latest
+fi
+
+if ! xmobar --version; then
+    cabal update
+    cabal install xmobar -fall_extensions
 fi
 
 if ! xkblayout-state print format; then
@@ -244,7 +255,6 @@ if [ ! -f /usr/local/bin/alacritty ]; then
     rm -rf ./alacritty
 fi
 
-# startship
 if ! starship --version; then
     sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 fi

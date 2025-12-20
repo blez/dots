@@ -148,7 +148,6 @@ clean-test-op() {
 
 fpath+=${ZDOTDIR:-~}/.zsh_functions
 eval "$(direnv hook zsh)"
-[ -f "/home/pkasko-ua/.ghcup/env" ] && source "/home/pkasko-ua/.ghcup/env" # ghcup-env
 
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
@@ -160,3 +159,5 @@ if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/ho
 if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/pkasko-ua/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+[ -f "/home/pkasko-ua/.ghcup/env" ] && . "/home/pkasko-ua/.ghcup/env" # ghcup-env
