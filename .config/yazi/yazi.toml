@@ -7,3 +7,6 @@ play = [
 prepend_rules = [
     { mime = "video/*", use = "play" },
 ]
+
+[mgr]
+show_hidden = true
