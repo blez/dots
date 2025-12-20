@@ -33,7 +33,6 @@ sudo apt -y install \
     exa \
     ffmpeg \
     flameshot \
-    fzf \
     gawk \
     g++ \
     git \
@@ -327,6 +326,13 @@ fi
 if [ ! -d "$HOME/.diff-so-fancy" ]; then
     cd
     git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
+fi
+
+if ! fzf --version; then
+    cd
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+    ~/.fzf/install
+    rm -rf ./fzf
 fi
 
 if ! rg --version; then
