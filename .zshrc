@@ -29,7 +29,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # Go
 export GOPATH=~/go
 
-export EDITOR="emacsclient -nw -a '' -s ~/.emacs.d/server/server"
+export EDITOR='emacsclient -nw -a "" -c -s ~/.emacs.d/server/server'
 
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1
 

@@ -2,11 +2,15 @@
 play = [
     { run = 'vlc "$@"', orphan = true, for = "unix" },
 ]
+emacs-edit = [
+    { run = 'emacsclient -nw -a "" -s ~/.emacs.d/server/server "$@"', block = true, for = "unix" }
+]
 
 [open]
 prepend_rules = [
     { mime = "video/*", use = "play" },
+    { mime = "text/*", use = "emacs-edit" },
 ]
 
 [mgr]
-show_hidden = true
+show_hidden = false

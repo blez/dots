@@ -4,10 +4,12 @@ set -euo pipefail
 git clone git://git.savannah.gnu.org/emacs.git
 (
     cd emacs
-    git checkout emacs-30.1
+    git checkout emacs-30.2
     make clean
     ./autogen.sh
-    ./configure --with-modules --with-native-compilation --without-pop --with-mailutils --with-sqlite3 --with-tree-sitter
+    ./configure \
+        --with-modules --with-native-compilation --without-pop --with-mailutils \
+        --with-sqlite3 --with-tree-sitter --with-x-toolkit=lucid
     export LD_LIBRARY_PATH=/usr/local/lib/
     make bootstrap
     make -j$(nproc)
