@@ -126,6 +126,7 @@ sudo apt -y install \
     xclip \
     xfce4-power-manager \
     xmlto \
+    xmonad libghc-xmonad-contrib-dev \
     zoxide
 
 if ! ghcup --version; then
@@ -136,16 +137,16 @@ if ! cabal --version; then
     ghcup install --set cabal latest
 fi
 
-if ! xmonad --version; then
-    cabal update
-    cabal install --package-env=$HOME/.xmonad --lib base xmonad xmonad-contrib
-    cabal install --package-env=$HOME/.xmonad xmonad
-fi
-
 if ! xmobar --version; then
     cabal update
     cabal install xmobar -fall_extensions
 fi
+
+# if ! xmonad --version; then
+#     cabal update
+#     cabal install --package-env=$HOME/.xmonad --lib base xmonad xmonad-contrib
+#     cabal install --package-env=$HOME/.xmonad xmonad
+# fi
 
 if ! zsh --version; then
     sudo apt -y install zsh
