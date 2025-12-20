@@ -126,16 +126,32 @@ sudo apt -y install \
     xclip \
     xfce4-power-manager \
     xmlto \
-    xmonad libghc-xmonad-contrib-dev \
     zoxide
 
-# zsh
+if ! ghcup --version; then
+    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+fi
+
+if ! cabal --version; then
+    ghcup install --set cabal latest
+fi
+
+if ! xmonad --version; then
+    cabal update
+    cabal install --package-env=$HOME/.xmonad --lib base xmonad xmonad-contrib
+    cabal install --package-env=$HOME/.xmonad xmonad
+fi
+
+if ! xmobar --version; then
+    cabal update
+    cabal install xmobar -fall_extensions
+fi
+
 if ! zsh --version; then
     sudo apt -y install zsh
     /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
 fi
 
-# ssh
 if [ ! -f ~/.ssh/id_ed25519 ]; then
     ssh-keygen -t ed25519 -C "pavalk6@gmail.com"
     eval "$(ssh-agent -s)"
@@ -171,19 +187,6 @@ if ! picom --version; then
     sudo ninja -C build install
     cd "$HOME"
     rm -rf ./picom
-fi
-
-if ! ghcup --version; then
-    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
-fi
-
-if ! cabal --version; then
-    ghcup install --set cabal latest
-fi
-
-if ! xmobar --version; then
-    cabal update
-    cabal install xmobar -fall_extensions
 fi
 
 if ! xkblayout-state print format; then
