@@ -29,7 +29,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # Go
 export GOPATH=~/go
 
-export EDITOR='emacs -nw'
+export EDITOR='emacsclient -nw'
 
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1
 
@@ -65,9 +65,9 @@ bindkey \^U backward-kill-line
 eval "$(starship init zsh)"
 
 alias lsf="ls | fzf"
-alias rc="emacs -nw ~/.zshrc"
+alias rc="emacsclient -nw ~/.zshrc"
 alias sp="~/setup.sh"
-alias spe="emacs -nw ~/setup.sh"
+alias spe="emacsclient -nw ~/setup.sh"
 
 alias hel="cd ~/helios"
 
@@ -75,7 +75,7 @@ alias dw="cd ~/Downloads"
 alias blez="cd ~/blez"
 alias rt="cd $PROOT"
 alias k="kubectl"
-alias em="emacs -nw"
+alias em="emacsclient -nw"
 
 alias gr="git pull -r"
 alias gcm="git cm"
@@ -85,7 +85,7 @@ alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
 alias lse='exa -l --git --icons --color=always --group-directories-first'
 alias kn="k9s"
-alias dr="emacs -nw ."
+alias dr="emacsclient -nw ."
 
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
@@ -116,6 +116,14 @@ else
     eval $(ssh-agent | tee ~/.ssh/agent.env)
     ssh-add
 fi
+
+function y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+    yazi "$@" --cwd-file="$tmp"
+    IFS= read -r -d '' cwd <"$tmp"
+    [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+    rm -f -- "$tmp"
+}
 
 #base64 decode
 64dec() {

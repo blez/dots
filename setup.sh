@@ -46,6 +46,7 @@ sudo apt -y install \
     isync \
     jq \
     libarchive-dev \
+    libvips-dev libsixel-dev libchafa-dev libtbb-dev \
     libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
     libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
     libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
@@ -340,6 +341,14 @@ if ! yazi --version; then
     git clone https://github.com/sxyazi/yazi.git
     cd yazi
     cargo build --release --locked
+    mv target/release/yazi target/release/ya ~/.local/bin
+
+    ya pkg add yazi-rs/plugins:full-border
+    ya pkg add yazi-rs/plugins:smart-enter
+    ya pkg add yazi-rs/plugins:smart-paste
+    ya pkg add yazi-rs/plugins:chmod
+    ya pkg add yazi-rs/plugins:toggle-pane
+
     rm -rf ./yazi
 fi
 
