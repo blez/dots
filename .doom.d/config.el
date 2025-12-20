@@ -31,6 +31,12 @@
 
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
+(after! server
+  (unless (server-running-p)
+    (server-start)))
+
+(setq server-socket-dir "~/.emacs.d/server")
+
 (map! :after neotree
       :map neotree-mode-map
       :m "h" #'+neotree/collapse-or-up)
@@ -46,10 +52,7 @@
   (setq lsp-diagnostics-provider :flycheck))
 
 (after! magit
-  (set-popup-rule! "^\\*magit-revision:" :side 'bottom :size 0.7)
-  ;; (set-popup-rule! "^\\*magit:.*" :side 'bottom :size 0.4)
-  ;; (set-popup-rule! "^magit-diff:" :side 'bottom :size 0.4)
-  )
+  (set-popup-rule! "^\\*magit-revision:" :side 'bottom :size 0.7))
 
 (map! :after flycheck
       :map flycheck-mode-map

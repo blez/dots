@@ -29,7 +29,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # Go
 export GOPATH=~/go
 
-export EDITOR='emacsclient -nw'
+export EDITOR="emacsclient -nw -a '' -s ~/.emacs.d/server/server"
 
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1
 
@@ -65,9 +65,9 @@ bindkey \^U backward-kill-line
 eval "$(starship init zsh)"
 
 alias lsf="ls | fzf"
-alias rc="emacsclient -nw ~/.zshrc"
+alias rc="$EDITOR ~/.zshrc"
 alias sp="~/setup.sh"
-alias spe="emacsclient -nw ~/setup.sh"
+alias spe="$EDITOR ~/setup.sh"
 
 alias hel="cd ~/helios"
 
@@ -75,7 +75,7 @@ alias dw="cd ~/Downloads"
 alias blez="cd ~/blez"
 alias rt="cd $PROOT"
 alias k="kubectl"
-alias em="emacsclient -nw"
+alias em="$EDITOR"
 
 alias gr="git pull -r"
 alias gcm="git cm"
@@ -85,7 +85,7 @@ alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
 alias lse='exa -l --git --icons --color=always --group-directories-first'
 alias kn="k9s"
-alias dr="emacsclient -nw ."
+alias dr="$EDITOR ."
 
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
@@ -94,6 +94,7 @@ alias myip="curl -s ifconfig.me || curl -s api.ipify.org"
 alias myloc="curl -s ipinfo.io/$(myip) | jq -r .timezone"
 
 alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
+alias dotsadd='dots add $(dots st -s | awk "{print \$2}")'
 dots config --local status.showUntrackedFiles no
 
 alias src="source ~/.zshrc"
