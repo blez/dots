@@ -37,7 +37,6 @@ sudo apt -y install \
     git \
     gnupg \
     glslang-tools \
-    haskell-stack \
     i3lock \
     imagemagick \
     install-info \
@@ -126,8 +125,8 @@ sudo apt -y install \
     xclip \
     xfce4-power-manager \
     xmlto \
-    xmonad libghc-xmonad-contrib-dev \
     zoxide
+# xmonad libghc-xmonad-contrib-dev \
 
 if ! ghcup --version; then
     curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
@@ -137,16 +136,16 @@ if ! cabal --version; then
     ghcup install --set cabal latest
 fi
 
+if ! xmonad --version; then
+    echo "Install xmonad"
+    exit 0
+# https://github.com/NapoleonWils0n/cerberus/blob/master/xmonad/xmonad-ubuntu-stack-install.org
+fi
+
 if ! xmobar --version; then
     cabal update
     cabal install xmobar -fall_extensions
 fi
-
-# if ! xmonad --version; then
-#     cabal update
-#     cabal install --package-env=$HOME/.xmonad --lib base xmonad xmonad-contrib
-#     cabal install --package-env=$HOME/.xmonad xmonad
-# fi
 
 if ! zsh --version; then
     sudo apt -y install zsh
