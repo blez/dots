@@ -11,7 +11,7 @@ sudo apt install -y \
     apache2-utils \
     autoconf \
     automake \
-    batcat \
+    bat \
     btop \
     bluez \
     build-essential \
@@ -40,7 +40,10 @@ sudo apt install -y \
     imagemagick \
     isync \
     jq \
+    libxaw7-dev \
+    libx11-dev \
     libarchive-dev \
+    libasound2-dev \
     libvips-dev \
     libsixel-dev \
     libchafa-dev \
@@ -53,9 +56,10 @@ sudo apt install -y \
     libtiff-dev \
     libfreetype6-dev \
     libfontconfig1-dev \
+    libtree-sitter-dev \
     libxcb-xfixes0-dev \
     libxkbcommon-dev \
-    libgccjit-12-dev \
+    libgccjit-13-dev \
     libgnutls28-dev \
     gnutls-bin \
     libjson-c-dev \
@@ -64,7 +68,7 @@ sudo apt install -y \
     libgtk-3-dev \
     libgtk-layer-shell-dev \
     libpango1.0-dev \
-    libwxgtk3.0-gtk3-dev \
+    libwxgtk3.2-dev \
     libcairo2-dev \
     libcairo-gobject2 \
     libneon27-dev \
@@ -110,6 +114,7 @@ sudo apt install -y \
     libpng-dev \
     libgif-dev \
     libgtk2.0-dev \
+    libxss-dev \
     lldb \
     lxappearance \
     maildir-utils \
@@ -333,26 +338,6 @@ if ! dockfmt version; then
     go install github.com/jessfraz/dockfmt@latest
 fi
 
-if ! emacs --version; then
-    cd "$HOME"
-    rm -rf ./emacs || :
-
-    git clone git://git.savannah.gnu.org/emacs.git
-    cd emacs
-    git checkout emacs-29.4
-    make clean
-    ./autogen.sh
-    ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
-    make bootstrap
-    make -j "$(nproc)"
-    sudo make install
-
-    cd "$HOME"
-    curl https://raw.githubusercontent.com/jeetelongname/doom-banners/master/splashes/emacs/emacs-e-logo.png \
-        -o ~/.emacs-e-logo.png -s
-    rm -rf ./emacs
-fi
-
 if [ ! -d "$HOME/.diff-so-fancy" ]; then
     cd
     git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
@@ -367,9 +352,9 @@ fi
 
 if ! rg --version; then
     cd
-    curl -LO https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep_13.0.0_amd64.deb
-    sudo dpkg -i ripgrep_13.0.0_amd64.deb
-    rm ripgrep_13.0.0_amd64.deb
+    curl -LO https://github.com/BurntSushi/ripgrep/releases/download/15.1.0/ripgrep_15.1.0-1_amd64.deb
+    sudo dpkg -i ripgrep_15.1.0-1_amd64.deb
+    rm ripgrep_15.1.0-1_amd64.deb
 fi
 
 if ! yazi --version; then
@@ -397,15 +382,16 @@ fi
 
 rustup update
 
-python3 -m pip install --upgrade pip
-pip install --upgrade pyflakes
-pip install isort
-pip install nose
-pip install -U pytest
-pip install black
-pip install python-lsp-server
-python3 -m pip install -U yt-dlp
-python3 -m pip install --user qmk
-pip3 install tldr
+# python3 -m pip install --upgrade pip
+pipx install pyflakes
+pipx install isort
+pipx install nose
+pipx install pytest
+pipx install black
+pipx install python-lsp-server
+pipx install yt-dlp
+pipx install qmk
+pipx install tldr
+pipx upgrade-all
 
 echo "Done."
