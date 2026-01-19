@@ -353,7 +353,7 @@ myStartupHook :: X ()
 myStartupHook = do
   -- spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
-  spawnOnce "picom --config ~/.config/picom.conf --experimental-backends"
+  -- spawnOnce "picom --config ~/.config/picom.conf"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
   spawnOnce "/usr/local/bin/emacs &"

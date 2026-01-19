@@ -19,8 +19,8 @@
 ;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "JetBrains Mono Medium" :size 20))
-;; (setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 23))
-(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 30))
+(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 23))
+;; (setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 30))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -128,7 +128,7 @@
   (define-key company-active-map (kbd "<tab>") nil))
 
 ;; setup lsp + other linters
-(setenv "GOPATH" "/home/pkasko-ua/go/") ;; TMP
+(setenv "GOPATH" (expand-file-name "~/go/"))
 (add-hook! 'lsp-after-initialize-hook
   (run-hooks (intern (format "%s-lsp-hook" major-mode))))
 (defun go-flycheck-setup ()
@@ -227,7 +227,7 @@
 ;; (set-formatter! 'yamlfmt
 ;;   '("yamlfmt" "-in" "-formatter" "indent=4,indentless_arrays=true,retain_line_breaks=true") :modes '(yaml-mode))
 (set-formatter! 'dockfmt '("dockfmt" "version") :modes '(dockerfile-mode))
-(set-formatter! 'rustfmt '("rustfmt" "--edition" "2021") :modes '(rustic-mode))
+(set-formatter! 'rustfmt '("rustfmt" "--edition" "2024") :modes '(rustic-mode))
 
 (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
 (add-to-list 'auto-mode-alist '("Jenkinsfile\\'" . groovy-mode))
@@ -251,10 +251,10 @@
             (let ((root (projectile-project-root)))
               (message "Current project root: %s" root)
               (cond
-               ((string-prefix-p "/home/pkasko-ua/helios/singlestore.com/helios/" root)
+               ((string-prefix-p (expand-file-name "~/helios/singlestore.com/helios/") root)
                 (message "Renaming perspective to 'backend'")
                 (persp-rename "backend"))
-               ((string-prefix-p "/home/pkasko-ua/helios/singlestore.com/" root)
+               ((string-prefix-p (expand-file-name "~/helios/singlestore.com/") root)
                 (message "Renaming perspective to 'operator'")
                 (persp-rename "operator"))))))
 

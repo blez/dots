@@ -11,7 +11,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 #pnpm
 export PNPM_HOME=~/.local/share/pnpm
 
-# doom
 export PATH=~/.emacs.d/bin:$PATH
 export PATH=~/.config/emacs/bin:$PATH
 export PATH=~/.diff-so-fancy:$PATH
@@ -37,7 +36,6 @@ export EDITOR='emacsclient -nw -a "" -c -s ~/.emacs.d/server/server'
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-
 plugins=(
     git
     zsh-autosuggestions
@@ -48,25 +46,33 @@ plugins=(
     copyfile
 )
 
-# autopair
-if [[ ! -d ~/.zsh-autopair ]]; then
-    git clone https://github.com/hlissner/zsh-autopair ~/.zsh-autopair
+if [[ -o interactive ]]; then
+    if [[ ! -d ~/.zsh-autopair ]]; then
+        git clone https://github.com/hlissner/zsh-autopair ~/.zsh-autopair
+    fi
+
+    source ~/.zsh-autopair/autopair.zsh
+    autopair-init
+
+
+    bindkey -e
+    bindkey \^U backward-kill-line
+
+    eval "$(starship init zsh)"
 fi
-source ~/.zsh-autopair/autopair.zsh
-autopair-init
 
 source $ZSH/oh-my-zsh.sh
 
-# Bindings
-bindkey -e
-bindkey \^U backward-kill-line
-
-# Starship
-eval "$(starship init zsh)"
-
 alias lsf="ls | fzf"
 alias rc="$EDITOR ~/.zshrc"
-alias sp="~/setup.sh"
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  if [ "$ID" = "ubuntu" ]; then
+    alias sp="$HOME/setup-ubuntu.sh"
+  else
+    alias sp="$HOME/setup.sh"
+  fi
+fi
 alias spe="$EDITOR ~/setup.sh"
 
 alias hel="cd ~/helios"
@@ -126,6 +132,14 @@ function y() {
     rm -f -- "$tmp"
 }
 
+clip() {
+    if [ -t 0 ]; then
+        cat "$@" | xclip -selection clipboard
+    else
+        xclip -selection clipboard
+    fi
+}
+
 #base64 decode
 64dec() {
     if [ -n "$1" ]; then
@@ -149,15 +163,10 @@ clean-test-op() {
 fpath+=${ZDOTDIR:-~}/.zsh_functions
 eval "$(direnv hook zsh)"
 
-# Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/pkasko-ua/Downloads/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/home/pkasko-ua/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/pkasko-ua/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+if [ -f '~/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '~/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+if [ -f '~/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '~/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-[ -f "/home/pkasko-ua/.ghcup/env" ] && . "/home/pkasko-ua/.ghcup/env" # ghcup-env
+[ -f ~/.ghcup/env ] && . ~/.ghcup/env # ghcup-env

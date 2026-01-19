@@ -1,4 +1,4 @@
-##!/bin/bash
+#!/bin/bash
 set -euo pipefail
 
 sudo add-apt-repository -y universe
