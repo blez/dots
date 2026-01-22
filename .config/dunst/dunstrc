@@ -2,9 +2,17 @@
     ### Display ###
     monitor = 0
 
-    # The geometry of the window:
-    #   [{width}]x{height}[+/-{x}+/-{y}]
-    geometry = "900x5-10+40"
+    # Replaces the old 'geometry' line
+    width = 900
+
+    # "10x40" comes from your old "-10+40" setting
+    offset = (10, 40)
+
+    # Derived from the negative X and positive Y in your old geometry
+    origin = top-right
+
+    # Derived from the "x5" in your old geometry (assuming you wanted 5 notifications max)
+    notification_limit = 5
 
     # Turn on the progess bar
     progress_bar = true
@@ -31,11 +39,6 @@
 
     # The transparency of the window.  Range: [0; 100].
     transparency = 10
-
-    # The height of the entire notification.  If the height is smaller
-    # than the font height and padding combined, it will be raised
-    # to the font height and padding.
-    notification_height = 0
 
     # Draw a line of "separator_height" pixel height between two
     # notifications.
@@ -136,7 +139,10 @@
     ### Misc/Advanced ###
 
     # dmenu path.
-    dmenu = /usr/bin/dmenu -fn 'JetBrains Mono:bold:pixelsize=30' -p dunst:
+    # dmenu = /usr/bin/dmenu -fn "JetBrains Mono:bold:pixelsize=30" -p dunst:
+    # dmenu = /usr/bin/dmenu -p dunst:
+    dmenu = /usr/bin/rofi -dmenu -p dunst:
+    # dmenu = /usr/bin/rofi -dmenu -p dunst:
 
     # Browser for opening urls in context menu.
     browser = google-chrome
@@ -150,65 +156,33 @@
     # Define the class of the windows spawned by dunst
     class = Dunst
 
-    startup_notification = false
-    verbosity = mesg
-
     # Define the corner radius of the notification window
     # in pixel size. If the radius is 0, you have no rounded
     # corners.
-    # The radius will be automatically lowered if it exceeds half of the
-    # notification height to avoid clipping text and/or icons.
     corner_radius = 6
 
     mouse_left_click = close_current
-    mouse_middle_click = do_action
+    mouse_middle_click = context
     mouse_right_click = close_all
 
-# Experimental features that may or may not work correctly. Do not expect them
-# to have a consistent behaviour across releases.
+# Experimental features that may or may not work correctly.
 [experimental]
-    # Calculate the dpi to use on a per-monitor basis.
-    # If this setting is enabled the Xft.dpi value will be ignored and instead
-    # dunst will attempt to calculate an appropriate dpi value for each monitor
-    # using the resolution and physical size. This might be useful in setups
-    # where there are multiple screens with very different dpi values.
     per_monitor_dpi = false
 
-[shortcuts]
-
-    # Shortcuts are specified as [modifier+][modifier+]...key
-    # Available modifiers are "ctrl", "mod1" (the alt-key), "mod2",
-    # "mod3" and "mod4" (windows-key).
-    # Xev might be helpful to find names for keys.
-
-    # Close notification.
-    close = mod4+bracketright
-
-    # Close all notifications.
-    close_all = mod4+bracketleft
-
-    # Redisplay last message(s).
-    # On the US keyboard layout "grave" is normally above TAB and left
-    # of "1". Make sure this key actually exists on your keyboard layout,
-    # e.g. check output of 'xmodmap -pke'
-    history = mod4+grave
-
-    # Context menu.
-    context = mod4+period
-
-    [urgency_low]
+# Urgency sections remain the same
+[urgency_low]
     timeout = 4
     background = "#141c21"
     foreground = "#93a1a1"
     frame_color = "#8bc34a"
 
-    [urgency_normal]
+[urgency_normal]
     timeout = 8
     background = "#141c21"
     foreground = "#93a1a1"
     frame_color = "#ba68c8"
 
-    [urgency_critical]
+[urgency_critical]
     timeout = 0
     background = "#141c21"
     foreground = "#93a1a1"

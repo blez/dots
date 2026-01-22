@@ -42,6 +42,7 @@ sudo apt -y install \
     install-info \
     isync \
     jq \
+    libnotify-dev \
     libarchive-dev \
     libvips-dev libsixel-dev libchafa-dev libtbb-dev \
     libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \

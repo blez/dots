@@ -40,6 +40,7 @@ sudo apt install -y \
     imagemagick \
     isync \
     jq \
+    libnotify-dev \
     libxaw7-dev \
     libx11-dev \
     libarchive-dev \

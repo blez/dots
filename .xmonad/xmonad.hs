@@ -134,7 +134,7 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       -- Increment the number of windows in the master area
       ((modm, xK_comma), sendMessage (IncMasterN 1)),
       -- Deincrement the number of windows in the master area
-      ((modm .|. shiftMask, xK_period), sendMessage (IncMasterN (-1))),
+      -- ((modm .|. shiftMask, xK_period), sendMessage (IncMasterN (-1))),
       -- Toggle the status bar gap
       -- Use this binding with avoidStruts from Hooks.ManageDocks.
       -- See also the statusBar function from Hooks.DynamicLog.
@@ -170,6 +170,12 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm .|. shiftMask, xK_r), spawn "xmonad --recompile; xmonad --restart"),
       -- Run xmessage with a summary of the default keybindings (useful for beginners)
       ((modm .|. shiftMask, xK_slash), spawn ("echo \"" ++ "\" | xmessage -file -"))
+
+      -- Dunst Keyboard Shortcuts
+      , ((mod4Mask, xK_bracketright), spawn "dunstctl close")
+      , ((mod4Mask, xK_bracketleft),  spawn "dunstctl close-all")
+      , ((mod4Mask .|. shiftMask, xK_grave), spawn "dunstctl history-pop")
+      , ((mod4Mask, xK_period), spawn "dunstctl context")
     ]
       -- mod-[1..9], Switch to workspace N
       -- mod-shift-[1..9], Move client to workspace N
