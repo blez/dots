@@ -25,7 +25,6 @@ sudo apt install -y \
     direnv \
     dmenu \
     dsniff \
-    dunst \
     dh-autoreconf \
     editorconfig \
     eza \
@@ -168,6 +167,15 @@ fi
 if ! xmobar --version; then
     cabal update
     cabal install xmobar -fall_extensions
+fi
+
+if ! dunst --version; then
+    (
+        git clone https://github.com/dunst-project/dunst.git
+        cd dunst
+        make
+        sudo make install
+    )
 fi
 
 if ! zsh --version; then

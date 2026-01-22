@@ -148,6 +148,15 @@ if ! xmobar --version; then
     cabal install xmobar -fall_extensions
 fi
 
+if ! dunst --version; then
+    (
+        git clone https://github.com/dunst-project/dunst.git
+        cd dunst
+        make
+        sudo make install
+    )
+fi
+
 if ! zsh --version; then
     sudo apt -y install zsh
     /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc

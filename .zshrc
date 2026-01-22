@@ -28,7 +28,8 @@ export ZSH="$HOME/.oh-my-zsh"
 # Go
 export GOPATH=~/go
 
-export EDITOR='emacsclient -nw -a "" -c -s ~/.emacs.d/server/server'
+# export EDITOR='emacsclient -nw -a "" -c -s ~/.emacs.d/server/server'
+export EDITOR='emacsclient -nw -a ""'
 
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1
 
@@ -54,7 +55,6 @@ if [[ -o interactive ]]; then
     source ~/.zsh-autopair/autopair.zsh
     autopair-init
 
-
     bindkey -e
     bindkey \^U backward-kill-line
 
@@ -66,12 +66,12 @@ source $ZSH/oh-my-zsh.sh
 alias lsf="ls | fzf"
 alias rc="$EDITOR ~/.zshrc"
 if [ -f /etc/os-release ]; then
-  . /etc/os-release
-  if [ "$ID" = "ubuntu" ]; then
-    alias sp="$HOME/setup-ubuntu.sh"
-  else
-    alias sp="$HOME/setup.sh"
-  fi
+    . /etc/os-release
+    if [ "$ID" = "ubuntu" ]; then
+        alias sp="$HOME/setup-ubuntu.sh"
+    else
+        alias sp="$HOME/setup.sh"
+    fi
 fi
 alias spe="$EDITOR ~/setup.sh"
 

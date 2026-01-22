@@ -31,11 +31,7 @@
 
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
-(after! server
-  (unless (server-running-p)
-    (server-start)))
-
-(setq server-socket-dir "~/.emacs.d/server")
+(server-start)
 
 (map! :after neotree
       :map neotree-mode-map
