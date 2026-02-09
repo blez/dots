@@ -126,6 +126,7 @@ sudo apt install -y \
     nitrogen \
     pavucontrol \
     pcmanfm \
+    pipx \
     poppler-utils \
     pkg-config \
     playerctl \
@@ -147,8 +148,7 @@ sudo apt install -y \
     xclip \
     xfce4-power-manager \
     xmlto \
-    zoxide \
-    picom
+    zoxide
 
 if ! ghcup --version; then
     curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
@@ -380,6 +380,11 @@ if ! yazi --version; then
     ya pkg add yazi-rs/plugins:toggle-pane
 
     rm -rf ./yazi
+fi
+
+if ! emacs --version; then
+    echo "Install emacs"
+    exit 0
 fi
 
 if ! doom version; then
