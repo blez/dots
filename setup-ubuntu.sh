@@ -148,7 +148,8 @@ sudo apt install -y \
     xclip \
     xfce4-power-manager \
     xmlto \
-    zoxide
+    zoxide \
+    7zip
 
 if ! ghcup --version; then
     curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
@@ -395,6 +396,10 @@ if ! doom version; then
 fi
 
 rustup update
+
+if ! copilot-language-server --version; then
+    sudo npm install -g @github/copilot-language-server
+fi
 
 # python3 -m pip install --upgrade pip
 pipx install pyflakes
