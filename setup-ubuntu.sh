@@ -17,6 +17,8 @@ sudo apt install -y \
     build-essential \
     ca-certificates \
     clang \
+    clangd \
+    clang-format \
     cmake \
     curl \
     default-jre \
@@ -32,6 +34,7 @@ sudo apt install -y \
     flameshot \
     gawk \
     g++ \
+    g++-14 \
     git \
     gnupg \
     glslang-tools \
@@ -47,6 +50,7 @@ sudo apt install -y \
     libvips-dev \
     libsixel-dev \
     libchafa-dev \
+    libstdc++-14-dev \
     libtbb-dev \
     libffi-dev \
     libgmp-dev \
@@ -412,5 +416,6 @@ pipx install yt-dlp
 pipx install qmk
 pipx install tldr
 pipx upgrade-all
+pipx install cmake-language-server
 
 echo "Done."

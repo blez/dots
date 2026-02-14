@@ -148,6 +148,19 @@
   (if (equal "keymap.c" (file-name-nondirectory buffer-file-name))
       (setq +format-with :none)))
 
+(after! lsp-clangd
+  (setq lsp-clients-clangd-executable "/usr/bin/clangd"))
+
+(with-eval-after-load 'lsp-clangd
+  (setq lsp-clients-clangd-args
+        '("-j=3"
+          "--background-index"
+          "--clang-tidy"
+          "--completion-style=detailed"
+          "--header-insertion=never"
+          "--header-insertion-decorators=0"))
+  (set-lsp-priority! 'clangd 2))
+
 (use-package! makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))
