@@ -20,7 +20,7 @@
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "JetBrains Mono Medium" :size 20))
 ;; (setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 23))
-(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 25))
+(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 24))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -175,8 +175,10 @@
                org-mode-hook org-ts-mode-hook
                rustic-mode-hook rustic-ts-mode-hook
                python-mode-hook python-ts-mode-hook
+               c++-mode-hook c++-ts-mode-hook
                emacs-lisp-mode-hook
                ) #'olivetti-mode))
+
 (setq-hook! 'olivetti-mode-hook olivetti-body-width 150)
 
 (use-package! dap-dlv-go
