@@ -42,6 +42,9 @@ sudo apt install -y \
     imagemagick \
     isync \
     jq \
+    libvips-dev \
+    libxcb-res0-dev \
+    libopencv-dev \
     libnotify-dev \
     libxaw7-dev \
     libx11-dev \
