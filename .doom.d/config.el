@@ -123,8 +123,24 @@
 (map! :n "," #'evil-first-non-blank)
 (map! :n "." #'evil-end-of-line)
 
-(with-eval-after-load 'company
-  (define-key company-active-map (kbd "<tab>") nil))
+;; (with-eval-after-load 'company
+;;   (define-key company-active-map (kbd "<tab>") nil))
+
+;; corfu
+(after! corfu
+  (setq corfu-preselect 'first
+        corfu-cycle t      ;; Allows cycling from last candidate back to first
+        corfu-auto t       ;; Enable auto-completion as you type
+        corfu-auto-delay 0
+        corfu-preview-current t
+        corfu-preview-current nil)
+
+  (map! :map corfu-map
+        :i "TAB"        #'corfu-insert
+        :i "<tab>"      #'corfu-insert
+        :i "S-TAB"      #'corfu-previous
+        :i "<backtab>"  #'corfu-previous)
+  )
 
 ;; setup lsp + other linters
 (setenv "GOPATH" (expand-file-name "~/go/"))
