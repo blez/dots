@@ -31,3 +31,4 @@
 (package! gptel)
 (package! sqlite3)
 (package! aidermacs)
+(package! dap-mode)

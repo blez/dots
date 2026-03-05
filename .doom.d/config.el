@@ -235,11 +235,10 @@
 (setq-hook! 'rjsx-mode-hook +format-with-lsp nil)
 
 (setq lsp-grammarly-server-path "~/.local/share/pnpm/grammarly-languageserver")
-(use-package lsp-grammarly
-  :ensure t
-  :hook (text-mode . (lambda ()
-                       (require 'lsp-grammarly)
-                       (lsp))))
+(use-package! lsp-grammarly
+  :after lsp-mode
+  :hook (text-mode . lsp))
+
 (beacon-mode 1)
 
 (use-package! copilot
@@ -289,17 +288,22 @@
                 (persp-rename "operator"))))))
 
 (setq auth-sources '("~/.authinfo"))
-(setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com"))
+
+(after! gptel
+  (require 'auth-source)
+  (setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com")))
+
 (map! :leader
-      :prefix "a"
-      :desc "GPTel" "i" #'gptel
+      :prefix ("a" . "gptel/aider")
+      :desc "GPTel"      "i" #'gptel
       :desc "GPTel send" "s" #'gptel-send
       :desc "GPTel Menu" "m" #'gptel-menu)
 
-(use-package aidermacs
+(use-package! aidermacs
+  :after auth-source
   :config
   (setenv "ANTHROPIC_API_KEY" (auth-source-pick-first-password :host "api.anthropic.com"))
-  (setenv "OPENAI_API_KEY" (auth-source-pick-first-password :host "api.openai.com"))
+  (setenv "OPENAI_API_KEY"    (auth-source-pick-first-password :host "api.openai.com"))
   :custom
   (aidermacs-use-architect-mode t)
   (aidermacs-default-model "sonnet"))
