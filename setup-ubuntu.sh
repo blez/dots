@@ -48,6 +48,8 @@ sudo apt install -y \
     libnotify-dev \
     libxaw7-dev \
     libx11-dev \
+    libappindicator3-1 \
+    libayatana-appindicator3-1 \
     libarchive-dev \
     libasound2-dev \
     libvips-dev \
