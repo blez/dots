@@ -30,6 +30,7 @@ sudo apt install -y \
     dh-autoreconf \
     editorconfig \
     eza \
+    fonts-symbola \
     ffmpeg \
     flameshot \
     gawk \
@@ -48,7 +49,6 @@ sudo apt install -y \
     libnotify-dev \
     libxaw7-dev \
     libx11-dev \
-    libappindicator3-1 \
     libayatana-appindicator3-1 \
     libarchive-dev \
     libasound2-dev \
