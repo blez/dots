@@ -150,12 +150,14 @@ sudo apt install -y \
     rofi \
     shellcheck \
     texinfo \
+    texlive-full \
     tmux \
     vim \
     vlc \
     xwallpaper \
     xclip \
     xfce4-power-manager \
+    xournalpp \
     xmlto \
     zoxide \
     7zip
@@ -422,5 +424,6 @@ pipx install qmk
 pipx install tldr
 pipx upgrade-all
 pipx install cmake-language-server
+pipx install Pygments
 
 echo "Done."
