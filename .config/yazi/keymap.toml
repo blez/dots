@@ -47,8 +47,11 @@ run  = "plugin toggle-pane max-preview"
 desc = "Maximize or restore the preview pane"
 
 [[mgr.prepend_keymap]]
-on = "\\"
-run = "plugin split-tabs spl_toggle"
+on = [ "\\" ]
+run = [
+    "plugin split-tabs spl_toggle",
+    "plugin split-tabs spl_preview"
+]
 desc = "Split-tabs: toggle split tabs mode"
 [[mgr.prepend_keymap]]
 on = "<Tab>"
