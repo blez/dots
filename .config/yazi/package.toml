@@ -1,0 +1,32 @@
+[[plugin.deps]]
+use = "yazi-rs/plugins:full-border"
+rev = "57f1863"
+hash = "3996fc74044bc44144b323686f887e1"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:smart-enter"
+rev = "57f1863"
+hash = "56fdabc96fc1f4d53c96eb884b02a5be"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:smart-paste"
+rev = "57f1863"
+hash = "75fd60b2df7115e0a6ca31a6a804d320"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:chmod"
+rev = "57f1863"
+hash = "8da0b15a97b5dfd13941d1ecc617ac7c"
+
+[[plugin.deps]]
+use = "yazi-rs/plugins:toggle-pane"
+rev = "57f1863"
+hash = "8a7c58225816a163a6e8730c0adafbc8"
+
+[[plugin.deps]]
+use = "terrakok/split-tabs"
+rev = "6c09318"
+hash = "1abd0fd82264000683ab7f51c5e89f1e"
+
+[flavor]
+deps = []

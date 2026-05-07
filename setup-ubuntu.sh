@@ -425,5 +425,6 @@ pipx install tldr
 pipx upgrade-all
 pipx install cmake-language-server
 pipx install Pygments
+pipx install curl_cffi
 
 echo "Done."

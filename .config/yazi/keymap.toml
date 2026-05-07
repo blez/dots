@@ -45,3 +45,35 @@ desc = "Show or hide the preview pane"
 on   = "T"
 run  = "plugin toggle-pane max-preview"
 desc = "Maximize or restore the preview pane"
+
+[[mgr.prepend_keymap]]
+on = "\\"
+run = "plugin split-tabs spl_toggle"
+desc = "Split-tabs: toggle split tabs mode"
+[[mgr.prepend_keymap]]
+on = "<Tab>"
+run = "plugin split-tabs spl_switch_tab"
+desc = "Split-tabs: switch to the other pane"
+[[mgr.prepend_keymap]]
+on = "P"
+run = "plugin split-tabs spl_preview"
+desc = "Split-tabs: toggle preview pane"
+[[mgr.prepend_keymap]]
+on   = [ "<F5>" ]
+run  = [
+    "yank",
+    "plugin split-tabs spl_switch_tab",
+    "paste",
+    "plugin split-tabs spl_switch_tab"
+]
+desc = "Copy to the other pane without staying there"
+[[mgr.prepend_keymap]]
+on   = [ "<F6>" ]
+run  = [
+    "yank --cut",
+    "plugin split-tabs spl_switch_tab",
+    "paste",
+    "plugin split-tabs spl_switch_tab"
+]
+desc = "Move to the other pane without staying there"
+
