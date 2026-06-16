@@ -113,12 +113,12 @@
         "M-H"  #'drag-stuff-left
         "M-L" #'drag-stuff-right))
 
-(defun previous-func ()
+(defun next-func ()
     (interactive)
     (end-of-defun)
     (end-of-defun)
     (beginning-of-defun))
-(map! :m "M-j" #'previous-func)
+(map! :m "M-j" #'next-func)
 (map! :m "M-k" #'beginning-of-defun)
 (map! :n "," #'evil-first-non-blank)
 (map! :n "." #'evil-end-of-line)
@@ -131,8 +131,7 @@
     (setq corfu-preselect 'first
         corfu-cycle t      ;; Allows cycling from last candidate back to first
         corfu-auto t       ;; Enable auto-completion as you type
-        corfu-auto-delay 0
-        corfu-preview-current t
+        corfu-auto-delay 0.1
         corfu-preview-current nil)
 
     (map! :map corfu-map
@@ -155,14 +154,15 @@
 
 (add-hook! '(sh-mode-lsp-hook sh-ts-mode-lsp-hook) #'sh-flycheck-setup)
 (defun sh-flycheck-setup ()
-    (flycheck-add-next-checker 'lsp 'sh-bash 'sh-shellcheck))
+    (flycheck-add-next-checker 'lsp 'sh-bash)
+    (flycheck-add-next-checker 'sh-bash 'sh-shellcheck))
 
-(add-hook! lsp-mode
-    (defalias '+lookup/references 'lsp-find-references))
+(defalias '+lookup/references 'lsp-find-references)
 
 (add-hook! 'c-mode-hook
-    (if (equal "keymap.c" (file-name-nondirectory buffer-file-name))
-        (setq +format-with :none)))
+    (if (and buffer-file-name
+            (equal "keymap.c" (file-name-nondirectory buffer-file-name)))
+        (setq-local +format-with :none)))
 
 (after! lsp-clangd
     (setq lsp-clients-clangd-executable "/usr/bin/clangd"))
@@ -273,8 +273,7 @@
 
 (setq rustic-lsp-server 'rust-analyzer)
 
-(exec-path-from-shell-copy-env "SSH_AGENT_PID")
-(exec-path-from-shell-copy-env "SSH_AUTH_SOCK")
+(exec-path-from-shell-copy-envs '("SSH_AGENT_PID" "SSH_AUTH_SOCK"))
 
 (setq org-clock-sound "~/sounds/bell.wav")
 (setq org-hide-emphasis-markers t)
@@ -322,8 +321,7 @@
     (aidermacs-use-architect-mode t)
     (aidermacs-default-model "sonnet"))
 
-(global-disable-mouse-mode)
-(setq disable-mouse-global-mode t)
+(global-disable-mouse-mode 1)
 (mapc #'disable-mouse-in-keymap
     (list evil-motion-state-map
         evil-normal-state-map

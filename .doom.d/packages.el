@@ -2,11 +2,7 @@
 ;;; $DOOMDIR/packages.el
 
 (package! go-fill-struct)
-(package! evil-easymotion)
-(package! evil-snipe)
-(package! evil-commentary)
 (package! evil-indent-plus)
-(package! evil-surround)
 (package! protobuf-mode)
 (package! makefile-executor)
 (package! dockerfile-mode)
@@ -14,7 +10,6 @@
 (package! groovy-mode)
 ;; (package! shfmt)
 (package! string-inflection)
-(package! centered-window)
 (package! olivetti)
 (package! beacon)
 (package! exec-path-from-shell)
@@ -23,8 +18,6 @@
 (package! transpose-frame)
 (package! lsp-grammarly)
 (package! disable-mouse)
-(package! codeium :recipe (:host github :repo "Exafunction/codeium.el"))
-(package! cape)
 (package! copilot
   :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 (package! drag-stuff)
