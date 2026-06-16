@@ -390,7 +390,7 @@ myStartupHook = do
 main :: IO ()
 main = do
   setEnv "LD_LIBRARY_PATH" "/usr/local/lib/" True
-  xmproc <- spawnPipe "~/.cabal/bin/xmobar -x 0 ~/.config/xmobar/xmobarrc"
+  xmproc <- spawnPipe "~/.config/xmobar/launch.sh"
   xmonad $
     docks $ ewmhFullscreen . ewmh $ withNavigation2DConfig def $
       def
