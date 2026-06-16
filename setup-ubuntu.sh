@@ -21,7 +21,6 @@ sudo apt install -y \
     clang-format \
     cmake \
     curl \
-    default-jre \
     default-jdk \
     deluge \
     direnv \
@@ -52,7 +51,6 @@ sudo apt install -y \
     libayatana-appindicator3-1 \
     libarchive-dev \
     libasound2-dev \
-    libvips-dev \
     libsixel-dev \
     libchafa-dev \
     libstdc++-14-dev \
@@ -68,7 +66,7 @@ sudo apt install -y \
     libtree-sitter-dev \
     libxcb-xfixes0-dev \
     libxkbcommon-dev \
-    libgccjit-13-dev \
+    libgccjit-14-dev \
     libgnutls28-dev \
     gnutls-bin \
     libjson-c-dev \
@@ -119,7 +117,6 @@ sudo apt install -y \
     libuchardet-dev \
     libxerces-c-dev \
     libxi-dev \
-    libx11-dev \
     libpng-dev \
     libgif-dev \
     libgtk2.0-dev \
@@ -152,6 +149,7 @@ sudo apt install -y \
     texinfo \
     texlive-full \
     tmux \
+    unzip \
     vim \
     vlc \
     xwallpaper \
@@ -162,26 +160,27 @@ sudo apt install -y \
     zoxide \
     7zip
 
-if ! ghcup --version; then
-    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+if ! command -v ghcup >/dev/null; then
+    BOOTSTRAP_HASKELL_NONINTERACTIVE=1 \
+        curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 fi
 
-if ! cabal --version; then
+if ! command -v cabal >/dev/null; then
     ghcup install --set cabal latest
 fi
 
-if ! xmonad --version; then
-    echo "Install xmonad"
-    exit 0
+if ! command -v xmonad >/dev/null; then
+    echo "Install xmonad" >&2
+    exit 1
 # https://github.com/NapoleonWils0n/cerberus/blob/master/xmonad/xmonad-ubuntu-stack-install.org
 fi
 
-if ! xmobar --version; then
+if ! command -v xmobar >/dev/null; then
     cabal update
     cabal install xmobar -fall_extensions
 fi
 
-if ! dunst --version; then
+if ! command -v dunst >/dev/null; then
     (
         git clone https://github.com/dunst-project/dunst.git
         cd dunst
@@ -190,9 +189,8 @@ if ! dunst --version; then
     )
 fi
 
-if ! zsh --version; then
+if ! command -v zsh >/dev/null; then
     sudo apt -y install zsh
-    /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
 fi
 
 if [ ! -f ~/.ssh/id_ed25519 ]; then
@@ -205,8 +203,11 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
 fi
 
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 fi
+
+# Restore .zshrc after oh-my-zsh install so its installer doesn't clobber it.
+/usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
 
 if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
@@ -218,144 +219,157 @@ fi
 
 # remove default picom
 sudo rm /usr/bin/picom || :
-if ! picom --version; then
-    cd "$HOME"
-    rm -rf picom || :
-    git clone git@github.com:yshui/picom.git
-    cd picom
-    git checkout "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
-    git submodule update --init --recursive
-    meson --buildtype=release . build
-    ninja -C build
-    sudo ninja -C build install
-    cd "$HOME"
-    rm -rf ./picom
+if ! command -v picom >/dev/null; then
+    (
+        cd "$HOME"
+        rm -rf picom
+        git clone git@github.com:yshui/picom.git
+        cd picom
+        git checkout "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
+        git submodule update --init --recursive
+        meson --buildtype=release . build
+        ninja -C build
+        sudo ninja -C build install
+    )
+    rm -rf "$HOME/picom"
 fi
 
-if ! xkblayout-state print format; then
-    cd
-    git clone git@github.com:nonpop/xkblayout-state.git
-    cd xkblayout-state
-    make
-    sudo mv xkblayout-state /usr/local/bin
-    cd
-    rm -rf xkblayout-state
+if ! command -v xkblayout-state >/dev/null; then
+    (
+        cd "$HOME"
+        rm -rf xkblayout-state
+        git clone git@github.com:nonpop/xkblayout-state.git
+        cd xkblayout-state
+        make
+        sudo mv xkblayout-state /usr/local/bin
+    )
+    rm -rf "$HOME/xkblayout-state"
 fi
 
 if [ ! -d "$HOME/.font-awesome" ]; then
-    cd "$HOME"
-    curl -LO https://use.fontawesome.com/releases/v5.15.4/fontawesome-free-5.15.4-desktop.zip
-    unzip fontawesome-free-5.15.4-desktop.zip
-    mv fontawesome-free-5.15.4-desktop .font-awesome
-    sudo rm -rf /usr/share/fonts/font-awesome
-    sudo cp -r .font-awesome /usr/share/fonts/font-awesome
-    fc-cache -f -v
-    rm fontawesome-free-5.15.4-desktop.zip
+    (
+        cd "$HOME"
+        curl -LO https://use.fontawesome.com/releases/v5.15.4/fontawesome-free-5.15.4-desktop.zip
+        unzip fontawesome-free-5.15.4-desktop.zip
+        mv fontawesome-free-5.15.4-desktop .font-awesome
+        sudo rm -rf /usr/share/fonts/font-awesome
+        sudo cp -r .font-awesome /usr/share/fonts/font-awesome
+        fc-cache -f -v
+        rm fontawesome-free-5.15.4-desktop.zip
+    )
 fi
 
 if [ ! -f "$HOME/.nerd-fonts" ]; then
-    cd
-    git clone https://github.com/ryanoasis/nerd-fonts
-    cd nerd-fonts
-    ./install.sh
+    (
+        cd "$HOME"
+        rm -rf nerd-fonts
+        git clone https://github.com/ryanoasis/nerd-fonts
+        cd nerd-fonts
+        ./install.sh
+    )
     rm -rf "$HOME/nerd-fonts"
     touch "$HOME/.nerd-fonts"
-    cd
 fi
 
-if ! cargo --version; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+if ! command -v cargo >/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     echo "Do 'source $HOME/.cargo/env' and rerun script"
     exit 0
 fi
 
-if ! fd --version; then
-    cd
-    rm -rf fd
-
-    git clone https://github.com/sharkdp/fd
-    cd fd
-    cargo build
-    cargo test
-    cargo install --path .
-
-    cd
-    rm -rf fd
+if ! command -v fd >/dev/null; then
+    (
+        cd "$HOME"
+        rm -rf fd
+        git clone https://github.com/sharkdp/fd
+        cd fd
+        cargo build
+        cargo test
+        cargo install --path .
+    )
+    rm -rf "$HOME/fd"
 fi
 
 if [ ! -f /usr/local/bin/alacritty ]; then
-    cd "$HOME"
-    rm -rf ./alacritty || :
-    git clone https://github.com/alacritty/alacritty.git
-    cd alacritty
+    (
+        cd "$HOME"
+        rm -rf alacritty
+        git clone https://github.com/alacritty/alacritty.git
+        cd alacritty
 
-    cargo build --release
-    sudo mv target/release/alacritty /usr/local/bin
-    sudo cp extra/logo/alacritty-term.svg /usr/share/pixmaps/Alacritty.svg
-    sudo desktop-file-install extra/linux/Alacritty.desktop
-    sudo update-desktop-database
-    mkdir -p "${ZDOTDIR:-~}/.zsh_functions"
-    cp extra/completions/_alacritty "${ZDOTDIR:-~}/.zsh_functions/_alacritty"
-
-    cd "$HOME"
-    rm -rf ./alacritty
+        cargo build --release
+        sudo mv target/release/alacritty /usr/local/bin
+        sudo cp extra/logo/alacritty-term.svg /usr/share/pixmaps/Alacritty.svg
+        sudo desktop-file-install extra/linux/Alacritty.desktop
+        sudo update-desktop-database
+        mkdir -p "${ZDOTDIR:-~}/.zsh_functions"
+        cp extra/completions/_alacritty "${ZDOTDIR:-~}/.zsh_functions/_alacritty"
+    )
+    rm -rf "$HOME/alacritty"
 fi
 
-if ! starship --version; then
-    sh -c "$(curl -fsSL https://starship.rs/install.sh)"
+if ! command -v starship >/dev/null; then
+    sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes
 fi
 
 # https://github.com/nodesource/distributions
-if ! node --version || [[ $(node --version) != v20* ]]; then
+# Install only if node is missing or older than the pinned major (22 LTS).
+node_major=0
+if command -v node >/dev/null; then
+    node_major=$(node --version | sed 's/^v\([0-9]*\).*/\1/')
+fi
+if [ "$node_major" -lt 22 ]; then
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |
-        sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" |
+        sudo gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" |
         sudo tee /etc/apt/sources.list.d/nodesource.list
     sudo apt-get update
     sudo apt-get install nodejs -y
 fi
 
-sudo npm install -g npm
+if command -v npm >/dev/null; then
+    sudo npm install -g npm
+fi
 
-if ! bash-language-server --version; then
+if ! command -v bash-language-server >/dev/null; then
     sudo npm i -g bash-language-server
 fi
 
-if ! pnpm --version; then
+if ! command -v pnpm >/dev/null; then
     sudo npm install -g @pnpm/exe
 fi
 
-if ! stylelint --version; then
+if ! command -v stylelint >/dev/null; then
     sudo npm install -g stylelint
 fi
 
-if ! js-beautify --version; then
+if ! command -v js-beautify >/dev/null; then
     sudo npm -g install js-beautify
 fi
 
-if ! grammarly-languageserver --node-ipc; then
+if ! command -v grammarly-languageserver >/dev/null; then
     pnpm i -g @emacs-grammarly/grammarly-languageserver
 fi
 
-if ! rust-analyzer --version; then
+if ! command -v rust-analyzer >/dev/null; then
     rustup component add rust-analyzer
 fi
 
-if ! deno --version; then
+if ! command -v deno >/dev/null; then
     cargo install deno --locked
 fi
 
-if ! go version; then
+if ! command -v go >/dev/null; then
     ~/scripts/go-update.sh
     ~/scripts/go-utils.sh
 fi
 
-if ! yamlfmt --version; then
+if ! command -v yamlfmt >/dev/null; then
     go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 fi
 
-if ! dockfmt version; then
+if ! command -v dockfmt >/dev/null; then
     go install github.com/jessfraz/dockfmt@latest
 fi
 
@@ -364,42 +378,44 @@ if [ ! -d "$HOME/.diff-so-fancy" ]; then
     git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
 fi
 
-if ! fzf --version; then
+if ! command -v fzf >/dev/null; then
     cd
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     ~/.fzf/install
-    rm -rf ./fzf
 fi
 
-if ! rg --version; then
+if ! command -v rg >/dev/null; then
     cd
     curl -LO https://github.com/BurntSushi/ripgrep/releases/download/15.1.0/ripgrep_15.1.0-1_amd64.deb
     sudo dpkg -i ripgrep_15.1.0-1_amd64.deb
     rm ripgrep_15.1.0-1_amd64.deb
 fi
 
-if ! yazi --version; then
-    cd
-    git clone https://github.com/sxyazi/yazi.git
-    cd yazi
-    cargo build --release --locked
-    mv target/release/yazi target/release/ya ~/.local/bin
+if ! command -v yazi >/dev/null; then
+    (
+        cd "$HOME"
+        rm -rf yazi
+        git clone https://github.com/sxyazi/yazi.git
+        cd yazi
+        cargo build --release --locked
+        mkdir -p ~/.local/bin
+        mv target/release/yazi target/release/ya ~/.local/bin
 
-    ya pkg add yazi-rs/plugins:full-border
-    ya pkg add yazi-rs/plugins:smart-enter
-    ya pkg add yazi-rs/plugins:smart-paste
-    ya pkg add yazi-rs/plugins:chmod
-    ya pkg add yazi-rs/plugins:toggle-pane
-
-    rm -rf ./yazi
+        ya pkg add yazi-rs/plugins:full-border
+        ya pkg add yazi-rs/plugins:smart-enter
+        ya pkg add yazi-rs/plugins:smart-paste
+        ya pkg add yazi-rs/plugins:chmod
+        ya pkg add yazi-rs/plugins:toggle-pane
+    )
+    rm -rf "$HOME/yazi"
 fi
 
-if ! emacs --version; then
-    echo "Install emacs"
-    exit 0
+if ! command -v emacs >/dev/null; then
+    echo "Install emacs" >&2
+    exit 1
 fi
 
-if ! doom version; then
+if ! command -v doom >/dev/null && [ ! -x ~/.emacs.d/bin/doom ]; then
     cd
     rm -rf ~/.emacs.d
     git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.emacs.d
@@ -408,14 +424,13 @@ fi
 
 rustup update
 
-if ! copilot-language-server --version; then
+if ! command -v copilot-language-server >/dev/null; then
     sudo npm install -g @github/copilot-language-server
 fi
 
 # python3 -m pip install --upgrade pip
 pipx install pyflakes
 pipx install isort
-pipx install nose
 pipx install pytest
 pipx install black
 pipx install python-lsp-server
