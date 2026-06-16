@@ -31,9 +31,9 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
                     , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
-                    , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf3fa</fn>' $(~/scripts/blue-connected.sh)"] "blue" 10
+                    , Run Com "/bin/bash" ["-c", "d=$(~/scripts/blue-connected.sh); echo \"<box type=Bottom width=2 mb=2 color=red><fc=white><fn=2>\xf3fa</fn>${d:+ $d}</fc></box>\""] "blue" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf0a0</fn> $(~/scripts/disk-usage.sh)\""] "disk" 100
-                    , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); [ -n \"$b\" ] && echo \"<fn=2>\xf185</fn> $b\""] "bright" 60
+                    , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"<box type=Bottom width=2 mb=2 color=red><fc=white><fn=2>\xf185</fn>${b:+ $b}</fc></box>\""] "bright" 60
                     , Run StdinReader
                     ]
        , sepChar = "%"
@@ -45,13 +45,13 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%__ETH__%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%__WIFI__wi% %__WIFI__%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%vpn%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%blue%</fc></box> \
+                    \ %blue% \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%upd%</fc></box> } \
                     \ %StdinReader% \
                     \{<box type=Bottom width=2 mb=2 color=red><fc=white>%music%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%date%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%layout%</fc></box> \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%myvolume%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%bright%</fc></box> \
+                    \ %bright% \
                     \ <box type=Bottom width=2 mb=2 color=red><fc=white>%battery%</fc></box> "
        }

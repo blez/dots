@@ -239,6 +239,15 @@
     :after lsp-mode
     :hook (text-mode . lsp))
 
+;; fd >= 10.x makes `--strip-cwd-prefix' take an optional `[=<when>]' value,
+;; which clap refuses to combine with a positional `[path]'. Doom's projectile
+;; shim always passes an explicit `.' path, so the flag is redundant; drop it to
+;; avoid: "the argument '--strip-cwd-prefix[=<when>]' cannot be used with '[path]...'"
+(after! projectile
+    (setq projectile-git-fd-args
+        (replace-regexp-in-string
+            " *--strip-cwd-prefix" "" projectile-git-fd-args t t)))
+
 (beacon-mode 1)
 
 (use-package! copilot
