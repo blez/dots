@@ -105,6 +105,7 @@ alias dotsadd='dots add $(dots st -s | awk "{print \$2}")'
 dots config --local status.showUntrackedFiles no
 
 alias src="source ~/.zshrc"
+alias claude-personal="CLAUDE_CONFIG_DIR=~/.claude-personal $HOME/.local/bin/claude"
 
 if [ -f ~/.ssh/agent.env ]; then
     . ~/.ssh/agent.env >/dev/null

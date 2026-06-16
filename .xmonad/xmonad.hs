@@ -5,37 +5,29 @@ import System.Exit
 import System.IO (hPutStrLn)
 import XMonad
 import XMonad.Actions.CycleWS
+import XMonad.Actions.Navigation2D (windowGo, withNavigation2DConfig)
 import XMonad.Hooks.DynamicLog (PP (..), dynamicLogWithPP, shorten, wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops
-import XMonad.Hooks.FadeWindows
-import XMonad.Hooks.ManageDocks (ToggleStruts (..), docks, avoidStruts, docksEventHook, manageDocks)
+import XMonad.Hooks.ManageDocks (docks, avoidStruts, manageDocks)
 import XMonad.Hooks.ManageHelpers (doFullFloat, isFullscreen)
 
 import XMonad.Layout.GridVariants (Grid (Grid))
 import XMonad.Layout.LayoutModifier
-import XMonad.Layout.LimitWindows (decreaseLimit, increaseLimit, limitWindows)
-import XMonad.Layout.MultiToggle (EOT (EOT), mkToggle, single, (??))
+import XMonad.Layout.MultiToggle (mkToggle, single)
 import qualified XMonad.Layout.MultiToggle as MT (Toggle (..))
-import XMonad.Layout.MultiToggle.Instances (StdTransformers (MIRROR, NBFULL, NOBORDERS))
+import XMonad.Layout.MultiToggle.Instances (StdTransformers (NBFULL))
 import XMonad.Layout.NoBorders
-import XMonad.Layout.MultiColumns
 import XMonad.Layout.Renamed
 import XMonad.Layout.ResizableTile
-import XMonad.Layout.ShowWName
 import XMonad.Layout.Simplest
-import XMonad.Layout.SimplestFloat
 import XMonad.Layout.Spacing
-import XMonad.Layout.Spiral
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.Tabbed
 import XMonad.Layout.ThreeColumns
-import qualified XMonad.Layout.ToggleLayouts as T (ToggleLayout (Toggle), toggleLayouts)
-import XMonad.Layout.WindowArranger (WindowArrangerMsg (..), windowArrange)
 import XMonad.Layout.WindowNavigation
 
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig (additionalKeys)
-import XMonad.Util.Hacks (fixSteamFlicker)
 import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 import System.Posix.Env (setEnv)
@@ -58,17 +50,25 @@ myBorderWidth = 3
 myModMask :: KeyMask
 myModMask = mod4Mask
 
+-- Named workspaces, so manageHook shifts reference them by name rather than by
+-- a fragile list index (reordering myWorkspaces can't silently misroute apps).
+wsEmacs, wsTerm, wsZoom, wsChat :: String
+wsEmacs = "<icon=Emacs.xpm/>"
+wsTerm = "<icon=Terminal.xpm/>"
+wsZoom = "5"
+wsChat = "<icon=Chat.xpm/>"
+
 myWorkspaces :: [String]
 myWorkspaces =
-  [ "<icon=Emacs.xpm/>",
-    "<icon=Terminal.xpm/>",
+  [ wsEmacs,
+    wsTerm,
     "3",
     "4",
-    "5",
+    wsZoom,
     "6",
     "7",
     "8",
-    "<icon=Chat.xpm/>"
+    wsChat
   ]
     ++ (map snd myExtraWorkspaces)
 
@@ -106,6 +106,8 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm, xK_q), kill),
       -- Rotate through the available layout algorithms
       ((modm, xK_Tab), sendMessage NextLayout),
+      -- Toggle temporary borderless fullscreen for the focused window (any layout)
+      ((modm, xK_f), sendMessage $ MT.Toggle NBFULL),
       --  Reset the layouts on the current workspace to default
       ((modm .|. shiftMask, xK_space), setLayout $ XMonad.layoutHook conf),
       -- Resize viewed windows to the correct size
@@ -113,10 +115,11 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       -- Move focus to the next window
       -- , ((modm,               xK_Tab   ), windows W.focusDown)
 
-      -- Move focus to the next window
-      ((modm, xK_j), windows W.focusDown),
-      -- Move focus to the previous window
-      ((modm, xK_k), windows W.focusUp),
+      -- Directional focus, group-aware and wrapping (True = wrap around edges)
+      ((modm, xK_h), windowGo L True),
+      ((modm, xK_j), windowGo D True),
+      ((modm, xK_k), windowGo U True),
+      ((modm, xK_l), windowGo R True),
       -- Move focus to the master window
       ((modm, xK_m), windows W.focusMaster),
       -- Swap the focused window and the master window
@@ -125,10 +128,25 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm .|. shiftMask, xK_j), windows W.swapDown),
       -- Swap the focused window with the previous window
       ((modm .|. shiftMask, xK_k), windows W.swapUp),
-      -- Shrink the master area
-      ((modm, xK_h), sendMessage Shrink),
-      -- Expand the master area
-      ((modm, xK_l), sendMessage Expand),
+      -- Resize: shrink/expand the master area
+      ((modm .|. controlMask, xK_h), sendMessage Shrink),
+      ((modm .|. controlMask, xK_l), sendMessage Expand),
+      -- Resize: secondary dimension (ResizableTall)
+      ((modm .|. controlMask, xK_j), sendMessage MirrorShrink),
+      ((modm .|. controlMask, xK_k), sendMessage MirrorExpand),
+      -- Merge focused window into the group in the given direction (SubLayouts)
+      ((modm .|. controlMask .|. shiftMask, xK_h), sendMessage $ pullGroup L),
+      ((modm .|. controlMask .|. shiftMask, xK_l), sendMessage $ pullGroup R),
+      ((modm .|. controlMask .|. shiftMask, xK_k), sendMessage $ pullGroup U),
+      ((modm .|. controlMask .|. shiftMask, xK_j), sendMessage $ pullGroup D),
+      -- Merge all windows on the workspace into one tabbed group
+      ((modm .|. controlMask, xK_m), withFocused (sendMessage . MergeAll)),
+      -- Pop the focused window back out of its group
+      ((modm .|. controlMask, xK_u), withFocused (sendMessage . UnMerge)),
+      -- Cycle tabs within the focused group
+      -- (shift+grave is taken by dunst history-pop, so reverse uses ctrl+grave)
+      ((modm, xK_grave), onGroup W.focusDown'),
+      ((modm .|. controlMask, xK_grave), onGroup W.focusUp'),
       -- Push window back into tiling
       ((modm, xK_t), withFocused $ windows . W.sink),
       -- Increment the number of windows in the master area
@@ -167,15 +185,13 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       -- Quit xmonad
       ((modm .|. shiftMask, xK_q), io (exitWith ExitSuccess)),
       -- Restart xmonad
-      ((modm .|. shiftMask, xK_r), spawn "xmonad --recompile; xmonad --restart"),
-      -- Run xmessage with a summary of the default keybindings (useful for beginners)
-      ((modm .|. shiftMask, xK_slash), spawn ("echo \"" ++ "\" | xmessage -file -"))
+      ((modm .|. shiftMask, xK_r), spawn "xmonad --recompile; xmonad --restart")
 
       -- Dunst Keyboard Shortcuts
-      , ((mod4Mask, xK_bracketright), spawn "dunstctl close")
-      , ((mod4Mask, xK_bracketleft),  spawn "dunstctl close-all")
-      , ((mod4Mask .|. shiftMask, xK_grave), spawn "dunstctl history-pop")
-      , ((mod4Mask, xK_period), spawn "dunstctl context")
+      , ((modm, xK_bracketright), spawn "dunstctl close")
+      , ((modm, xK_bracketleft),  spawn "dunstctl close-all")
+      , ((modm .|. shiftMask, xK_grave), spawn "dunstctl history-pop")
+      , ((modm, xK_period), spawn "dunstctl context")
     ]
       -- mod-[1..9], Switch to workspace N
       -- mod-shift-[1..9], Move client to workspace N
@@ -240,33 +256,35 @@ mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 tall = renamed [Replace "tall"]
     $ windowNavigation
     $ addTabs shrinkText myTabTheme
-    $ limitWindows 12
+    $ subLayout [] Simplest
     $ mySpacing 8
     $ ResizableTall 1 (3/100) (1/2) []
 
 full = renamed [Replace "full"]
     $ windowNavigation
     $ addTabs shrinkText myTabTheme
-    $ limitWindows 20
+    $ subLayout [] Simplest
     $ mySpacing 8
     $ Full
 
 grid = renamed [Replace "grid"]
     $ windowNavigation
     $ addTabs shrinkText myTabTheme
-    $ limitWindows 12
+    $ subLayout [] Simplest
     $ mySpacing 8
     $ Grid (16 / 10)
 
 threeColMid = renamed [Replace "threeColMid"]
-    $ limitWindows 12
+    $ windowNavigation
+    $ addTabs shrinkText myTabTheme
+    $ subLayout [] Simplest
     $ mySpacing 8
     $ ThreeColMid 1 (3/100) (1/2)
 
 mirror = renamed [Replace "mirror"]
     $ windowNavigation
     $ addTabs shrinkText myTabTheme
-    $ limitWindows 12
+    $ subLayout [] Simplest
     $ mySpacing 8
     $ Mirror(Tall 1 (3/100) (3/5))
 
@@ -284,7 +302,7 @@ myTabTheme =
       inactiveTextColor = "#d0d0d0"
     }
 
-myLayoutHook = avoidStruts $ windowArrange $ smartBorders $ myDefaultLayout
+myLayoutHook = avoidStruts $ mkToggle (single NBFULL) $ smartBorders $ myDefaultLayout
   where
     myDefaultLayout = tall
         ||| grid
@@ -319,9 +337,9 @@ myManageHook =
       className =? "Pavucontrol" --> doFloat,
       className =? "peek" --> doFloat,
       className =? "flameshot" --> doFloat,
-      className =? "Slack" --> doShift (myWorkspaces !! 8),
-      className =? "Emacs" --> doShift (myWorkspaces !! 0),
-      className =? "zoom" --> doShift (myWorkspaces !! 4)
+      className =? "Slack" --> doShift wsChat,
+      className =? "Emacs" --> doShift wsEmacs,
+      className =? "zoom" --> doShift wsZoom
     ]
 
 ------------------------------------------------------------------------
@@ -341,11 +359,6 @@ myManageHook =
 
 -- Perform an arbitrary action on each internal state change or X event.
 -- See the 'XMonad.Hooks.DynamicLog' extension for examples.
---
-myFadeHook = composeAll [opaque, isUnfocused --> transparency 0.2]
-
-myLogHook :: X ()
-myLogHook = fadeWindowsLogHook myFadeHook
 
 ------------------------------------------------------------------------
 -- Startup hook
@@ -359,13 +372,15 @@ myStartupHook :: X ()
 myStartupHook = do
   -- spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
-  -- spawnOnce "picom --config ~/.config/picom.conf"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
   spawnOnce "/usr/local/bin/emacs &"
   -- spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
   spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/lenovo.kbd &"
-  spawn "timedatectl set-timezone $(curl -s ipinfo.io/$(myip) | jq -r .timezone)"
+  -- Best-effort auto-timezone, re-run on every restart so travel is picked up.
+  -- Only sets it if the lookup actually returned one, so an offline boot doesn't
+  -- run `timedatectl set-timezone ""`; capped with --max-time so it can't hang.
+  spawn "tz=$(curl -s --max-time 5 ipinfo.io/$(myip) | jq -r .timezone); [ -n \"$tz\" ] && [ \"$tz\" != null ] && timedatectl set-timezone \"$tz\""
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.
@@ -377,7 +392,7 @@ main = do
   setEnv "LD_LIBRARY_PATH" "/usr/local/lib/" True
   xmproc <- spawnPipe "~/.cabal/bin/xmobar -x 0 ~/.config/xmobar/xmobarrc"
   xmonad $
-    docks $ ewmhFullscreen . ewmh $
+    docks $ ewmhFullscreen . ewmh $ withNavigation2DConfig def $
       def
         { -- simple stuff
           terminal = myTerminal,
@@ -397,8 +412,7 @@ main = do
           manageHook = (isFullscreen --> doFullFloat) <+> myManageHook <+> manageDocks,
           -- handleEventHook = docksEventHook,
           logHook =
-            myLogHook
-              <+> dynamicLogWithPP
+            dynamicLogWithPP
                 xmobarPP
                   { ppOutput = hPutStrLn xmproc,
                     ppCurrent = xmobarColor "red" "" . wrap "→ " "", -- Current workspace in xmobar
