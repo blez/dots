@@ -18,6 +18,7 @@
 (package! transpose-frame)
 (package! lsp-grammarly)
 (package! disable-mouse)
+(package! dirvish)
 (package! copilot
   :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 (package! drag-stuff)

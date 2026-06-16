@@ -84,6 +84,10 @@
     (map! :map dired-mode-map
         :n "-" #'dired-do-kill-lines))
 
+(use-package! dirvish
+    :init
+    (dirvish-override-dired-mode))
+
 (defun current-line-empty-p ()
     (save-excursion
         (beginning-of-line)
