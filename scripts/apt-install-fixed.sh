@@ -1,4 +1,10 @@
 #!/bin/bash
+set -euo pipefail
+
+if [ $# -lt 1 ] || [ ! -f "$1" ]; then
+    echo "Usage: $0 <package.deb>" >&2
+    exit 1
+fi
 
 package="$1"
 name="$(basename "${package}" .deb)"

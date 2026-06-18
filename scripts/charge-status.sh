@@ -7,8 +7,9 @@ if [ -z "$(ls -A /sys/class/power_supply)" ]; then
     exit 0
 fi
 
-state=$(upower -i "$(upower -e | grep 'BAT')" | grep state | awk '{print $2}')
-percent=$(upower -i "$(upower -e | grep 'BAT')" | grep -E "percentage" | awk '{print $2}')
+battery=$(upower -e | grep 'BAT' | head -n1)
+state=$(upower -i "$battery" | grep state | awk '{print $2}')
+percent=$(upower -i "$battery" | grep -E "percentage" | awk '{print $2}')
 percent=${percent%$"%"}
 
 charge_image=""
