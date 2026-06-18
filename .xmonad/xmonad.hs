@@ -5,7 +5,7 @@ import System.Exit
 import System.IO (hPutStrLn)
 import XMonad
 import XMonad.Actions.CycleWS
-import XMonad.Actions.Navigation2D (windowGo, withNavigation2DConfig)
+import XMonad.Actions.Navigation2D (Direction2D (..), windowGo, withNavigation2DConfig)
 import XMonad.Hooks.DynamicLog (PP (..), dynamicLogWithPP, shorten, wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (docks, avoidStruts, manageDocks)
@@ -87,6 +87,16 @@ myAdditionalKeys =
          | (key, ws) <- myExtraWorkspaces
        ]
 
+-- Layout-aware focus: geometric (wrapping) nav in tiled layouts, but in the
+-- "full" layout (all windows stacked at full screen) there are no spatial
+-- neighbours, so fall back to linear stack cycling.
+focusDir :: Direction2D -> X ()
+focusDir dir = do
+  l <- gets (description . W.layout . W.workspace . W.current . windowset)
+  if l == "full"
+    then windows (if dir == D || dir == R then W.focusDown else W.focusUp)
+    else windowGo dir True
+
 myKeys conf@(XConfig {XMonad.modMask = modm}) =
   M.fromList $
     -- launch a terminal
@@ -116,10 +126,10 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       -- , ((modm,               xK_Tab   ), windows W.focusDown)
 
       -- Directional focus, group-aware and wrapping (True = wrap around edges)
-      ((modm, xK_h), windowGo L True),
-      ((modm, xK_j), windowGo D True),
-      ((modm, xK_k), windowGo U True),
-      ((modm, xK_l), windowGo R True),
+      ((modm, xK_h), focusDir L),
+      ((modm, xK_j), focusDir D),
+      ((modm, xK_k), focusDir U),
+      ((modm, xK_l), focusDir R),
       -- Move focus to the master window
       ((modm, xK_m), windows W.focusMaster),
       -- Swap the focused window and the master window
