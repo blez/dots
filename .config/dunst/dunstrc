@@ -3,13 +3,18 @@
     monitor = 0
 
     # Replaces the old 'geometry' line
-    width = 900
+    # (min, max) so windows size to content instead of forcing 900px always
+    width = (300, 900)
 
     # "10x40" comes from your old "-10+40" setting
     offset = (10, 40)
 
     # Derived from the negative X and positive Y in your old geometry
     origin = top-right
+
+    # How to behave when a fullscreen window is focused:
+    # show / delay / pushback. "pushback" hides notifications until fullscreen ends.
+    fullscreen = pushback
 
     # Derived from the "x5" in your old geometry (assuming you wanted 5 notifications max)
     notification_limit = 5
@@ -24,6 +29,9 @@
     # Set the frame width of the progress bar
     progress_bar_frame_width = 1
 
+    # Max radius is half the bar height (10), so 5 = fully rounded pill
+    progress_bar_corner_radius = 5
+
     # Set the minimum width for the progress bar
     progress_bar_min_width = 150
 
@@ -33,10 +41,6 @@
     # Show how many messages are currently hidden (because of geometry).
     indicate_hidden = yes
 
-    # Shrink window if it's smaller than the width.  Will be ignored if
-    # width is 0.
-    shrink = no
-
     # The transparency of the window.  Range: [0; 100].
     transparency = 10
 
@@ -45,6 +49,9 @@
     # Set to 0 to disable.
     separator_height = 0
     separator_color = frame
+
+    # Visual gap between stacked notifications (looks clean with rounded corners).
+    gap_size = 8
 
     # Padding between text and separator.
     padding = 32
@@ -85,7 +92,7 @@
     #   %n  progress value if set without any extra characters
     #   %%  Literal %
     # Markup is allowed
-    format = "%a:\n\n<b>%s</b>\n%b"
+    format = "%a:\n<b>%s</b>\n%b"
 
     # Alignment of message text.
     # Possible values are "left", "center" and "right".
@@ -121,11 +128,19 @@
     # Align icons left/right/off
     icon_position = left
 
+    # Resolve icons by name from the icon theme (all sizes/subdirs), with
+    # fallback across themes. Replaces the brittle manual icon_path list.
+    enable_recursive_icon_lookup = true
+    icon_theme = "Yaru, Adwaita"
+
     # Scale larger icons down to this size, set to 0 to disable
     max_icon_size = 88
 
-    # Paths to default icons.
-    icon_path = /usr/share/icons/gnome/16x16/status/:/usr/share/icons/gnome/16x16/devices/
+    # Scale tiny icons up to this floor so they stay legible
+    min_icon_size = 32
+
+    # Round notification icons to match the window corner_radius
+    icon_corner_radius = 6
 
     ### History ###
 
@@ -161,7 +176,8 @@
     # corners.
     corner_radius = 6
 
-    mouse_left_click = close_current
+    # Trigger a notification's action if it has one, then close it.
+    mouse_left_click = do_action, close_current
     mouse_middle_click = context
     mouse_right_click = close_all
 
