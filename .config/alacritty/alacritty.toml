@@ -12,6 +12,13 @@ yellow = "#c4a000"
 background = "#000000"
 foreground = "0xd3d7cf"
 
+[debug]
+# Create the GL context via EGL instead of GLX. Works around stale/black window
+# contents after xmonad unmaps and remaps the window on a workspace switch.
+prefer_egl = true
+# Write a log per window to $TMPDIR/Alacritty-<pid>.log so a freeze leaves evidence.
+persistent_logging = true
+
 [env]
 TERM = "xterm-256color"
 
