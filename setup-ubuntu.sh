@@ -37,6 +37,7 @@ sudo apt install -y \
     g++-14 \
     git \
     gnupg \
+    graphviz \
     glslang-tools \
     i3lock \
     imagemagick \
@@ -148,6 +149,7 @@ sudo apt install -y \
     shellcheck \
     texinfo \
     texlive-full \
+    tidy \
     tmux \
     unzip \
     vim \

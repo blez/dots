@@ -181,6 +181,11 @@
              "--header-insertion-decorators=0"))
     (set-lsp-priority! 'clangd 2))
 
+;; Newer projectile removed its "commander" feature. makefile-executor's
+;; compiled code still references `projectile-commander-methods', so define
+;; it defensively to avoid a void-variable error on load.
+(defvar projectile-commander-methods nil)
+
 (use-package! makefile-executor
     :config
     (add-hook 'makefile-mode-hook 'makefile-executor-mode))
@@ -306,25 +311,6 @@
          "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 (setq org-latex-listings 'minted)
 
-(after! gptel
-    (require 'auth-source)
-    (setq gptel-api-key (auth-source-pick-first-password :host "api.openai.com")))
-
-(map! :leader
-    :prefix ("a" . "gptel/aider")
-    :desc "GPTel"      "i" #'gptel
-    :desc "GPTel send" "s" #'gptel-send
-    :desc "GPTel Menu" "m" #'gptel-menu)
-
-(use-package! aidermacs
-    :after auth-source
-    :config
-    (setenv "ANTHROPIC_API_KEY" (auth-source-pick-first-password :host "api.anthropic.com"))
-    (setenv "OPENAI_API_KEY"    (auth-source-pick-first-password :host "api.openai.com"))
-    :custom
-    (aidermacs-use-architect-mode t)
-    (aidermacs-default-model "sonnet"))
-
 (global-disable-mouse-mode 1)
 (mapc #'disable-mouse-in-keymap
     (list evil-motion-state-map
@@ -360,3 +346,6 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+
+;; --- Voc backlog (project-local org config, lives in the repo) -------------
+(load "~/blez/voc/todo/voc-org.el" 'noerror)

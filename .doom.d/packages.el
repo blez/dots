@@ -22,7 +22,5 @@
 (package! copilot
   :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 (package! drag-stuff)
-(package! gptel)
 (package! sqlite3)
-(package! aidermacs)
 (package! dap-mode)

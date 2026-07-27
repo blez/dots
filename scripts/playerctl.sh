@@ -50,12 +50,13 @@ mapfile -t players < <(
     done | sort -n -s -k1,1 | cut -f2
 )
 
-if [ "${#players[@]}" -eq 1 ]; then
-    # Only one stream: no ambiguity, act on it directly.
+if [ "${#players[@]}" -eq 1 ] || [ "$cmd" != "play" ]; then
+    # One stream, or a next/prev: no prompt. Act on the top stream, which
+    # (sorted Playing-first) is the one currently playing.
     player=${players[0]}
 else
-    # Several streams: let the user pick which to control. Labels omit the
-    # mpris_tabs.* player id and show "[status] artist - title" instead.
+    # play with several streams: let the user pick which to control. Labels
+    # omit the mpris_tabs.* player id and show "[status] artist - title".
     declare -A by_label
     menu=""
     for p in "${players[@]}"; do
