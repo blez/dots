@@ -53,6 +53,7 @@ sudo apt install -y \
     libarchive-dev \
     libasound2-dev \
     libsixel-dev \
+    libspa-0.2-bluetooth \
     libchafa-dev \
     libstdc++-14-dev \
     libtbb-dev \
