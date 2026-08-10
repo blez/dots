@@ -181,10 +181,15 @@
              "--header-insertion-decorators=0"))
     (set-lsp-priority! 'clangd 2))
 
-;; Newer projectile removed its "commander" feature. makefile-executor's
-;; compiled code still references `projectile-commander-methods', so define
-;; it defensively to avoid a void-variable error on load.
-(defvar projectile-commander-methods nil)
+;; Newer projectile removed its "commander" feature entirely, so
+;; `def-projectile-commander-method' is no longer a macro. makefile-executor's
+;; compiled code therefore calls it as a plain function, which evaluates its
+;; body eagerly at load time -- running
+;; `makefile-executor-execute-project-target' outside a project and failing with
+;; (cl-no-applicable-method project-root nil). Neutralize both halves of that
+;; now-dead form.
+(defvar makefile-executor-projectile-style #'ignore)
+(defun def-projectile-commander-method (&rest _) nil)
 
 (use-package! makefile-executor
     :config
