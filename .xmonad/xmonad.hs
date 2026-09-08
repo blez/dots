@@ -93,7 +93,7 @@ myAdditionalKeys =
 focusDir :: Direction2D -> X ()
 focusDir dir = do
   l <- gets (description . W.layout . W.workspace . W.current . windowset)
-  if l == "full"
+  if l `elem` ["full", "Full"]
     then windows (if dir == D || dir == R then W.focusDown else W.focusUp)
     else windowGo dir True
 
