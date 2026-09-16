@@ -190,13 +190,13 @@
     timeout = 4
     background = "#000000"
     foreground = "#d3d7cf"
-    frame_color = "#00bbff"
+    frame_color = "#33a38f"
 
 [urgency_normal]
     timeout = 8
     background = "#000000"
     foreground = "#d3d7cf"
-    frame_color = "#ffffff"
+    frame_color = "#33a38f"
 
 [urgency_critical]
     timeout = 0

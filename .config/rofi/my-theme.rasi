@@ -22,17 +22,17 @@
     alternate-normal-foreground: @foreground;
     normal-background:           transparent;
     lightfg:                     rgba ( 88, 104, 117, 100 % );
-    selected-normal-background:  rgba ( 38, 139, 210, 100 % );
+    selected-normal-background:  #33a38f;
     border-color:                @foreground;
     spacing:                     2;
-    separatorcolor:              rgba ( 38, 139, 210, 100 % );
+    separatorcolor:              #33a38f;
     urgent-background:           transparent;
-    selected-urgent-background:  rgba ( 38, 139, 210, 100 % );
+    selected-urgent-background:  #33a38f;
     alternate-urgent-foreground: @urgent-foreground;
     background-color:            rgba ( 0, 0, 0, 0 % );
     alternate-active-foreground: @active-foreground;
     active-background:           rgba ( 57, 57, 57, 100 % );
-    selected-active-background:  rgba ( 38, 139, 210, 100 % );
+    selected-active-background:  #33a38f;
 }
 #window {
     background-color: #000000;
@@ -76,7 +76,7 @@
     text-color:       @active-foreground;
 }
 #element.selected.normal {
-    background-color: #06989a;
+    background-color: #33a38f;
     text-color:       #d3d7cf;
 }
 #element.selected.urgent {

@@ -74,7 +74,7 @@ myWorkspaces =
 
 myExtraWorkspaces = [(xK_0, "<icon=Chrome.xpm/>")]
 
-myNormalBorderColor = "#ffffff"
+myNormalBorderColor = "#2e3440"
 
 -- myFocusedBorderColor = "#ff0000"
 myFocusedBorderColor = "#33a38f"
@@ -306,8 +306,8 @@ mirror = renamed [Replace "mirror"]
 myTabTheme =
   def
     { fontName = myFont,
-      activeColor = "#46d9ff",
-      inactiveColor = "#313846",
+      activeColor = "#33a38f",
+      inactiveColor = "#1e1e1e",
       activeTextColor = "#282c34",
       inactiveTextColor = "#d0d0d0"
     }
@@ -381,7 +381,8 @@ myManageHook =
 myStartupHook :: X ()
 myStartupHook = do
   -- spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
-  spawnOnce "xwallpaper --stretch ~/wallpapers/wall.jpg"
+  spawnOnce "xwallpaper --zoom ~/wallpapers/wall.jpg"
+  spawnOnce "picom --config ~/.config/picom.conf &"
   spawnOnce "dunst &"
   spawnOnce "xfce4-power-manager &"
   spawnOnce "/usr/local/bin/emacs &"
