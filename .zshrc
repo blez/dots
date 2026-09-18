@@ -2,7 +2,6 @@
 PROMPT_DIRNAME=3
 
 DEFAULT_USER=$(whoami)
-export TERM="xterm-256color"
 export PATH=$PATH:/usr/local/go/bin:~/go/bin:/usr/local/singlestore-toolbox
 export GOPATH=~/go
 export GOROOT=/usr/local/go
@@ -20,13 +19,9 @@ export PATH=/usr/java/jre1.8.0_333/bin/:$PATH
 export PATH=~/flutter/bin/:$PATH
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export PATH="$PNPM_HOME:$PATH"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-
-# Go
-export GOPATH=~/go
 
 # export EDITOR='emacsclient -nw -a "" -c -s ~/.emacs.d/server/server'
 export EDITOR='emacsclient -nw -a ""'
@@ -40,6 +35,7 @@ export EDITOR='emacsclient -nw -a ""'
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
     git
+    fzf-tab
     zsh-autosuggestions
     zsh-syntax-highlighting
     extract
@@ -47,6 +43,8 @@ plugins=(
     sudo
     copyfile
 )
+# Dropped where it is not installed, so oh-my-zsh does not warn.
+[[ -d $ZSH/custom/plugins/fzf-tab ]] || plugins=(${plugins:#fzf-tab})
 
 if [[ -o interactive ]]; then
     if [[ ! -d ~/.zsh-autopair ]]; then
@@ -64,15 +62,31 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
-# Print "start → end (elapsed)" after commands that ran for at least 10s.
+# Print "start → end (elapsed)" after commands that ran for at least 10s,
+# and send a desktop notification if this terminal is not the focused window.
 zmodload zsh/datetime
 autoload -Uz add-zsh-hook
-_cmdtime_preexec() { _cmdtime_start=$EPOCHSECONDS }
+_cmdtime_preexec() { _cmdtime_start=$EPOCHSECONDS _cmdtime_cmd=$1 }
 _cmdtime_precmd() {
+    local code=$?
     [[ -n $_cmdtime_start ]] || return
     local elapsed=$(( EPOCHSECONDS - _cmdtime_start ))
-    (( elapsed >= 10 )) && print -P "%F{242}$(strftime %T $_cmdtime_start) → $(strftime %T $EPOCHSECONDS) (${elapsed}s)%f"
-    unset _cmdtime_start
+    if (( elapsed >= 10 )); then
+        print -P "%F{242}$(strftime %T $_cmdtime_start) → $(strftime %T $EPOCHSECONDS) (${elapsed}s)%f"
+        _cmdtime_notify $code $elapsed
+    fi
+    unset _cmdtime_start _cmdtime_cmd
+}
+_cmdtime_notify() {
+    [[ -n $DISPLAY && -n $WINDOWID ]] && (( $+commands[notify-send] && $+commands[xprop] )) || return
+    local active="$(xprop -root _NET_ACTIVE_WINDOW 2>/dev/null)"
+    active=${active##* }
+    (( ${active:-0} == WINDOWID )) && return
+    if (( $1 == 0 )); then
+        notify-send -a zsh "Done in ${2}s" -- "$_cmdtime_cmd"
+    else
+        notify-send -a zsh -u critical "Failed ($1) after ${2}s" -- "$_cmdtime_cmd"
+    fi
 }
 add-zsh-hook preexec _cmdtime_preexec
 add-zsh-hook precmd _cmdtime_precmd
@@ -104,6 +118,12 @@ alias gal="git al"
 alias preview="fzf --preview 'bat --color \"always\" {}'"
 alias j="ranger"
 alias lse='exa -l --git --icons --color=always --group-directories-first'
+if command -v eza >/dev/null; then
+    alias ls='eza --icons --group-directories-first'
+    alias ll='eza -l --git --icons --group-directories-first'
+    alias la='eza -la --git --icons --group-directories-first'
+    alias lt='eza --tree --level=2 --icons --group-directories-first'
+fi
 alias kn="k9s"
 alias dr="$EDITOR ."
 
@@ -177,6 +197,7 @@ clean-test-op() {
 
 fpath+=${ZDOTDIR:-~}/.zsh_functions
 eval "$(direnv hook zsh)"
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
 
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
@@ -184,6 +205,8 @@ if [ -f '~/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '~/Downloads/googl
 if [ -f '~/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '~/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# Must come after fzf so atuin owns Ctrl-R. Up arrow keeps the normal zsh history.
+command -v atuin >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 [ -f ~/.ghcup/env ] && . ~/.ghcup/env # ghcup-env
 
 # The next line updates PATH for the Google Cloud SDK.

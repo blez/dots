@@ -179,6 +179,10 @@ if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
 fi
 
+if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/fzf-tab" ]; then
+    git clone https://github.com/Aloxaf/fzf-tab "$HOME/.oh-my-zsh/custom/plugins/fzf-tab"
+fi
+
 if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
 fi
@@ -266,6 +270,31 @@ if [ ! -f /usr/local/bin/alacritty ]; then
 
     cd "$HOME"
     rm -rf ./alacritty
+fi
+
+# Ubuntu/Debian ship bat as "batcat".
+if ! command -v bat >/dev/null && command -v batcat >/dev/null; then
+    mkdir -p ~/.local/bin
+    ln -s "$(command -v batcat)" ~/.local/bin/bat
+fi
+
+if ! command -v delta >/dev/null; then
+    (
+        cd "$(mktemp -d)"
+        curl -fsSL https://github.com/dandavison/delta/releases/download/0.19.2/delta-0.19.2-x86_64-unknown-linux-musl.tar.gz | tar xz
+        mkdir -p ~/.local/bin
+        install -m755 delta-*/delta ~/.local/bin/delta
+    )
+fi
+
+if ! command -v atuin >/dev/null; then
+    (
+        cd "$(mktemp -d)"
+        curl -fsSL https://github.com/atuinsh/atuin/releases/download/v18.22.0/atuin-x86_64-unknown-linux-musl.tar.gz | tar xz
+        mkdir -p ~/.local/bin
+        install -m755 atuin-*/atuin ~/.local/bin/atuin
+        ~/.local/bin/atuin import auto || true
+    )
 fi
 
 if ! starship --version; then

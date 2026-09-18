@@ -60,13 +60,11 @@
 # }}}
 [merge "ours"]
 	driver = true
-[pager]
-       diff = diff-so-fancy | less --tabs=1,5 -RFX
-
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [core]
 	editor = emacs -nw
+	pager = sh -c 'command -v delta >/dev/null && exec delta || exec less -RFX'
 [github]
 	user = blez
 [gitlab]
@@ -86,3 +84,7 @@
 	directory = /home/pkasko-ua/bcc/libbpf-tools/blazesym
 	directory = /home/pkasko-ua/bcc/src/cc/libbpf
 	directory = /home/pkasko-ua/bcc/libbpf-tools/bpftool
+[interactive]
+	diffFilter = sh -c 'command -v delta >/dev/null && exec delta --color-only || exec cat'
+[delta]
+	navigate = true
