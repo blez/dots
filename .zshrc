@@ -64,6 +64,19 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
+# Print "start → end (elapsed)" after commands that ran for at least 10s.
+zmodload zsh/datetime
+autoload -Uz add-zsh-hook
+_cmdtime_preexec() { _cmdtime_start=$EPOCHSECONDS }
+_cmdtime_precmd() {
+    [[ -n $_cmdtime_start ]] || return
+    local elapsed=$(( EPOCHSECONDS - _cmdtime_start ))
+    (( elapsed >= 10 )) && print -P "%F{242}$(strftime %T $_cmdtime_start) → $(strftime %T $EPOCHSECONDS) (${elapsed}s)%f"
+    unset _cmdtime_start
+}
+add-zsh-hook preexec _cmdtime_preexec
+add-zsh-hook precmd _cmdtime_precmd
+
 alias lsf="ls | fzf"
 alias rc="$EDITOR ~/.zshrc"
 if [ -f /etc/os-release ]; then
