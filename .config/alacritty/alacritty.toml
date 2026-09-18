@@ -42,3 +42,8 @@ style = "Bold"
 key = "Return"
 mods = "Shift"
 chars = "\u001B\r"
+
+[window]
+padding = { x = 8, y = 6 }
+# Spread leftover pixels (window size not a multiple of the cell size) evenly around the grid.
+dynamic_padding = true
