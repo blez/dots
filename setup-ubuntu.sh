@@ -123,6 +123,7 @@ sudo apt install -y \
     libgif-dev \
     libgtk2.0-dev \
     libxss-dev \
+    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
     lldb \
     lxappearance \
     maildir-utils \

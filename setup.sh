@@ -44,6 +44,7 @@ sudo apt -y install \
     jq \
     libnotify-dev \
     libarchive-dev \
+    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
     libvips-dev libsixel-dev libchafa-dev libtbb-dev \
     libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
     libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
