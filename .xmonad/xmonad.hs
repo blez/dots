@@ -52,9 +52,11 @@ myModMask = mod4Mask
 
 -- Named workspaces, so manageHook shifts reference them by name rather than by
 -- a fragile list index (reordering myWorkspaces can't silently misroute apps).
-wsEmacs, wsTerm, wsZoom, wsChat :: String
+wsEmacs, wsTerm, wsAI, wsSSH, wsZoom, wsChat :: String
 wsEmacs = "<icon=Emacs.xpm/>"
 wsTerm = "<icon=Terminal.xpm/>"
+wsAI = "<fn=2><fc=white>\xf085</fc></fn>"
+wsSSH = "<fn=2><fc=white>\xf233</fc></fn>"
 wsZoom = "5"
 wsChat = "<icon=Chat.xpm/>"
 
@@ -62,8 +64,8 @@ myWorkspaces :: [String]
 myWorkspaces =
   [ wsEmacs,
     wsTerm,
-    "3",
-    "4",
+    wsAI,
+    wsSSH,
     wsZoom,
     "6",
     "7",
@@ -391,7 +393,7 @@ myStartupHook = do
   -- Best-effort auto-timezone, re-run on every restart so travel is picked up.
   -- Only sets it if the lookup actually returned one, so an offline boot doesn't
   -- run `timedatectl set-timezone ""`; capped with --max-time so it can't hang.
-  spawn "tz=$(curl -s --max-time 5 ipinfo.io/$(myip) | jq -r .timezone); [ -n \"$tz\" ] && [ \"$tz\" != null ] && timedatectl set-timezone \"$tz\""
+  spawn "tz=$(curl -s --max-time 5 ipinfo.io | jq -r .timezone); [ -n \"$tz\" ] && [ \"$tz\" != null ] && timedatectl set-timezone \"$tz\""
 
 ------------------------------------------------------------------------
 -- Now run xmonad with all the defaults we set up.

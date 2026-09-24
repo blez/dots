@@ -18,10 +18,10 @@ Config { font = "JetBrains Mono Nerd Font 15"
        , allDesktops = True
        , overrideRedirect = True
        , iconRoot = ".xmonad/xpm/"
-       , commands = [Run Network "__ETH__" ["-t", "<fn=2>\xf6ff</fn> <fn=2>\xf063</fn> <rx>Kb <fn=2>\xf062</fn> <tx>Kb", "-S", "N/A"] 10
+       , commands = [Run Cpu ["-t", "CPU: <total>%"] 10
+                    , Run Network "__ETH__" ["-t", "<fn=2>\xf6ff</fn> <fn=2>\xf063</fn> <rx>Kb <fn=2>\xf062</fn> <tx>Kb", "-S", "N/A"] 10
                     , Run Network "__WIFI__" ["-t", "<rx>Kb|<tx>Kb"] 10
                     , Run Wireless "__WIFI__" ["-t","<fn=2>\xf1eb</fn> <essid> <quality>"] 10
-                    , Run Cpu ["-t", "CPU: <total>%"] 10
                     , Run Memory ["-t","RAM: <usedratio>%"] 10
                     , Run Swap ["-t","SWAP: <usedratio>%"] 100
                     , Run Date "<fn=2>\xf017</fn> %a %b %_d %Y %H:%M:%S" "date" 10
@@ -29,29 +29,29 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "battery" 600
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
-                    , Run Com "/bin/bash" ["-c", "playerctl metadata --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}' || true"] "music" 10
+                    , Run Com "/bin/bash" ["-c", "playerctl metadata 2>/dev/null --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}'"] "music" 10
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
-                    , Run Com "/bin/bash" ["-c", "d=$(~/scripts/blue-connected.sh); echo \"<box type=Bottom width=2 mb=2 color=red><fc=white><fn=2>\xf3fa</fn>${d:+ $d}</fc></box>\""] "blue" 10
+                    , Run Com "/bin/bash" ["-c", "d=$(~/scripts/blue-connected.sh); echo \"__BOX__<fn=2>\xf3fa</fn>${d:+ $d}__XOB__\""] "blue" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf0a0</fn> $(~/scripts/disk-usage.sh)\""] "disk" 100
-                    , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"<box type=Bottom width=2 mb=2 color=red><fc=white><fn=2>\xf185</fn>${b:+ $b}</fc></box>\""] "bright" 60
+                    , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"__BOX__<fn=2>\xf185</fn>${b:+ $b}__XOB__\""] "bright" 60
                     , Run StdinReader
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = "<box type=Bottom width=2 mb=2 color=red><fc=white>%cpu%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%memory%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%swap%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%disk%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%__ETH__%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%__WIFI__wi% %__WIFI__%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%vpn%</fc></box> \
+       , template = "__BOX__%cpu%__XOB__ \
+                    \ __BOX__%memory%__XOB__ \
+                    \ __BOX__%swap%__XOB__ \
+                    \ __BOX__%disk%__XOB__ \
+                    \ __BOX__%__ETH__%__XOB__ \
+                    \ __BOX__%__WIFI__wi% %__WIFI__%__XOB__ \
+                    \ __BOX__%vpn%__XOB__ \
                     \ %blue% \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%upd%</fc></box> } \
+                    \ __BOX__%upd%__XOB__ } \
                     \ %StdinReader% \
-                    \{<box type=Bottom width=2 mb=2 color=red><fc=white>%music%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%date%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%layout%</fc></box> \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%myvolume%</fc></box> \
+                    \{__BOX__%music%__XOB__ \
+                    \ __BOX__%date%__XOB__ \
+                    \ __BOX__%layout%__XOB__ \
+                    \ __BOX__%myvolume%__XOB__ \
                     \ %bright% \
-                    \ <box type=Bottom width=2 mb=2 color=red><fc=white>%battery%</fc></box> "
+                    \ __BOX__%battery%__XOB__ "
        }

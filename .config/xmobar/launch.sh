@@ -2,7 +2,8 @@
 # Launches xmobar with interface names detected at runtime, so the same
 # xmobarrc works across machines (desktop, laptop, USB ethernet dongles).
 #
-# xmobarrc uses the tokens __ETH__ and __WIFI__ as placeholders. This script
+# xmobarrc uses the tokens __ETH__ and __WIFI__ as placeholders (plus
+# __BOX__/__XOB__ for segment styling). This script
 # resolves the real interface names, writes a generated rc, then execs xmobar
 # so it inherits this process's stdin (the pipe xmonad uses for StdinReader).
 set -euo pipefail
@@ -40,11 +41,19 @@ detect_eth() {
 ETH=$(detect_eth || true)
 WIFI=$(detect_wifi || true)
 
-# Fallbacks: if an interface type is absent, leave a name that simply reports
-# N/A rather than breaking the template. 'lo' always exists and stays idle.
-ETH=${ETH:-lo}
-WIFI=${WIFI:-lo}
+# Shared styling for bar segments; xmobarrc writes __BOX__...__XOB__.
+BOX='<box type=Bottom width=2 mb=2 color=red><fc=white>'
+XOB='</fc></box>'
 
-sed -e "s/__ETH__/$ETH/g" -e "s/__WIFI__/$WIFI/g" "$TEMPLATE" > "$GENERATED"
+# Drop every line mentioning an absent interface type (its commands and its
+# template segment), so a machine without wifi shows no dead wifi segment.
+drop=()
+[ -z "$ETH" ] && drop+=(-e '/__ETH__/d')
+[ -z "$WIFI" ] && drop+=(-e '/__WIFI__/d')
+
+sed "${drop[@]}" \
+    -e "s/__ETH__/$ETH/g" -e "s/__WIFI__/$WIFI/g" \
+    -e "s|__BOX__|$BOX|g" -e "s|__XOB__|$XOB|g" \
+    "$TEMPLATE" > "$GENERATED"
 
 exec "$XMOBAR" -x 0 "$GENERATED"
