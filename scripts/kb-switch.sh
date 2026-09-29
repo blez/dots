@@ -7,9 +7,13 @@ us)
     setxkbmap ru
     ;;
 ru)
-    setxkbmap us
+    # both Alts type Polish characters, only while pl is active
+    setxkbmap pl -option lv3:lalt_switch
+    ;;
+pl)
+    setxkbmap us -option ''
     ;;
 *)
-    setxkbmap us
+    setxkbmap us -option ''
     ;;
 esac
