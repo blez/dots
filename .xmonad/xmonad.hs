@@ -5,7 +5,7 @@ import System.Exit
 import System.IO (hPutStrLn)
 import XMonad
 import XMonad.Actions.CycleWS
-import XMonad.Actions.Navigation2D (Direction2D (..), windowGo, withNavigation2DConfig)
+import XMonad.Actions.Navigation2D (Direction2D (..), Navigation2DConfig (..), centerNavigation, hybridOf, sideNavigation, windowGo, withNavigation2DConfig)
 import XMonad.Hooks.DynamicLog (PP (..), dynamicLogWithPP, shorten, wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (docks, avoidStruts, manageDocks)
@@ -88,6 +88,18 @@ myAdditionalKeys =
     ++ [ ((myModMask .|. shiftMask, key), (windows $ W.shift ws))
          | (key, ws) <- myExtraWorkspaces
        ]
+
+-- Directional-focus strategy for tiled windows. The Navigation2D default
+-- (hybridOf lineNavigation sideNavigation) shoots a ray from the centre of the
+-- focused window; with Spacing, that ray can pass straight through the gap
+-- between two stacked neighbours (e.g. a side column split at the exact height
+-- of a tall master's centre) and, because we wrap, hit a wrapped copy of a
+-- window on the far side instead. lineNavigation then "succeeds", so the
+-- fallback never runs and the stacked neighbours are unreachable.
+-- sideNavigation pushes the whole edge instead of a single ray, so any
+-- window that overlaps the focused one is a candidate.
+myNav2DConfig :: Navigation2DConfig
+myNav2DConfig = def { defaultTiledNavigation = hybridOf sideNavigation centerNavigation }
 
 -- Layout-aware focus: geometric (wrapping) nav in tiled layouts, but in the
 -- "full" layout (all windows stacked at full screen) there are no spatial
@@ -405,7 +417,7 @@ main = do
   setEnv "LD_LIBRARY_PATH" "/usr/local/lib/" True
   xmproc <- spawnPipe "~/.config/xmobar/launch.sh"
   xmonad $
-    docks $ ewmhFullscreen . ewmh $ withNavigation2DConfig def $
+    docks $ ewmhFullscreen . ewmh $ withNavigation2DConfig myNav2DConfig $
       def
         { -- simple stuff
           terminal = myTerminal,

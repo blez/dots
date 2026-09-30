@@ -27,7 +27,11 @@
 ;; `load-theme' function. This is the default:
 ;; (setq doom-theme 'doom-dark+)
 (setq doom-theme 'modus-vivendi)
-;; (setq modus-themes-syntax '(faint))
+;; modus-themes 5.x (Emacs 31) dims tree-sitter "use"/"call" faces to slate/pink.
+;; Map them back to the full-strength definition colors used in Emacs 30.
+(setq modus-themes-common-palette-overrides
+      '((variable-use variable)
+        (fnname-call fnname)))
 
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
@@ -72,7 +76,7 @@
 (map! :n "J" #'evil-mc-make-cursor-move-next-line)
 (map! :n "K" #'evil-mc-make-cursor-move-prev-line)
 
-(map! :leader :desc "Transpose frame" "w /" #'transpose-frame)
+(map! :leader :desc "Transpose windows" "w /" #'window-layout-transpose)
 (map! :leader
     (:prefix-map ("a" . "Custom")
         :desc "Save buffer" "a" #'save-buffer))
@@ -155,6 +159,15 @@
 (defun go-lsp-setup ()
     (setq lsp-go-build-flags ["-tags=operator,integration,cluster,debug"]))
 (add-hook! '(go-mode-lsp-hook go-ts-mode-lsp-hook) #'go-flycheck-setup #'go-lsp-setup)
+
+;; Emacs 31: built-in go test runner in go-ts-mode (C-c C-t t/f/p), honors build tags.
+;; Doom already uses SPC m t t/f/s for gotest, so these go on free keys.
+(after! go-ts-mode
+    (setq go-ts-mode-build-tags '("operator" "integration" "cluster" "debug")))
+(map! :after go-ts-mode :map go-ts-mode-map :localleader
+    :desc "Test function at point (builtin)" "t ." #'go-ts-mode-test-function-at-point
+    :desc "Test this file (builtin)"         "t F" #'go-ts-mode-test-this-file
+    :desc "Test this package (builtin)"      "t p" #'go-ts-mode-test-this-package)
 
 (add-hook! '(sh-mode-lsp-hook sh-ts-mode-lsp-hook) #'sh-flycheck-setup)
 (defun sh-flycheck-setup ()
@@ -334,6 +347,11 @@
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type 'relative)
+
+;; Emacs 31 additions.
+(setq hs-show-indicators t)              ; fringe fold indicators (works in ts modes now)
+(vc-auto-revert-mode 1)                  ; revert VCS-tracked buffers after git operations
+(setq-default line-spacing '(2 . 2))     ; space above and below each line
 (add-hook 'protobuf-mode-hook #'display-line-numbers-mode)
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
