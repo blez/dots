@@ -15,7 +15,6 @@
 (package! exec-path-from-shell)
 (package! closql)
 (package! org-preview-html)
-(package! lsp-grammarly)
 (package! disable-mouse)
 (package! dirvish)
 (package! copilot

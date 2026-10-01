@@ -261,11 +261,6 @@
 
 (setq-hook! 'rjsx-mode-hook +format-with-lsp nil)
 
-(setq lsp-grammarly-server-path "~/.local/share/pnpm/grammarly-languageserver")
-(use-package! lsp-grammarly
-    :after lsp-mode
-    :hook (text-mode . lsp))
-
 ;; fd >= 10.x makes `--strip-cwd-prefix' take an optional `[=<when>]' value,
 ;; which clap refuses to combine with a positional `[path]'. Doom's projectile
 ;; shim always passes an explicit `.' path, so the flag is redundant; drop it to

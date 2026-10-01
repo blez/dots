@@ -171,7 +171,7 @@ _clone_and_run() {
     "$@"
 }
 
-# npm_tool PKG / pnpm_tool PKG / pipx_tool PKG / go_tool PKG -- per package manager.
+# npm_tool PKG / pipx_tool PKG / go_tool PKG -- per package manager.
 npm_json=""
 npm_tool() {
     local pkg=$1 current latest
@@ -181,15 +181,6 @@ npm_tool() {
     if want_install "$pkg" "$current" "$latest"; then
         sudo npm install -g "$pkg@latest"
         npm_json=""
-    fi
-}
-
-pnpm_tool() {
-    local pkg=$1 current latest
-    current="$(pnpm ls -g --depth=0 --json 2>/dev/null | jq -r --arg p "$pkg" '.[0].dependencies[$p].version // empty' || :)"
-    latest="$(npm view "$pkg" version 2>/dev/null || :)"
-    if want_install "$pkg" "$current" "$latest"; then
-        pnpm add -g "$pkg@latest"
     fi
 }
 
@@ -567,7 +558,6 @@ else
 fi
 npm_tool stylelint
 npm_tool js-beautify
-pnpm_tool @emacs-grammarly/grammarly-languageserver
 
 if ! command -v rust-analyzer >/dev/null; then
     rustup component add rust-analyzer
