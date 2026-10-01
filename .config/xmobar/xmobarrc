@@ -27,13 +27,14 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Date "<fn=2>\xf017</fn> %a %b %_d %Y %H:%M:%S" "date" 10
                     , Run Com "xkblayout-state" ["print", "<fn=2>\xf0ac</fn> %s"] "layout" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
-                    , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "battery" 600
+                    , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "__BAT__battery" 600
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
                     , Run Com "/bin/bash" ["-c", "playerctl metadata 2>/dev/null --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}'"] "music" 10
                     , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
                     , Run Com "/bin/bash" ["-c", "d=$(~/scripts/blue-connected.sh); echo \"__BOX__<fn=2>\xf3fa</fn>${d:+ $d}__XOB__\""] "blue" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf0a0</fn> $(~/scripts/disk-usage.sh)\""] "disk" 100
-                    , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"__BOX__<fn=2>\xf185</fn>${b:+ $b}__XOB__\""] "bright" 60
+                    , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"__BOX__<fn=2>\xf185</fn>${b:+ $b}__XOB__\""] "__BL__bright" 60
+                    , Run Com "/bin/bash" ["-c", "w=$(~/scripts/weather.sh); if [ -n \"$w\" ]; then echo \"__BOX__${w}__XOB__\"; fi"] "weather" 600
                     , Run StdinReader
                     ]
        , sepChar = "%"
@@ -49,9 +50,11 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     \ __BOX__%upd%__XOB__ } \
                     \ %StdinReader% \
                     \{__BOX__%music%__XOB__ \
+                    \ %weather% \
                     \ __BOX__%date%__XOB__ \
                     \ __BOX__%layout%__XOB__ \
                     \ __BOX__%myvolume%__XOB__ \
-                    \ %bright% \
-                    \ __BOX__%battery%__XOB__ "
+                    \ %__BL__bright% \
+                    \ __BOX__%__BAT__battery%__XOB__ \
+                    \"
        }
