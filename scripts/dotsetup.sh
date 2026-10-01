@@ -33,8 +33,8 @@ dots checkout
 dots config status.showUntrackedFiles no
 
 # Desktop theming the checked-out configs assume: GTK theme/icons
-# (~/.config/gtk-3.0, gtk-4.0, .gtkrc-2.0) and the compositor xmonad spawns.
-sudo apt install -y yaru-theme-gtk yaru-theme-icon picom
+# (~/.config/gtk-3.0, gtk-4.0, .gtkrc-2.0). picom is built from source in setup.sh.
+sudo apt install -y yaru-theme-gtk yaru-theme-icon
 
 # Nerd Font used by xmonad tabs, xmobar, rofi, dunst, alacritty and GTK;
 # not packaged by apt, so fetch the release zip into the user font dir.

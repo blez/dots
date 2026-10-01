@@ -18,7 +18,8 @@ export PATH=~/.local/bin/:$PATH
 export PATH=/usr/java/jre1.8.0_333/bin/:$PATH
 export PATH=~/flutter/bin/:$PATH
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-export PATH="$PNPM_HOME:$PATH"
+# pnpm 11+ puts global package binaries in $PNPM_HOME/bin
+export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -93,14 +94,7 @@ add-zsh-hook precmd _cmdtime_precmd
 
 alias lsf="ls | fzf"
 alias rc="$EDITOR ~/.zshrc"
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    if [ "$ID" = "ubuntu" ]; then
-        alias sp="$HOME/setup-ubuntu.sh"
-    else
-        alias sp="$HOME/setup.sh"
-    fi
-fi
+alias sp="$HOME/setup.sh"
 alias spe="$EDITOR ~/setup.sh"
 
 alias hel="cd ~/helios"
@@ -134,7 +128,8 @@ alias myip="curl -s ifconfig.me || curl -s api.ipify.org"
 alias myloc="curl -s ipinfo.io/$(myip) | jq -r .timezone"
 
 alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
-alias dotsadd='dots add $(dots st -s | awk "{print \$2}")'
+# Stage all changes to tracked files, deletions and renames included.
+alias dotsadd='dots add -u'
 dots config --local status.showUntrackedFiles no
 
 alias src="source ~/.zshrc"

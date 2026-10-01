@@ -1,10 +1,244 @@
 #!/bin/bash
 set -euo pipefail
 
+usage() {
+    cat <<'USAGE'
+Usage: setup.sh [-i|--ignore-updates]
+
+Installs missing tools and offers available upgrades with a [Y/n] prompt.
+
+  -i, --ignore-updates  Only report available upgrades; don't ask, don't upgrade.
+                        Missing tools are still installed.
+  -h, --help            Show this help.
+USAGE
+}
+
+ignore_updates=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -i | --ignore-updates) ignore_updates=1 ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+# Directories this script installs tools into. Login shells add them via
+# .zshrc/.profile, but a fresh machine or a plain bash run doesn't have them,
+# which makes installed tools look missing and fresh installs unusable.
+export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+export GOPATH="${GOPATH:-$HOME/go}"
+for dir in "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/.ghcup/bin" "$HOME/.cabal/bin" \
+    "$PNPM_HOME" "$PNPM_HOME/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin"; do
+    case ":$PATH:" in
+        *":$dir:"*) ;;
+        *) PATH="$dir:$PATH" ;;
+    esac
+done
+export PATH
+
+# ---------------------------------------------------------------------------
+# Update helpers. Missing tools are installed without asking; for installed
+# ones a newer upstream version is offered with a [Y/n] prompt. The prompt
+# reads from the terminal; with no terminal, or with --ignore-updates, the
+# upgrade is only reported and listed again in a summary at the end.
+# ---------------------------------------------------------------------------
+
+# confirm QUESTION -- yes unless the answer starts with n/N. QUESTION reads
+# "<what is available>. Do you want to ...?"; when not asking, only the first
+# part is reported and remembered for the summary.
+skipped_updates=()
+confirm() {
+    local answer
+    if [ "$ignore_updates" = 0 ] && (exec </dev/tty) 2>/dev/null &&
+        read -r -p "$1 [Y/n] " answer </dev/tty; then
+        case "$answer" in
+            [nN]*) return 1 ;;
+            *) return 0 ;;
+        esac
+    fi
+    skipped_updates+=("${1% Do you want*}")
+    if [ "$ignore_updates" = 1 ]; then
+        echo "${1% Do you want*}"
+    else
+        echo "$1 [no terminal, skipped]"
+    fi
+    return 1
+}
+
+# ver CMD... -- first version-looking token of CMD's output, "" if CMD is missing.
+ver() {
+    command -v "$1" >/dev/null || return 0
+    "$@" 2>/dev/null | head -1 | grep -oE '[0-9]+(\.[0-9]+)*(-[0-9A-Za-z.]+)?' | head -1 || :
+}
+
+# latest_tag REPO_URL -- newest stable tag (rc/beta/dev/vNext excluded), "" on failure.
+latest_tag() {
+    git ls-remote --tags --refs "$1" 2>/dev/null | sed 's|.*refs/tags/||' |
+        grep -E '^v?[0-9]+(\.[0-9]+)*$' | sort -V | tail -1 || :
+}
+
+# is_newer A B -- true if version A is newer than B (leading "v" ignored).
+# A pre-release/dev build of A (0.17.0-dev, 0.17.0-rc1) counts as older than A;
+# a build N commits after release A (git describe: 1.13.2-15) counts as newer.
+is_newer() {
+    local a=${1#v} b=${2#v}
+    [ "$a" != "$b" ] || return 1
+    if [ "${b%%-*}" = "$a" ]; then
+        case "${b#*-}" in
+            [0-9]*) return 1 ;;
+            *) return 0 ;;
+        esac
+    fi
+    [ "$(printf '%s\n%s\n' "$a" "$b" | sort -V | tail -1)" = "$a" ]
+}
+
+# want_install NAME CURRENT LATEST [need_latest]
+# True when NAME is missing, or LATEST is newer and the user agrees.
+# Pass need_latest when installing is impossible without knowing LATEST.
+want_install() {
+    local name=$1 current=$2 latest=$3 need_latest=${4:-}
+    if [ -z "$current" ]; then
+        if [ -z "$latest" ] && [ -n "$need_latest" ]; then
+            echo "$name: not installed and the latest version could not be looked up, skipping" >&2
+            return 1
+        fi
+        echo "$name: not installed, installing${latest:+ $latest}"
+        return 0
+    fi
+    if [ -z "$latest" ]; then
+        echo "$name: could not look up the latest version, skipping update check" >&2
+        return 1
+    fi
+    is_newer "$latest" "$current" || return 1
+    confirm "$name: new version $latest available (installed $current). Do you want to upgrade?"
+}
+
+# git_repo_update NAME DIR [COMMAND...] -- for tools that live in a git checkout:
+# offer new upstream commits. COMMAND (run in DIR) replaces the default pull.
+git_repo_update() {
+    local name=$1 dir=$2 behind
+    shift 2
+    if ! git -C "$dir" fetch --quiet 2>/dev/null; then
+        echo "$name: could not fetch updates, skipping update check" >&2
+        return 0
+    fi
+    behind="$(git -C "$dir" rev-list --count 'HEAD..@{u}' 2>/dev/null || echo 0)"
+    [ "$behind" -gt 0 ] || return 0
+    if confirm "$name: $behind new upstream commits available. Do you want to update?"; then
+        if [ $# -gt 0 ]; then
+            (cd "$dir" && "$@")
+        else
+            git -C "$dir" pull --ff-only --quiet
+        fi
+    fi
+}
+
+# Non-fatal install failures, reported at the end (and setup.sh exits 1).
+failed_installs=()
+
+# in_temp_dir CMD... -- run CMD inside a fresh temp dir, then delete the dir.
+# Keeps builds and downloads out of $HOME and cleans up after them.
+in_temp_dir() {
+    local dir
+    dir="$(mktemp -d)"
+    (
+        trap 'rm -rf "$dir"' EXIT
+        cd "$dir"
+        "$@"
+    )
+}
+
+# build_from_tag REPO TAG CMD... -- shallow-clone REPO at TAG (default branch
+# when TAG is empty) into a temp dir and run CMD inside the checkout.
+build_from_tag() {
+    local repo=$1 tag=$2
+    shift 2
+    in_temp_dir _clone_and_run "$repo" "$tag" "$@"
+}
+_clone_and_run() {
+    local repo=$1 tag=$2
+    shift 2
+    git -c advice.detachedHead=false clone --quiet --depth 1 --recurse-submodules --shallow-submodules \
+        ${tag:+--branch "$tag"} "$repo" src
+    cd src
+    "$@"
+}
+
+# npm_tool PKG / pnpm_tool PKG / pipx_tool PKG / go_tool PKG -- per package manager.
+npm_json=""
+npm_tool() {
+    local pkg=$1 current latest
+    [ -n "$npm_json" ] || npm_json="$(npm ls -g --depth=0 --json 2>/dev/null || echo '{}')"
+    current="$(jq -r --arg p "$pkg" '.dependencies[$p].version // empty' <<<"$npm_json" || :)"
+    latest="$(npm view "$pkg" version 2>/dev/null || :)"
+    if want_install "$pkg" "$current" "$latest"; then
+        sudo npm install -g "$pkg@latest"
+        npm_json=""
+    fi
+}
+
+pnpm_tool() {
+    local pkg=$1 current latest
+    current="$(pnpm ls -g --depth=0 --json 2>/dev/null | jq -r --arg p "$pkg" '.[0].dependencies[$p].version // empty' || :)"
+    latest="$(npm view "$pkg" version 2>/dev/null || :)"
+    if want_install "$pkg" "$current" "$latest"; then
+        pnpm add -g "$pkg@latest"
+    fi
+}
+
+pipx_json=""
+pipx_tool() {
+    local pkg=$1 key current latest
+    key="$(echo "$pkg" | tr 'A-Z_' 'a-z-')"
+    [ -n "$pipx_json" ] || pipx_json="$(pipx list --json 2>/dev/null || echo '{}')"
+    current="$(jq -r --arg p "$key" '.venvs[$p].metadata.main_package.package_version // empty' <<<"$pipx_json" || :)"
+    latest="$(curl -fsS "https://pypi.org/pypi/$pkg/json" 2>/dev/null | jq -r '.info.version // empty' || :)"
+    if want_install "$pkg" "$current" "$latest"; then
+        if [ -z "$current" ]; then
+            pipx install "$pkg"
+        else
+            pipx upgrade "$pkg"
+        fi
+    fi
+}
+
+go_tool() {
+    local pkg=$1 bin=${1##*/} path mod="" current="" latest=""
+    if path="$(command -v "$bin")"; then
+        read -r mod current < <(go version -m "$path" 2>/dev/null | awk '$1 == "mod" {print $2, $3; exit}') || :
+        [ -z "$mod" ] || latest="$(go list -m -f '{{.Version}}' "$mod@latest" 2>/dev/null || :)"
+    fi
+    if want_install "$bin" "$current" "$latest"; then
+        if ! go install "$pkg@latest"; then
+            echo "$bin: go install failed" >&2
+            failed_installs+=("$bin (go install $pkg@latest)")
+        fi
+    fi
+}
+
+# ---------------------------------------------------------------------------
+
+sudo add-apt-repository -y universe
 sudo apt update
-sudo apt full-upgrade
-sudo apt autoremove
-sudo apt -y install \
+# Simulate instead of "apt list --upgradable": that also lists phased and
+# held-back updates which full-upgrade won't install, so it would nag forever.
+apt_upgradable="$(apt-get -s full-upgrade 2>/dev/null | grep -c '^Inst ' || :)"
+if [ "$apt_upgradable" -gt 0 ]; then
+    if confirm "apt: $apt_upgradable packages can be upgraded. Do you want to upgrade?"; then
+        sudo apt full-upgrade -y
+    fi
+fi
+sudo apt autoremove -y
+
+# --no-upgrade: already-installed packages are only upgraded via the prompt above.
+sudo apt install -y --no-upgrade \
     alsa-utils \
     apache2-utils \
     autoconf \
@@ -12,56 +246,82 @@ sudo apt -y install \
     bat \
     btop \
     bluez \
-    bluez-tools \
     build-essential \
     ca-certificates \
     clang \
+    clangd \
+    clang-format \
     cmake \
-    compton \
     curl \
-    default-jre \
     default-jdk \
     deluge \
     direnv \
     dmenu \
-    docbook2x \
     dsniff \
-    dunst \
     dh-autoreconf \
     editorconfig \
-    exa \
+    eza \
+    fonts-symbola \
     ffmpeg \
     flameshot \
     gawk \
     g++ \
+    g++-14 \
     git \
     gnupg \
+    graphviz \
     glslang-tools \
     i3lock \
     imagemagick \
-    install-info \
     isync \
     jq \
+    libvips-dev \
+    libxcb-res0-dev \
+    libopencv-dev \
     libnotify-dev \
+    libxaw7-dev \
+    libx11-dev \
+    libayatana-appindicator3-1 \
     libarchive-dev \
-    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
-    libvips-dev libsixel-dev libchafa-dev libtbb-dev \
-    libffi-dev libffi7 libgmp-dev libgmp10 libncurses5 libtinfo5 \
-    libc6-dev libjpeg62-turbo libncurses5-dev libtiff5-dev xaw3dg-dev zlib1g-dev \
-    libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev \
-    libgccjit-10-dev libgnutls28-dev gnutls-bin libjson-c-dev libjson-glib-dev libjansson-dev \
-    librust-gdk-sys-dev libgtk-3-dev libgtk-layer-shell-dev libpango1.0-dev \
-    libwxgtk3.0-gtk3-dev \
-    librust-gdk-pixbuf-sys-dev libcairo2-dev libcairo-gobject2 librust-gio-sys-dev \
-    librust-glib-sys-dev librust-gobject-sys-dev \
+    libasound2-dev \
+    libsixel-dev \
+    libspa-0.2-bluetooth \
+    libchafa-dev \
+    libstdc++-14-dev \
+    libtbb-dev \
+    libffi-dev \
+    libgmp-dev \
+    libncurses-dev \
+    libc6-dev \
+    libjpeg-dev \
+    libtiff-dev \
+    libfreetype6-dev \
+    libfontconfig1-dev \
+    libtree-sitter-dev \
+    libxcb-xfixes0-dev \
+    libxkbcommon-dev \
+    libgccjit-14-dev \
+    libgnutls28-dev \
+    gnutls-bin \
+    libjson-c-dev \
+    libjson-glib-dev \
+    libjansson-dev \
+    libgtk-3-dev \
+    libgtk-layer-shell-dev \
+    libpango1.0-dev \
+    libwxgtk3.2-dev \
+    libcairo2-dev \
+    libcairo-gobject2 \
     libneon27-dev \
-    libncurses-dev libxpm-dev \
+    libxpm-dev \
     libxext-dev \
     libxcb1-dev \
     libxcb-dpms0-dev \
     libxcb-damage0-dev \
     libxcb-shape0-dev \
     libxcb-render-util0-dev \
+    libxcb-util-dev \
+    libepoxy-dev \
     libxcb-render0-dev \
     libxcb-randr0-dev \
     libxcb-composite0-dev \
@@ -76,7 +336,6 @@ sudo apt -y install \
     libcurl4-gnutls-dev \
     libgl1-mesa-dev \
     libpcre2-dev \
-    libpcre3-dev \
     libevdev-dev \
     uthash-dev \
     libev-dev \
@@ -94,12 +353,15 @@ sudo apt -y install \
     libuchardet-dev \
     libxerces-c-dev \
     libxi-dev \
-    libx11-dev libxpm-dev libjpeg-dev libpng-dev libgif-dev libtiff-dev libgtk2.0-dev \
+    libpng-dev \
+    libgif-dev \
+    libgtk2.0-dev \
+    libxss-dev \
+    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
     lldb \
     lxappearance \
     maildir-utils \
     meson \
-    mu4e \
     m4 \
     net-tools \
     ninja-build \
@@ -107,10 +369,13 @@ sudo apt -y install \
     nitrogen \
     pavucontrol \
     pcmanfm \
+    pipx \
     poppler-utils \
     pkg-config \
     playerctl \
-    pulseaudio pulseaudio-utils pulseaudio-module-bluetooth \
+    pulseaudio \
+    pulseaudio-utils \
+    pulseaudio-module-bluetooth \
     pipenv \
     protobuf-compiler \
     python3 \
@@ -118,49 +383,60 @@ sudo apt -y install \
     ranger \
     rofi \
     shellcheck \
-    systemd-timesyncd \
     texinfo \
+    texlive-full \
+    tidy \
     tmux \
+    unzip \
     vim \
     vlc \
     xwallpaper \
     xclip \
     xfce4-power-manager \
+    xournalpp \
     xmlto \
-    zoxide
-# xmonad libghc-xmonad-contrib-dev \
+    zoxide \
+    7zip
 
-if ! ghcup --version; then
-    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+if ! command -v ghcup >/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org |
+        BOOTSTRAP_HASKELL_NONINTERACTIVE=1 sh
 fi
 
-if ! cabal --version; then
-    ghcup install --set cabal latest
+cabal_latest="$(ghcup list -t cabal -r 2>/dev/null | awk '$3 ~ /(^|,)latest(,|$)/ {print $2}' || :)"
+if want_install cabal "$(ver cabal --version)" "$cabal_latest"; then
+    ghcup install cabal --set "${cabal_latest:-latest}"
 fi
 
-if ! xmonad --version; then
-    echo "Install xmonad"
-    exit 0
+if ! command -v xmonad >/dev/null; then
+    echo "Install xmonad" >&2
+    exit 1
 # https://github.com/NapoleonWils0n/cerberus/blob/master/xmonad/xmonad-ubuntu-stack-install.org
 fi
 
-if ! xmobar --version; then
+xmobar_latest="$(curl -fsS -H 'Accept: application/json' https://hackage.haskell.org/package/xmobar/preferred 2>/dev/null |
+    jq -r '."normal-version"[0] // empty' || :)"
+if want_install xmobar "$(ver xmobar --version)" "$xmobar_latest"; then
     cabal update
-    cabal install xmobar -fall_extensions
+    cabal install xmobar -fall_extensions --overwrite-policy=always
 fi
 
-if ! dunst --version; then
-    (
-        git clone https://github.com/dunst-project/dunst.git
-        cd dunst
-        make
-        sudo make install
-    )
+# dunst: built from source; purge the outdated distro package so its binary
+# and D-Bus service file can't shadow the build.
+if dpkg -s dunst >/dev/null 2>&1; then
+    sudo apt purge -y dunst
+fi
+dunst_latest="$(latest_tag https://github.com/dunst-project/dunst.git)"
+build_dunst() {
+    make
+    sudo make install
+}
+if want_install dunst "$(ver dunst --version)" "$dunst_latest"; then
+    build_from_tag https://github.com/dunst-project/dunst.git "$dunst_latest" build_dunst
 fi
 
-if ! zsh --version; then
+if ! command -v zsh >/dev/null; then
     sudo apt -y install zsh
-    /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
 fi
 
 if [ ! -f ~/.ssh/id_ed25519 ]; then
@@ -173,104 +449,163 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
 fi
 
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    # The installer replaces .zshrc; restore ours. Only here, so later runs
+    # never discard uncommitted .zshrc edits.
+    /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
 fi
 
-if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
-    git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
-fi
+for plugin in zsh-users/zsh-autosuggestions Aloxaf/fzf-tab zsh-users/zsh-syntax-highlighting; do
+    plugin_dir="$HOME/.oh-my-zsh/custom/plugins/${plugin#*/}"
+    if [ ! -d "$plugin_dir" ]; then
+        git clone "https://github.com/$plugin.git" "$plugin_dir"
+    else
+        git_repo_update "${plugin#*/}" "$plugin_dir"
+    fi
+done
 
-if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/fzf-tab" ]; then
-    git clone https://github.com/Aloxaf/fzf-tab "$HOME/.oh-my-zsh/custom/plugins/fzf-tab"
+# picom: built from source; the distro package is outdated, so purge it
+# so it can't shadow the build or reappear on upgrades.
+if dpkg -s picom >/dev/null 2>&1; then
+    sudo apt purge -y picom
 fi
-
-if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-fi
-
-# remove default picom
-sudo rm /usr/bin/picom || :
-if ! picom --version; then
-    cd "$HOME"
-    rm -rf picom || :
-    git clone git@github.com:yshui/picom.git
-    cd picom
-    git checkout "$(curl https://api.github.com/repos/yshui/picom/releases/latest | jq -r .tag_name)"
-    git submodule update --init --recursive
-    meson --buildtype=release . build
+picom_latest="$(latest_tag https://github.com/yshui/picom.git)"
+build_picom() {
+    meson setup --buildtype=release build
     ninja -C build
     sudo ninja -C build install
-    cd "$HOME"
-    rm -rf ./picom
+}
+if want_install picom "$(ver picom --version)" "$picom_latest"; then
+    build_from_tag https://github.com/yshui/picom.git "$picom_latest" build_picom
 fi
 
-if ! xkblayout-state print format; then
-    cd
-    git clone git@github.com:nonpop/xkblayout-state.git
-    cd xkblayout-state
+build_xkblayout_state() {
     make
-    sudo mv xkblayout-state /usr/local/bin
-    cd
-    rm -rf xkblayout-state
+    sudo install -m755 xkblayout-state /usr/local/bin/xkblayout-state
+}
+if ! command -v xkblayout-state >/dev/null; then
+    build_from_tag https://github.com/nonpop/xkblayout-state.git "" build_xkblayout_state
 fi
 
-if [ ! -d "$HOME/.font-awesome" ]; then
-    cd "$HOME"
-    curl -LO https://use.fontawesome.com/releases/v5.15.4/fontawesome-free-5.15.4-desktop.zip
-    unzip fontawesome-free-5.15.4-desktop.zip
-    mv fontawesome-free-5.15.4-desktop .font-awesome
+# Font Awesome stays on v5 on purpose. ~/.font-awesome is kept as the install marker.
+install_font_awesome() {
+    curl -fsSLO https://use.fontawesome.com/releases/v5.15.4/fontawesome-free-5.15.4-desktop.zip
+    unzip -q fontawesome-free-5.15.4-desktop.zip
+    mv fontawesome-free-5.15.4-desktop "$HOME/.font-awesome"
     sudo rm -rf /usr/share/fonts/font-awesome
-    sudo cp -r .font-awesome /usr/share/fonts/font-awesome
-    fc-cache -f -v
-    rm fontawesome-free-5.15.4-desktop.zip
+    sudo cp -r "$HOME/.font-awesome" /usr/share/fonts/font-awesome
+    fc-cache -f
+}
+if [ ! -d "$HOME/.font-awesome" ]; then
+    in_temp_dir install_font_awesome
 fi
 
 if [ ! -f "$HOME/.nerd-fonts" ]; then
-    cd
-    git clone https://github.com/ryanoasis/nerd-fonts
-    cd nerd-fonts
-    ./install.sh
-    rm -rf "$HOME/nerd-fonts"
+    build_from_tag https://github.com/ryanoasis/nerd-fonts "" ./install.sh
     touch "$HOME/.nerd-fonts"
-    cd
 fi
 
-if ! cargo --version; then
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    echo "Do 'source $HOME/.cargo/env' and rerun script"
-    exit 0
+if ! command -v cargo >/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 
-if ! fd --version; then
-    cd
-    rm -rf fd
 
-    git clone https://github.com/sharkdp/fd
-    cd fd
-    cargo build
-    cargo test
-    cargo install --path .
-
-    cd
-    rm -rf fd
+# fd: the crate is published as fd-find; cargo builds the latest release once.
+fd_latest="$(latest_tag https://github.com/sharkdp/fd.git)"
+if want_install fd "$(ver fd --version)" "$fd_latest"; then
+    cargo install fd-find --locked
 fi
 
-if [ ! -f /usr/local/bin/alacritty ]; then
-    cd "$HOME"
-    rm -rf ./alacritty || :
-    git clone https://github.com/alacritty/alacritty.git
-    cd alacritty
-
+alacritty_latest="$(latest_tag https://github.com/alacritty/alacritty.git)"
+build_alacritty() {
     cargo build --release
-    sudo mv target/release/alacritty /usr/local/bin
+    sudo install -m755 target/release/alacritty /usr/local/bin/alacritty
     sudo cp extra/logo/alacritty-term.svg /usr/share/pixmaps/Alacritty.svg
     sudo desktop-file-install extra/linux/Alacritty.desktop
     sudo update-desktop-database
-    mkdir -p "${ZDOTDIR:-~}/.zsh_functions"
-    cp extra/completions/_alacritty "${ZDOTDIR:-~}/.zsh_functions/_alacritty"
+    mkdir -p "${ZDOTDIR:-$HOME}/.zsh_functions"
+    cp extra/completions/_alacritty "${ZDOTDIR:-$HOME}/.zsh_functions/_alacritty"
+}
+if want_install alacritty "$(ver alacritty --version)" "$alacritty_latest"; then
+    build_from_tag https://github.com/alacritty/alacritty.git "$alacritty_latest" build_alacritty
+fi
 
-    cd "$HOME"
-    rm -rf ./alacritty
+starship_latest="$(latest_tag https://github.com/starship/starship.git)"
+if want_install starship "$(ver starship --version)" "$starship_latest"; then
+    sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes
+fi
+
+# https://github.com/nodesource/distributions
+# Install only if node is missing or older than the pinned major (22 LTS).
+node_major=0
+if command -v node >/dev/null; then
+    node_major=$(node --version | sed 's/^v\([0-9]*\).*/\1/')
+fi
+if [ "$node_major" -lt 22 ]; then
+    sudo mkdir -p /etc/apt/keyrings
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |
+        sudo gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" |
+        sudo tee /etc/apt/sources.list.d/nodesource.list
+    sudo apt-get update
+    sudo apt-get install nodejs -y
+fi
+
+if command -v npm >/dev/null; then
+    npm_tool npm
+fi
+
+npm_tool bash-language-server
+# pnpm self-installs into $PNPM_HOME, which comes first on PATH; upgrading the
+# npm-installed copy would leave the one actually in use untouched.
+if [ -x "$PNPM_HOME/pnpm" ]; then
+    if want_install pnpm "$(ver "$PNPM_HOME/pnpm" --version)" "$(npm view @pnpm/exe version 2>/dev/null || :)"; then
+        "$PNPM_HOME/pnpm" self-update
+    fi
+else
+    npm_tool @pnpm/exe
+fi
+npm_tool stylelint
+npm_tool js-beautify
+pnpm_tool @emacs-grammarly/grammarly-languageserver
+
+if ! command -v rust-analyzer >/dev/null; then
+    rustup component add rust-analyzer
+fi
+
+# deno: prebuilt release binary instead of a cargo build (seconds, not tens of
+# minutes). An existing install upgrades itself in place, wherever it lives.
+deno_latest="$(latest_tag https://github.com/denoland/deno.git)"
+install_deno() {
+    curl -fsSLO "https://github.com/denoland/deno/releases/download/$deno_latest/deno-x86_64-unknown-linux-gnu.zip"
+    unzip -q deno-x86_64-unknown-linux-gnu.zip
+    mkdir -p ~/.local/bin
+    install -m755 deno ~/.local/bin/deno
+}
+if want_install deno "$(ver deno --version)" "$deno_latest" need_latest; then
+    if command -v deno >/dev/null; then
+        deno upgrade "${deno_latest#v}"
+    else
+        in_temp_dir install_deno
+    fi
+fi
+
+# Go stays on the version pinned in go-update.sh (work projects need it),
+# so it is only installed when missing, never offered for upgrade.
+if ! command -v go >/dev/null; then
+    ~/scripts/go-update.sh
+fi
+
+# Go tools: the list lives in go-utils.sh. Each is installed if missing and
+# offered for upgrade when its module has a newer release.
+for pkg in $(sed -nE 's/^go install ([^@ ]+)@latest.*/\1/p' ~/scripts/go-utils.sh); do
+    go_tool "$pkg"
+done
+
+if [ ! -d "$HOME/.diff-so-fancy" ]; then
+    git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
+else
+    git_repo_update diff-so-fancy "$HOME/.diff-so-fancy"
 fi
 
 # Ubuntu/Debian ship bat as "batcat".
@@ -279,156 +614,109 @@ if ! command -v bat >/dev/null && command -v batcat >/dev/null; then
     ln -s "$(command -v batcat)" ~/.local/bin/bat
 fi
 
-if ! command -v delta >/dev/null; then
-    (
-        cd "$(mktemp -d)"
-        curl -fsSL https://github.com/dandavison/delta/releases/download/0.19.2/delta-0.19.2-x86_64-unknown-linux-musl.tar.gz | tar xz
-        mkdir -p ~/.local/bin
-        install -m755 delta-*/delta ~/.local/bin/delta
-    )
+delta_latest="$(latest_tag https://github.com/dandavison/delta.git)"
+install_delta() {
+    curl -fsSL "https://github.com/dandavison/delta/releases/download/$delta_latest/delta-$delta_latest-x86_64-unknown-linux-musl.tar.gz" | tar xz
+    mkdir -p ~/.local/bin
+    install -m755 delta-*/delta ~/.local/bin/delta
+}
+if want_install delta "$(ver delta --version)" "$delta_latest" need_latest; then
+    in_temp_dir install_delta
 fi
 
-if ! command -v atuin >/dev/null; then
-    (
-        cd "$(mktemp -d)"
-        curl -fsSL https://github.com/atuinsh/atuin/releases/download/v18.22.0/atuin-x86_64-unknown-linux-musl.tar.gz | tar xz
-        mkdir -p ~/.local/bin
-        install -m755 atuin-*/atuin ~/.local/bin/atuin
+atuin_current="$(ver atuin --version)"
+atuin_latest="$(latest_tag https://github.com/atuinsh/atuin.git)"
+install_atuin() {
+    curl -fsSL "https://github.com/atuinsh/atuin/releases/download/$atuin_latest/atuin-x86_64-unknown-linux-musl.tar.gz" | tar xz
+    mkdir -p ~/.local/bin
+    install -m755 atuin-*/atuin ~/.local/bin/atuin
+    if [ -z "$atuin_current" ]; then
         ~/.local/bin/atuin import auto || true
-    )
+    fi
+}
+if want_install atuin "$atuin_current" "$atuin_latest" need_latest; then
+    in_temp_dir install_atuin
 fi
 
-if ! starship --version; then
-    sh -c "$(curl -fsSL https://starship.rs/install.sh)"
-fi
-
-# https://github.com/nodesource/distributions
-if ! node --version || [[ $(node --version) != v20* ]]; then
-    sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |
-        sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" |
-        sudo tee /etc/apt/sources.list.d/nodesource.list
-    sudo apt-get update
-    sudo apt-get install nodejs -y
-fi
-
-sudo npm install -g npm
-
-if ! bash-language-server --version; then
-    sudo npm i -g bash-language-server
-fi
-
-if ! pnpm --version; then
-    sudo npm install -g @pnpm/exe
-fi
-
-if ! stylelint --version; then
-    sudo npm install -g stylelint
-fi
-
-if ! js-beautify --version; then
-    sudo npm -g install js-beautify
-fi
-
-if ! grammarly-languageserver --node-ipc; then
-    pnpm i -g @emacs-grammarly/grammarly-languageserver
-fi
-
-if ! rust-analyzer --version; then
-    rustup component add rust-analyzer
-fi
-
-if ! deno --version; then
-    cargo install deno --locked
-fi
-
-if ! go version; then
-    ~/scripts/go-update.sh
-    ~/scripts/go-utils.sh
-fi
-
-if ! yamlfmt --version; then
-    go install github.com/google/yamlfmt/cmd/yamlfmt@latest
-fi
-
-if ! dockfmt version; then
-    go install github.com/jessfraz/dockfmt@latest
-fi
-
-if ! emacs --version; then
-    cd "$HOME"
-    rm -rf ./emacs || :
-
-    git clone git://git.savannah.gnu.org/emacs.git
-    cd emacs
-    git checkout emacs-29.4
-    make clean
-    ./autogen.sh
-    ./configure --with-modules --with-native-compilation --with-json --without-pop --with-mailutils
-    make bootstrap
-    make -j "$(nproc)"
-    sudo make install
-
-    cd "$HOME"
-    curl https://raw.githubusercontent.com/jeetelongname/doom-banners/master/splashes/emacs/emacs-e-logo.png \
-        -o ~/.emacs-e-logo.png -s
-    rm -rf ./emacs
-fi
-
-if [ ! -d "$HOME/.diff-so-fancy" ]; then
-    cd
-    git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
-fi
-
-if ! fzf --version; then
-    cd
+if ! command -v fzf >/dev/null; then
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     ~/.fzf/install
-    rm -rf ./fzf
+elif [ -d ~/.fzf/.git ]; then
+    fzf_latest="$(latest_tag https://github.com/junegunn/fzf.git)"
+    if want_install fzf "$(ver fzf --version)" "$fzf_latest"; then
+        git -C ~/.fzf pull --ff-only --quiet
+        ~/.fzf/install --bin
+    fi
 fi
 
-if ! rg --version; then
-    cd
-    curl -LO https://github.com/BurntSushi/ripgrep/releases/download/13.0.0/ripgrep_13.0.0_amd64.deb
-    sudo dpkg -i ripgrep_13.0.0_amd64.deb
-    rm ripgrep_13.0.0_amd64.deb
+rg_latest="$(latest_tag https://github.com/BurntSushi/ripgrep.git)"
+install_rg() {
+    curl -fsSLO "https://github.com/BurntSushi/ripgrep/releases/download/$rg_latest/ripgrep_${rg_latest}-1_amd64.deb"
+    sudo dpkg -i "ripgrep_${rg_latest}-1_amd64.deb"
+}
+if want_install ripgrep "$(ver rg --version)" "$rg_latest" need_latest; then
+    in_temp_dir install_rg
 fi
 
-if ! yazi --version; then
-    cd
-    git clone https://github.com/sxyazi/yazi.git
-    cd yazi
+yazi_current="$(ver yazi --version)"
+yazi_latest="$(latest_tag https://github.com/sxyazi/yazi.git)"
+build_yazi() {
     cargo build --release --locked
-    mv target/release/yazi target/release/ya ~/.local/bin
+    mkdir -p ~/.local/bin
+    install -m755 target/release/yazi target/release/ya ~/.local/bin/
 
-    ya pkg add yazi-rs/plugins:full-border
-    ya pkg add yazi-rs/plugins:smart-enter
-    ya pkg add yazi-rs/plugins:smart-paste
-    ya pkg add yazi-rs/plugins:chmod
-    ya pkg add yazi-rs/plugins:toggle-pane
-
-    rm -rf ./yazi
+    # Plugins only on a fresh install; "ya pkg add" fails if already added.
+    if [ -z "$yazi_current" ]; then
+        ya pkg add yazi-rs/plugins:full-border
+        ya pkg add yazi-rs/plugins:smart-enter
+        ya pkg add yazi-rs/plugins:smart-paste
+        ya pkg add yazi-rs/plugins:chmod
+        ya pkg add yazi-rs/plugins:toggle-pane
+    fi
+}
+if want_install yazi "$yazi_current" "$yazi_latest"; then
+    build_from_tag https://github.com/sxyazi/yazi.git "$yazi_latest" build_yazi
 fi
 
-if ! doom version; then
-    cd
-    rm -rf ~/.emacs.d
-    git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.emacs.d
-    ~/.emacs.d/bin/doom install
+# Emacs is installed manually; only report whether it's missing or outdated.
+emacs_current="$(ver emacs --version)"
+emacs_latest="$(git ls-remote --tags --refs https://git.savannah.gnu.org/git/emacs.git 2>/dev/null |
+    sed 's|.*refs/tags/||' | grep -E '^emacs-[0-9]+(\.[0-9]+)*$' | sed 's/^emacs-//' | sort -V | tail -1 || :)"
+if [ -z "$emacs_current" ]; then
+    echo "emacs: not installed, install it manually" >&2
+    skipped_updates+=("emacs: not installed, install it manually")
+elif [ -n "$emacs_latest" ] && is_newer "$emacs_latest" "$emacs_current"; then
+    echo "emacs: new version $emacs_latest available (installed $emacs_current), install it manually"
+    skipped_updates+=("emacs: new version $emacs_latest available (installed $emacs_current), install it manually")
 fi
 
-rustup update
+rust_updates="$(rustup check 2>/dev/null | grep 'Update available' || :)"
+if [ -n "$rust_updates" ]; then
+    echo "$rust_updates"
+    if confirm "rust: updates available (listed above). Do you want to upgrade?"; then
+        rustup update
+    fi
+fi
 
-python3 -m pip install --upgrade pip
-pip install --upgrade pyflakes
-pip install isort
-pip install nose
-pip install -U pytest
-pip install black
-pip install python-lsp-server
-python3 -m pip install -U yt-dlp
-python3 -m pip install --user qmk
-pip3 install tldr
+npm_tool @github/copilot-language-server
+
+# python3 -m pip install --upgrade pip
+for pkg in pyflakes isort pytest black python-lsp-server yt-dlp qmk tldr \
+    cmake-language-server Pygments curl_cffi; do
+    pipx_tool "$pkg"
+done
+
+if [ ${#skipped_updates[@]} -gt 0 ]; then
+    echo
+    echo "Updates available but not installed:"
+    printf '  %s\n' "${skipped_updates[@]}"
+fi
+
+if [ ${#failed_installs[@]} -gt 0 ]; then
+    echo
+    echo "Failed to install:" >&2
+    printf '  %s\n' "${failed_installs[@]}" >&2
+    exit 1
+fi
 
 echo "Done."

@@ -12,5 +12,5 @@ git clone --bare github.com/blez $HOME/dots
 alias dots='/usr/bin/git --git-dir=$HOME/dots/ --work-tree=$HOME'
 dots config status.showUntrackedFiles no
 dots checkout
-setup.sh
+./setup.sh
 ```

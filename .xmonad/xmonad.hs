@@ -396,10 +396,10 @@ myStartupHook :: X ()
 myStartupHook = do
   -- spawnOnce "setxkbmap -option 'caps:ctrl_modifier'"
   spawnOnce "xwallpaper --zoom ~/wallpapers/wall.jpg"
-  spawnOnce "picom --config ~/.config/picom.conf &"
-  spawnOnce "dunst &"
-  spawnOnce "xfce4-power-manager &"
-  spawnOnce "/usr/local/bin/emacs &"
+  spawnOnce "picom --config ~/.config/picom.conf"
+  spawnOnce "dunst"
+  spawnOnce "xfce4-power-manager"
+  spawnOnce "/usr/local/bin/emacs"
   -- spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
   spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/lenovo.kbd &"
   -- Best-effort auto-timezone, re-run on every restart so travel is picked up.

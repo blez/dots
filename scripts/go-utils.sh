@@ -11,3 +11,5 @@ go install golang.org/x/tools/cmd/goimports@latest
 go install golang.org/x/tools/cmd/gorename@latest
 go install golang.org/x/tools/cmd/guru@latest
 go install mvdan.cc/sh/v3/cmd/shfmt@latest
+go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+go install github.com/jessfraz/dockfmt@latest
