@@ -2,14 +2,14 @@ import qualified Data.Map as M
 import Data.Monoid
 import Graphics.X11.ExtraTypes.XF86
 import System.Exit
-import System.IO (hPutStrLn)
 import XMonad
 import XMonad.Actions.CycleWS
 import XMonad.Actions.Navigation2D (Direction2D (..), Navigation2DConfig (..), centerNavigation, hybridOf, sideNavigation, windowGo, withNavigation2DConfig)
-import XMonad.Hooks.DynamicLog (PP (..), dynamicLogWithPP, shorten, wrap, xmobarColor, xmobarPP)
+import XMonad.Hooks.StatusBar (statusBarProp, withSB)
+import XMonad.Hooks.StatusBar.PP (PP (..), wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (docks, avoidStruts, manageDocks)
-import XMonad.Hooks.ManageHelpers (doFullFloat, isFullscreen)
+import XMonad.Hooks.ManageHelpers (doCenterFloat, doFullFloat, isDialog, isFullscreen)
 
 import XMonad.Layout.GridVariants (Grid (Grid))
 import XMonad.Layout.LayoutModifier
@@ -28,7 +28,6 @@ import XMonad.Layout.WindowNavigation
 
 import qualified XMonad.StackSet as W
 import XMonad.Util.EZConfig (additionalKeys)
-import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 import System.Posix.Env (setEnv)
 
@@ -175,11 +174,12 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm, xK_t), withFocused $ windows . W.sink),
       -- Increment the number of windows in the master area
       ((modm, xK_comma), sendMessage (IncMasterN 1)),
-      -- Deincrement the number of windows in the master area
-      -- ((modm .|. shiftMask, xK_period), sendMessage (IncMasterN (-1))),
+      -- Decrement the number of windows in the master area
+      -- (mod-period is taken by dunst context)
+      ((modm .|. shiftMask, xK_comma), sendMessage (IncMasterN (-1))),
       -- Toggle the status bar gap
       -- Use this binding with avoidStruts from Hooks.ManageDocks.
-      -- See also the statusBar function from Hooks.DynamicLog.
+      -- See also withEasySB from Hooks.StatusBar, which adds it for you.
       --
       -- , ((modm              , xK_b     ), sendMessage ToggleStruts)
 
@@ -208,8 +208,9 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       ((modm, xK_Print), spawn "flameshot full -p ~/Pictures/"),
       -- Quit xmonad
       ((modm .|. shiftMask, xK_q), io (exitWith ExitSuccess)),
-      -- Restart xmonad
-      ((modm .|. shiftMask, xK_r), spawn "xmonad --recompile; xmonad --restart")
+      -- Recompile and restart xmonad, but only restart if the compile worked.
+      -- On a compile error xmonad shows the errors itself (xmessage).
+      ((modm .|. shiftMask, xK_r), spawn "xmonad --recompile && xmonad --restart")
 
       -- Dunst Keyboard Shortcuts
       , ((modm, xK_bracketright), spawn "dunstctl close")
@@ -310,7 +311,7 @@ mirror = renamed [Replace "mirror"]
     $ addTabs shrinkText myTabTheme
     $ subLayout [] Simplest
     $ mySpacing 8
-    $ Mirror(Tall 1 (3/100) (3/5))
+    $ Mirror (ResizableTall 1 (3/100) (3/5) [])
 
 -- tabs = renamed [Replace "tabs"]
 --     $ tabbed shrinkText myTabTheme
@@ -353,7 +354,8 @@ myLayoutHook = avoidStruts $ mkToggle (single NBFULL) $ smartBorders $ myDefault
 myManageHook :: XMonad.Query (Data.Monoid.Endo WindowSet)
 myManageHook =
   composeAll
-    [ className =? "MPlayer" --> doFloat,
+    [ isDialog --> doCenterFloat,
+      className =? "MPlayer" --> doFloat,
       className =? "Gimp" --> doFloat,
       className =? "Android Emulator - Pixel_3a_API_33_x86_64:5554" --> doFloat,
       resource =? "desktop_window" --> doIgnore,
@@ -381,8 +383,26 @@ myManageHook =
 ------------------------------------------------------------------------
 -- Status bars and logging
 
--- Perform an arbitrary action on each internal state change or X event.
--- See the 'XMonad.Hooks.DynamicLog' extension for examples.
+-- xmobar, managed by XMonad.Hooks.StatusBar: started at startup, and killed
+-- and restarted on every xmonad restart, so restarts never leave a second
+-- bar behind. Workspace info goes to xmobar through the _XMONAD_LOG root
+-- window property, which xmobar reads with its XMonadLog plugin.
+myStatusBar = statusBarProp "~/.config/xmobar/launch.sh" (pure myXmobarPP)
+
+myXmobarPP :: PP
+myXmobarPP =
+  xmobarPP
+    { ppCurrent = xmobarColor "red" "" . wrap "→ " "", -- Current workspace in xmobar
+      ppVisible = xmobarColor "white" "", -- Visible but not current workspace
+      ppHidden = xmobarColor "white" "" . wrap "" "°", -- Hidden workspaces in xmobar
+      ppHiddenNoWindows = xmobarColor "white" "", -- Hidden workspaces (no windows)
+      ppSep = " | ", -- Separators in xmobar
+      ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!", -- Urgent workspace
+      -- , ppTitle = xmobarColor "#b3afc2" "" . shorten 60     -- Title of active window in xmobar
+      -- , ppOrder  = \(ws:l:t:ex) -> [ws]++ex++[t]
+      -- Keep the workspaces, drop the layout name and window title.
+      ppOrder = \fields -> take 1 fields ++ drop 3 fields
+    }
 
 ------------------------------------------------------------------------
 -- Startup hook
@@ -415,9 +435,8 @@ myStartupHook = do
 main :: IO ()
 main = do
   setEnv "LD_LIBRARY_PATH" "/usr/local/lib/" True
-  xmproc <- spawnPipe "~/.config/xmobar/launch.sh"
   xmonad $
-    docks $ ewmhFullscreen . ewmh $ withNavigation2DConfig myNav2DConfig $
+    docks $ withSB myStatusBar $ ewmhFullscreen . ewmh $ withNavigation2DConfig myNav2DConfig $
       def
         { -- simple stuff
           terminal = myTerminal,
@@ -434,21 +453,6 @@ main = do
           -- hooks, layouts
           layoutHook = myLayoutHook,
           startupHook = myStartupHook,
-          manageHook = (isFullscreen --> doFullFloat) <+> myManageHook <+> manageDocks,
-          -- handleEventHook = docksEventHook,
-          logHook =
-            dynamicLogWithPP
-                xmobarPP
-                  { ppOutput = hPutStrLn xmproc,
-                    ppCurrent = xmobarColor "red" "" . wrap "→ " "", -- Current workspace in xmobar
-                    ppVisible = xmobarColor "white" "", -- Visible but not current workspace
-                    ppHidden = xmobarColor "white" "" . wrap "" "°", -- Hidden workspaces in xmobar
-                    ppHiddenNoWindows = xmobarColor "white" "", -- Hidden workspaces (no windows)
-                    ppSep = " | ", -- Separators in xmobar
-                    ppUrgent = xmobarColor "#C45500" "" . wrap "!" "!", -- Urgent workspace
-                    -- , ppTitle = xmobarColor "#b3afc2" "" . shorten 60     -- Title of active window in xmobar
-                    -- , ppOrder  = \(ws:l:t:ex) -> [ws]++ex++[t]
-                    ppOrder = \(ws : l : t : ex) -> [ws] ++ ex
-                  }
+          manageHook = (isFullscreen --> doFullFloat) <+> myManageHook <+> manageDocks
         }
       `additionalKeys` myAdditionalKeys

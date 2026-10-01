@@ -5,8 +5,9 @@
 # xmobarrc uses the tokens __ETH__ and __WIFI__ as placeholders for interface
 # names, __BAT__ and __BL__ to mark the battery and backlight segments, plus
 # __BOX__/__XOB__ for segment styling. This script resolves them, writes a
-# generated rc, then execs xmobar so it inherits this process's stdin (the
-# pipe xmonad uses for StdinReader).
+# generated rc, then execs xmobar. xmonad (XMonad.Hooks.StatusBar) starts
+# this script in its own process group and kills that whole group on
+# restart, so xmobar must stay in it: don't detach it with setsid or "&".
 set -euo pipefail
 
 CONFIG_DIR="$HOME/.config/xmobar"

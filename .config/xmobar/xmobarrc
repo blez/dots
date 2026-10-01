@@ -35,7 +35,7 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf0a0</fn> $(~/scripts/disk-usage.sh)\""] "disk" 100
                     , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"__BOX__<fn=2>\xf185</fn>${b:+ $b}__XOB__\""] "__BL__bright" 60
                     , Run Com "/bin/bash" ["-c", "w=$(~/scripts/weather.sh); if [ -n \"$w\" ]; then echo \"__BOX__${w}__XOB__\"; fi"] "weather" 600
-                    , Run StdinReader
+                    , Run XMonadLog
                     ]
        , sepChar = "%"
        , alignSep = "}{"
@@ -48,7 +48,7 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     \ __BOX__%vpn%__XOB__ \
                     \ %blue% \
                     \ __BOX__%upd%__XOB__ } \
-                    \ %StdinReader% \
+                    \ %XMonadLog% \
                     \{__BOX__%music%__XOB__ \
                     \ %weather% \
                     \ __BOX__%date%__XOB__ \
