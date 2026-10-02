@@ -319,6 +319,7 @@ apt_packages=(
     fonts-symbola
     ffmpeg
     flameshot
+    flatpak # WhatsApp (ZapZap) comes from Flathub
     gawk
     g++
     g++-14
@@ -938,6 +939,60 @@ install_telegram() {
 if want_install telegram "$telegram_current" "$telegram_latest" need_latest; then
     step "Installing telegram $telegram_latest..."
     in_temp_dir install_telegram
+fi
+
+# Viber: the official .deb. It adds no apt repository, so apt never updates
+# it. The latest version is read from the first 256 KB of the package (its
+# control data comes first), so checking doesn't download the whole ~130 MB.
+step "Checking viber for updates..."
+viber_url="https://download.cdn.viber.com/cdn/desktop/Linux/viber.deb"
+viber_current="$(dpkg-query -W -f='${db:Status-Status} ${Version}' viber 2>/dev/null |
+    sed -n 's/^installed //p' || :)"
+viber_latest="$(curl -fsS --max-time "$lookup_timeout" -r 0-262143 "$viber_url" 2>/dev/null |
+    dpkg-deb -f /dev/stdin Version 2>/dev/null || :)"
+install_viber() {
+    curl -fsSLo viber.deb "$viber_url"
+    apt_get install ./viber.deb
+}
+if want_install viber "$viber_current" "$viber_latest" need_latest; then
+    step "Installing viber $viber_latest..."
+    in_temp_dir install_viber
+fi
+
+# WhatsApp: there's no official Linux app. ZapZap is a maintained desktop
+# client for WhatsApp Web, from Flathub, installed for this user (no sudo).
+# Its version label isn't reliable (new builds keep an old number), so flatpak
+# itself decides whether an update is available.
+zapzap_id="com.rtosta.zapzap"
+timeout "$lookup_timeout" flatpak remote-add --user --if-not-exists \
+    flathub https://dl.flathub.org/repo/flathub.flatpakrepo || :
+if ! flatpak info --user "$zapzap_id" >/dev/null 2>&1; then
+    step "Installing whatsapp (ZapZap)..."
+    if ! flatpak install --user -y --noninteractive flathub "$zapzap_id"; then
+        failed_installs+=("whatsapp (flatpak install $zapzap_id)")
+    fi
+else
+    step "Checking whatsapp (ZapZap) for updates..."
+    if timeout "$lookup_timeout" flatpak remote-ls --user --updates --app --columns=application 2>/dev/null |
+        grep -qxF "$zapzap_id"; then
+        if confirm "whatsapp (ZapZap): an update is available. Do you want to upgrade?"; then
+            step "Upgrading whatsapp (ZapZap)..."
+            flatpak update --user -y --noninteractive "$zapzap_id"
+        fi
+    fi
+fi
+
+# Claude Code: the native install (~/.local/bin/claude). Its own auto-update
+# is turned off here, so setup.sh offers updates. "latest" is the installer's
+# default release channel.
+step "Checking claude code for updates..."
+claude_latest="$(curl -fsS --max-time "$lookup_timeout" \
+    https://downloads.claude.ai/claude-code-releases/latest 2>/dev/null |
+    grep -xE '[0-9]+\.[0-9]+\.[0-9]+' || :)"
+if want_install "claude code" "$(ver claude --version)" "$claude_latest" need_latest; then
+    step "Installing claude code $claude_latest..."
+    claude_installer="$(curl -fsSL --max-time 60 https://claude.ai/install.sh)"
+    bash -s -- "$claude_latest" <<<"$claude_installer"
 fi
 
 step "Checking yazi for updates..."
