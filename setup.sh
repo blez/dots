@@ -6,9 +6,11 @@ usage() {
 Usage: setup.sh [-i|--ignore-updates]
 
 Installs missing tools and offers available upgrades with a [Y/n] prompt.
+apt packages are always upgraded (update + full-upgrade), without a prompt.
 
-  -i, --ignore-updates  Only report available upgrades; don't ask, don't upgrade.
-                        Missing tools are still installed.
+  -i, --ignore-updates  Only report available tool upgrades; don't ask, don't
+                        upgrade them. Missing tools are still installed, and apt
+                        packages are still upgraded.
   -h, --help            Show this help.
 USAGE
 }
@@ -51,6 +53,7 @@ export PATH
 # ones a newer upstream version is offered with a [Y/n] prompt. The prompt
 # reads from the terminal; with no terminal, or with --ignore-updates, the
 # upgrade is only reported and listed again in a summary at the end.
+# apt packages are the exception: they are always upgraded, without a prompt.
 # ---------------------------------------------------------------------------
 
 # confirm QUESTION -- yes unless the answer starts with n/N. QUESTION reads
@@ -76,9 +79,11 @@ confirm() {
 }
 
 # ver CMD... -- first version-looking token of CMD's output, "" if CMD is missing.
+# Takes the first version on any line, not just the first line: some tools
+# (yazi 26.9+) print only their name on the first line.
 ver() {
     command -v "$1" >/dev/null || return 0
-    "$@" 2>/dev/null | head -1 | grep -oE '[0-9]+(\.[0-9]+)*(-[0-9A-Za-z.]+)?' | head -1 || :
+    "$@" 2>/dev/null </dev/null | grep -m1 -oE '[0-9]+(\.[0-9]+)*(-[0-9A-Za-z.]+)?' | head -1 || :
 }
 
 # latest_tag REPO_URL -- newest stable tag (rc/beta/dev/vNext excluded), "" on failure.
@@ -219,179 +224,198 @@ go_tool() {
 
 # ---------------------------------------------------------------------------
 
-sudo add-apt-repository -y universe
-sudo apt update
-# Simulate instead of "apt list --upgradable": that also lists phased and
-# held-back updates which full-upgrade won't install, so it would nag forever.
-apt_upgradable="$(apt-get -s full-upgrade 2>/dev/null | grep -c '^Inst ' || :)"
-if [ "$apt_upgradable" -gt 0 ]; then
-    if confirm "apt: $apt_upgradable packages can be upgraded. Do you want to upgrade?"; then
-        sudo apt full-upgrade -y
-    fi
-fi
-sudo apt autoremove -y
+# apt_get ARGS... -- apt-get that never stops for a question. When an upgrade
+# ships a new version of a config file you changed, dpkg would ask which one
+# to keep, and without a terminal it can't get an answer and leaves the package
+# half-configured. Instead: keep your version (the new one is saved next to it
+# as .dpkg-dist), or take the new one if you never changed it.
+apt_get() {
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y \
+        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$@"
+}
 
-# --no-upgrade: already-installed packages are only upgraded via the prompt above.
-sudo apt install -y --no-upgrade \
-    alsa-utils \
-    apache2-utils \
-    autoconf \
-    automake \
-    bat \
-    btop \
-    bluez \
-    build-essential \
-    ca-certificates \
-    clang \
-    clangd \
-    clang-format \
-    cmake \
-    curl \
-    default-jdk \
-    deluge \
-    direnv \
-    dmenu \
-    dsniff \
-    dh-autoreconf \
-    editorconfig \
-    eza \
-    fonts-symbola \
-    ffmpeg \
-    flameshot \
-    gawk \
-    g++ \
-    g++-14 \
-    git \
-    gnupg \
-    graphviz \
-    glslang-tools \
-    i3lock \
-    imagemagick \
-    isync \
-    jq \
-    libvips-dev \
-    libxcb-res0-dev \
-    libopencv-dev \
-    libnotify-dev \
-    libxaw7-dev \
-    libx11-dev \
-    libayatana-appindicator3-1 \
-    libarchive-dev \
-    libasound2-dev \
-    libsixel-dev \
-    libspa-0.2-bluetooth \
-    libchafa-dev \
-    libstdc++-14-dev \
-    libtbb-dev \
-    libffi-dev \
-    libgmp-dev \
-    libncurses-dev \
-    libc6-dev \
-    libjpeg-dev \
-    libtiff-dev \
-    libfreetype6-dev \
-    libfontconfig1-dev \
-    libtree-sitter-dev \
-    libxcb-xfixes0-dev \
-    libxkbcommon-dev \
-    libgccjit-14-dev \
-    libgnutls28-dev \
-    gnutls-bin \
-    libjson-c-dev \
-    libjson-glib-dev \
-    libjansson-dev \
-    libgtk-3-dev \
-    libgtk-layer-shell-dev \
-    libpango1.0-dev \
-    libwxgtk3.2-dev \
-    libcairo2-dev \
-    libcairo-gobject2 \
-    libneon27-dev \
-    libxpm-dev \
-    libxext-dev \
-    libxcb1-dev \
-    libxcb-dpms0-dev \
-    libxcb-damage0-dev \
-    libxcb-shape0-dev \
-    libxcb-render-util0-dev \
-    libxcb-util-dev \
-    libepoxy-dev \
-    libxcb-render0-dev \
-    libxcb-randr0-dev \
-    libxcb-composite0-dev \
-    libxcb-image0-dev \
-    libxcb-present-dev \
-    libxcb-xinerama0-dev \
-    libxcb-xrm-dev \
-    libxcb-glx0-dev \
-    libpixman-1-dev \
-    libdbus-1-dev \
-    libconfig-dev \
-    libcurl4-gnutls-dev \
-    libgl1-mesa-dev \
-    libpcre2-dev \
-    libevdev-dev \
-    uthash-dev \
-    libev-dev \
-    libexpat1-dev \
-    libx11-xcb-dev \
-    librsvg2-dev \
-    libspdlog-dev \
-    libnfs-dev \
-    libnotify-bin \
-    libsqlite3-dev \
-    libsmbclient-dev \
-    libssh-dev \
-    libssl-dev \
-    libtool-bin \
-    libuchardet-dev \
-    libxerces-c-dev \
-    libxi-dev \
-    libpng-dev \
-    libgif-dev \
-    libgtk2.0-dev \
-    libxss-dev \
-    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
-    lldb \
-    lxappearance \
-    maildir-utils \
-    meson \
-    m4 \
-    net-tools \
-    ninja-build \
-    ncdu \
-    nitrogen \
-    pavucontrol \
-    pcmanfm \
-    pipx \
-    poppler-utils \
-    pkg-config \
-    playerctl \
-    pulseaudio \
-    pulseaudio-utils \
-    pulseaudio-module-bluetooth \
-    pipenv \
-    protobuf-compiler \
-    python3 \
-    python3-pip \
-    ranger \
-    rofi \
-    shellcheck \
-    texinfo \
-    texlive-full \
-    tidy \
-    tmux \
-    unzip \
-    vim \
-    vlc \
-    xwallpaper \
-    xclip \
-    xfce4-power-manager \
-    xournalpp \
-    xmlto \
-    zoxide \
-    zsh \
+# -n: don't refresh the package index here; apt_get update below does it once.
+sudo add-apt-repository -y -n universe
+# apt always runs in full, with no prompt (also with --ignore-updates).
+apt_get update
+apt_get full-upgrade
+apt_get autoremove
+
+apt_packages=(
+    alsa-utils
+    apache2-utils
+    autoconf
+    automake
+    bat
+    btop
+    bluez
+    build-essential
+    ca-certificates
+    clang
+    clangd
+    clang-format
+    cmake
+    curl
+    default-jdk
+    deluge
+    direnv
+    suckless-tools # provides dmenu
+    dsniff
+    dh-autoreconf
+    editorconfig
+    eza
+    fonts-symbola
+    ffmpeg
+    flameshot
+    gawk
+    g++
+    g++-14
+    git
+    gnupg
+    graphviz
+    glslang-tools
+    i3lock
+    imagemagick
+    isync
+    jq
+    libvips-dev
+    libxcb-res0-dev
+    libopencv-dev
+    libnotify-dev
+    libxaw7-dev
+    libx11-dev
+    libayatana-appindicator3-1
+    libarchive-dev
+    libasound2-dev
+    libsixel-dev
+    libspa-0.2-bluetooth
+    libchafa-dev
+    libstdc++-14-dev
+    libtbb-dev
+    libffi-dev
+    libgmp-dev
+    libncurses-dev
+    libc6-dev
+    libjpeg-dev
+    libtiff-dev
+    libfreetype-dev
+    libfontconfig1-dev
+    libtree-sitter-dev
+    libxcb-xfixes0-dev
+    libxkbcommon-dev
+    libgccjit-14-dev
+    libgnutls28-dev
+    gnutls-bin
+    libjson-c-dev
+    libjson-glib-dev
+    libjansson-dev
+    libgtk-3-dev
+    libgtk-layer-shell-dev
+    libpango1.0-dev
+    libwxgtk3.2-dev
+    libcairo2-dev
+    libcairo-gobject2
+    libneon27-dev
+    libxpm-dev
+    libxext-dev
+    libxcb1-dev
+    libxcb-dpms0-dev
+    libxcb-damage0-dev
+    libxcb-shape0-dev
+    libxcb-render-util0-dev
+    libxcb-util-dev
+    libepoxy-dev
+    libxcb-render0-dev
+    libxcb-randr0-dev
+    libxcb-composite0-dev
+    libxcb-image0-dev
+    libxcb-present-dev
+    libxcb-xinerama0-dev
+    libxcb-xrm-dev
+    libxcb-glx0-dev
+    libpixman-1-dev
+    libdbus-1-dev
+    libconfig-dev
+    libcurl4-gnutls-dev
+    libgl1-mesa-dev
+    libpcre2-dev
+    libevdev-dev
+    uthash-dev
+    libev-dev
+    libexpat1-dev
+    libx11-xcb-dev
+    librsvg2-dev
+    libspdlog-dev
+    libnfs-dev
+    libnotify-bin
+    libsqlite3-dev
+    libsmbclient-dev
+    libssh-dev
+    libssl-dev
+    libtool-bin
+    libuchardet-dev
+    libxerces-c-dev
+    libxi-dev
+    libpng-dev
+    libgif-dev
+    libgtk2.0-dev
+    libxss-dev
+    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
+    lldb
+    lxappearance
+    maildir-utils
+    meson
+    m4
+    net-tools
+    ninja-build
+    ncdu
+    nitrogen
+    pavucontrol
+    pcmanfm
+    pipx
+    poppler-utils
+    pkg-config
+    playerctl
+    pulseaudio
+    pulseaudio-utils
+    pulseaudio-module-bluetooth
+    pipenv
+    protobuf-compiler
+    python3
+    python3-pip
+    ranger
+    rofi
+    shellcheck
+    texinfo
+    texlive-full
+    tidy
+    tmux
+    unzip
+    vim
+    vlc
+    xwallpaper
+    xclip
+    xfce4-power-manager
+    xournalpp
+    xmlto
+    zoxide
+    zsh
     7zip
+)
+# Install only the missing ones. Passing installed packages makes apt print a
+# "Skipping ..." or "already the newest version" line for each of them, and
+# full-upgrade above already keeps them current.
+declare -A apt_installed=()
+while read -r pkg; do apt_installed[$pkg]=1; done < <(
+    dpkg-query -W -f='${Package}\t${db:Status-Status}\n' 2>/dev/null | awk -F'\t' '$2 == "installed" {print $1}')
+apt_missing=()
+for pkg in "${apt_packages[@]}"; do
+    [ -n "${apt_installed[$pkg]:-}" ] || apt_missing+=("$pkg")
+done
+if [ ${#apt_missing[@]} -gt 0 ]; then
+    echo "apt: installing ${apt_missing[*]}"
+    apt_get install "${apt_missing[@]}"
+fi
 
 if ! command -v ghcup >/dev/null; then
     curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org |
@@ -429,7 +453,7 @@ if want_install dunst "$(ver /usr/local/bin/dunst --version)" "$dunst_latest" ne
 fi
 # Its binary and D-Bus service file would shadow the build.
 if [ -x /usr/local/bin/dunst ] && dpkg -s dunst >/dev/null 2>&1; then
-    sudo apt purge -y dunst
+    apt_get purge dunst
 fi
 
 if [ ! -f ~/.ssh/id_ed25519 ]; then
@@ -474,7 +498,7 @@ if want_install picom "$(ver /usr/local/bin/picom --version)" "$picom_latest" ne
 fi
 # It could shadow the build or reappear on upgrades.
 if [ -x /usr/local/bin/picom ] && dpkg -s picom >/dev/null 2>&1; then
-    sudo apt purge -y picom
+    apt_get purge picom
 fi
 
 build_xkblayout_state() {
