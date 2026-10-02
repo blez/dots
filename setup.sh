@@ -34,12 +34,15 @@ done
 # which makes installed tools look missing and fresh installs unusable.
 export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
 export GOPATH="${GOPATH:-$HOME/go}"
-for dir in "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/.ghcup/bin" "$HOME/.cabal/bin" \
-    "$PNPM_HOME" "$PNPM_HOME/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin"; do
-    case ":$PATH:" in
-        *":$dir:"*) ;;
-        *) PATH="$dir:$PATH" ;;
-    esac
+# Same priority as the login shell (.zshrc): listed order, first wins.
+# Directories already on PATH are left where they are.
+path_front=""
+for dir in "$PNPM_HOME/bin" "$PNPM_HOME" "$HOME/.local/bin" "$HOME/.cargo/bin"; do
+    case ":$PATH:" in *":$dir:"*) ;; *) path_front="$path_front$dir:" ;; esac
+done
+PATH="$path_front$PATH"
+for dir in "$HOME/.cabal/bin" "$HOME/.ghcup/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin"; do
+    case ":$PATH:" in *":$dir:"*) ;; *) PATH="$PATH:$dir" ;; esac
 done
 export PATH
 
@@ -348,7 +351,7 @@ sudo apt install -y --no-upgrade \
     libgif-dev \
     libgtk2.0-dev \
     libxss-dev \
-    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
+    libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
     lldb \
     lxappearance \
     maildir-utils \
@@ -387,6 +390,7 @@ sudo apt install -y --no-upgrade \
     xournalpp \
     xmlto \
     zoxide \
+    zsh \
     7zip
 
 if ! command -v ghcup >/dev/null; then
@@ -412,22 +416,20 @@ if want_install xmobar "$(ver xmobar --version)" "$xmobar_latest"; then
     cabal install xmobar -fall_extensions --overwrite-policy=always
 fi
 
-# dunst: built from source; purge the outdated distro package so its binary
-# and D-Bus service file can't shadow the build.
-if dpkg -s dunst >/dev/null 2>&1; then
-    sudo apt purge -y dunst
-fi
+# dunst: built from the latest release into /usr/local. The outdated distro
+# package is purged only once that build exists, so a failed build or lookup
+# never leaves you without a notification daemon.
 dunst_latest="$(latest_tag https://github.com/dunst-project/dunst.git)"
 build_dunst() {
     make
     sudo make install
 }
-if want_install dunst "$(ver dunst --version)" "$dunst_latest"; then
+if want_install dunst "$(ver /usr/local/bin/dunst --version)" "$dunst_latest" need_latest; then
     build_from_tag https://github.com/dunst-project/dunst.git "$dunst_latest" build_dunst
 fi
-
-if ! command -v zsh >/dev/null; then
-    sudo apt -y install zsh
+# Its binary and D-Bus service file would shadow the build.
+if [ -x /usr/local/bin/dunst ] && dpkg -s dunst >/dev/null 2>&1; then
+    sudo apt purge -y dunst
 fi
 
 if [ ! -f ~/.ssh/id_ed25519 ]; then
@@ -440,7 +442,10 @@ if [ ! -f ~/.ssh/id_ed25519 ]; then
 fi
 
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    # Assigning first makes a failed download stop the script; inside
+    # sh -c "$(curl ...)" it would run an empty script and carry on.
+    omz_installer="$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    RUNZSH=no CHSH=no sh -c "$omz_installer" "" --unattended
     # The installer replaces .zshrc; restore ours. Only here, so later runs
     # never discard uncommitted .zshrc edits.
     /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" checkout .zshrc
@@ -455,19 +460,21 @@ for plugin in zsh-users/zsh-autosuggestions Aloxaf/fzf-tab zsh-users/zsh-syntax-
     fi
 done
 
-# picom: built from source; the distro package is outdated, so purge it
-# so it can't shadow the build or reappear on upgrades.
-if dpkg -s picom >/dev/null 2>&1; then
-    sudo apt purge -y picom
-fi
+# picom: built from the latest release into /usr/local. The outdated distro
+# package is purged only once that build exists, so a failed build or lookup
+# never leaves you without a compositor.
 picom_latest="$(latest_tag https://github.com/yshui/picom.git)"
 build_picom() {
     meson setup --buildtype=release build
     ninja -C build
     sudo ninja -C build install
 }
-if want_install picom "$(ver picom --version)" "$picom_latest"; then
+if want_install picom "$(ver /usr/local/bin/picom --version)" "$picom_latest" need_latest; then
     build_from_tag https://github.com/yshui/picom.git "$picom_latest" build_picom
+fi
+# It could shadow the build or reappear on upgrades.
+if [ -x /usr/local/bin/picom ] && dpkg -s picom >/dev/null 2>&1; then
+    sudo apt purge -y picom
 fi
 
 build_xkblayout_state() {
@@ -523,7 +530,8 @@ fi
 
 starship_latest="$(latest_tag https://github.com/starship/starship.git)"
 if want_install starship "$(ver starship --version)" "$starship_latest"; then
-    sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes
+    starship_installer="$(curl -fsSL https://starship.rs/install.sh)"
+    sh -c "$starship_installer" -- --yes
 fi
 
 # https://github.com/nodesource/distributions
@@ -559,7 +567,11 @@ fi
 npm_tool stylelint
 npm_tool js-beautify
 
-if ! command -v rust-analyzer >/dev/null; then
+# rustup always puts a rust-analyzer proxy in ~/.cargo/bin, so check the
+# component itself, not the command.
+# Only with rustup: a distro cargo has no rustup to add components with.
+if command -v rustup >/dev/null &&
+    ! rustup component list --installed 2>/dev/null | grep -q '^rust-analyzer'; then
     rustup component add rust-analyzer
 fi
 
@@ -593,7 +605,7 @@ for pkg in $(sed -nE 's/^go install ([^@ ]+)@latest.*/\1/p' ~/scripts/go-utils.s
 done
 
 if [ ! -d "$HOME/.diff-so-fancy" ]; then
-    git clone git@github.com:so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
+    git clone https://github.com/so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
 else
     git_repo_update diff-so-fancy "$HOME/.diff-so-fancy"
 fi
@@ -630,7 +642,8 @@ fi
 
 if ! command -v fzf >/dev/null; then
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install
+    # No prompts and no rc edits: .zshrc already sources ~/.fzf.zsh.
+    ~/.fzf/install --key-bindings --completion --no-update-rc
 elif [ -d ~/.fzf/.git ]; then
     fzf_latest="$(latest_tag https://github.com/junegunn/fzf.git)"
     if want_install fzf "$(ver fzf --version)" "$fzf_latest"; then
@@ -646,6 +659,48 @@ install_rg() {
 }
 if want_install ripgrep "$(ver rg --version)" "$rg_latest" need_latest; then
     in_temp_dir install_rg
+fi
+
+# Telegram Desktop: official prebuilt binary in /usr/local/bin, owned by you
+# (not root) so Telegram's built-in updater can still replace it.
+# The latest non-beta release with a Linux binary comes from the GitHub
+# releases API: tag and download URL in one step, both empty if either is
+# missing.
+IFS=$'\t' read -r telegram_latest telegram_url < <(curl -fsS --max-time 10 \
+    https://api.github.com/repos/telegramdesktop/tdesktop/releases/latest 2>/dev/null |
+    jq -r '.tag_name as $tag
+        | first(.assets[] | select(.label == "Linux 64 bit: Binary"))
+        | select($tag != null and .browser_download_url != null)
+        | [$tag, .browser_download_url] | @tsv' 2>/dev/null) || :
+# Installed version: Telegram has no --version flag, but its log records the
+# version on every launch ("Launched version: 7002009" = 7.2.9), which also
+# picks up its self-updates. Until Telegram restarts after setup.sh installs
+# a new one, the log still shows the old version, so setup.sh also records
+# what it installed; the newer of the two wins.
+telegram_marker="${XDG_STATE_HOME:-$HOME/.local/state}/telegram-version"
+telegram_current=""
+if [ -x /usr/local/bin/Telegram ]; then
+    telegram_current="$(
+        {
+            sed -nE 's/.*Launched version: ([0-9]+).*/\1/p' \
+                ~/.local/share/TelegramDesktop/log.txt 2>/dev/null | tail -1 |
+                awk '{printf "%d.%d.%d\n", $1 / 1000000, ($1 / 1000) % 1000, $1 % 1000}'
+            grep -xE '[0-9]+(\.[0-9]+)*' "$telegram_marker" 2>/dev/null
+        } | sort -V | tail -1 || :
+    )"
+    # Installed but version unknown (never launched): offer the latest.
+    telegram_current="${telegram_current:-0 (unknown)}"
+fi
+install_telegram() {
+    curl -fsSL "$telegram_url" | tar xJ
+    sudo install -o "$(id -un)" -g "$(id -gn)" -m755 \
+        Telegram/Telegram Telegram/Updater /usr/local/bin/
+    mkdir -p "$(dirname "$telegram_marker")"
+    echo "${telegram_latest#v}" >"$telegram_marker"
+    echo "telegram: installed $telegram_latest (restart Telegram if it's running)"
+}
+if want_install telegram "$telegram_current" "$telegram_latest" need_latest; then
+    in_temp_dir install_telegram
 fi
 
 yazi_current="$(ver yazi --version)"
