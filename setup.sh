@@ -56,6 +56,20 @@ export PATH
 # apt packages are the exception: they are always upgraded, without a prompt.
 # ---------------------------------------------------------------------------
 
+# step MESSAGE -- progress line before a slow step (mostly network lookups),
+# so a long wait shows what it is waiting for instead of looking like a hang.
+step() {
+    if [ -t 1 ]; then
+        printf '\033[1;34m==>\033[0m %s\n' "$*"
+    else
+        printf '==> %s\n' "$*"
+    fi
+}
+
+# Time limit (seconds) for each "latest version" lookup, so an unresponsive
+# server makes the lookup fail ("could not look up ...") instead of hanging.
+lookup_timeout=30
+
 # confirm QUESTION -- yes unless the answer starts with n/N. QUESTION reads
 # "<what is available>. Do you want to ...?"; when not asking, only the first
 # part is reported and remembered for the summary.
@@ -88,7 +102,7 @@ ver() {
 
 # latest_tag REPO_URL -- newest stable tag (rc/beta/dev/vNext excluded), "" on failure.
 latest_tag() {
-    git ls-remote --tags --refs "$1" 2>/dev/null | sed 's|.*refs/tags/||' |
+    timeout "$lookup_timeout" git ls-remote --tags --refs "$1" 2>/dev/null | sed 's|.*refs/tags/||' |
         grep -E '^v?[0-9]+(\.[0-9]+)*$' | sort -V | tail -1 || :
 }
 
@@ -133,7 +147,8 @@ want_install() {
 git_repo_update() {
     local name=$1 dir=$2 behind
     shift 2
-    if ! git -C "$dir" fetch --quiet 2>/dev/null; then
+    step "Checking $name for updates..."
+    if ! timeout "$lookup_timeout" git -C "$dir" fetch --quiet 2>/dev/null; then
         echo "$name: could not fetch updates, skipping update check" >&2
         return 0
     fi
@@ -183,9 +198,10 @@ _clone_and_run() {
 npm_json=""
 npm_tool() {
     local pkg=$1 current latest
+    step "Checking $pkg (npm) for updates..."
     [ -n "$npm_json" ] || npm_json="$(npm ls -g --depth=0 --json 2>/dev/null || echo '{}')"
     current="$(jq -r --arg p "$pkg" '.dependencies[$p].version // empty' <<<"$npm_json" || :)"
-    latest="$(npm view "$pkg" version 2>/dev/null || :)"
+    latest="$(timeout "$lookup_timeout" npm view "$pkg" version 2>/dev/null || :)"
     if want_install "$pkg" "$current" "$latest"; then
         sudo npm install -g "$pkg@latest"
         npm_json=""
@@ -195,10 +211,11 @@ npm_tool() {
 pipx_json=""
 pipx_tool() {
     local pkg=$1 key current latest
+    step "Checking $pkg (pipx) for updates..."
     key="$(echo "$pkg" | tr 'A-Z_' 'a-z-')"
     [ -n "$pipx_json" ] || pipx_json="$(pipx list --json 2>/dev/null || echo '{}')"
     current="$(jq -r --arg p "$key" '.venvs[$p].metadata.main_package.package_version // empty' <<<"$pipx_json" || :)"
-    latest="$(curl -fsS "https://pypi.org/pypi/$pkg/json" 2>/dev/null | jq -r '.info.version // empty' || :)"
+    latest="$(curl -fsS --max-time "$lookup_timeout" "https://pypi.org/pypi/$pkg/json" 2>/dev/null | jq -r '.info.version // empty' || :)"
     if want_install "$pkg" "$current" "$latest"; then
         if [ -z "$current" ]; then
             pipx install "$pkg"
@@ -210,9 +227,10 @@ pipx_tool() {
 
 go_tool() {
     local pkg=$1 bin=${1##*/} path mod="" current="" latest=""
+    step "Checking $bin (go) for updates..."
     if path="$(command -v "$bin")"; then
         read -r mod current < <(go version -m "$path" 2>/dev/null | awk '$1 == "mod" {print $2, $3; exit}') || :
-        [ -z "$mod" ] || latest="$(go list -m -f '{{.Version}}' "$mod@latest" 2>/dev/null || :)"
+        [ -z "$mod" ] || latest="$(timeout "$lookup_timeout" go list -m -f '{{.Version}}' "$mod@latest" 2>/dev/null || :)"
     fi
     if want_install "$bin" "$current" "$latest"; then
         if ! go install "$pkg@latest"; then
@@ -237,6 +255,7 @@ apt_get() {
 # -n: don't refresh the package index here; apt_get update below does it once.
 sudo add-apt-repository -y -n universe
 # apt always runs in full, with no prompt (also with --ignore-updates).
+step "Updating apt packages..."
 apt_get update
 apt_get full-upgrade
 apt_get autoremove
@@ -408,6 +427,7 @@ apt_packages=(
 # Install only the missing ones. Passing installed packages makes apt print a
 # "Skipping ..." or "already the newest version" line for each of them, and
 # full-upgrade above already keeps them current.
+step "Checking for missing apt packages..."
 declare -A apt_installed=()
 while read -r pkg; do apt_installed[$pkg]=1; done < <(
     dpkg-query -W -f='${Package}\t${db:Status-Status}\n' 2>/dev/null | awk -F'\t' '$2 == "installed" {print $1}')
@@ -421,12 +441,15 @@ if [ ${#apt_missing[@]} -gt 0 ]; then
 fi
 
 if ! command -v ghcup >/dev/null; then
+    step "Installing ghcup..."
     curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org |
         BOOTSTRAP_HASKELL_NONINTERACTIVE=1 sh
 fi
 
-cabal_latest="$(ghcup list -t cabal -r 2>/dev/null | awk '$3 ~ /(^|,)latest(,|$)/ {print $2}' || :)"
+step "Checking cabal for updates..."
+cabal_latest="$(timeout "$lookup_timeout" ghcup list -t cabal -r 2>/dev/null | awk '$3 ~ /(^|,)latest(,|$)/ {print $2}' || :)"
 if want_install cabal "$(ver cabal --version)" "$cabal_latest"; then
+    step "Installing cabal ${cabal_latest:-latest}..."
     ghcup install cabal --set "${cabal_latest:-latest}"
 fi
 
@@ -436,6 +459,7 @@ fi
 # tags, plus the stack.yaml from `stack init`; `stack install` puts the xmonad
 # binary in ~/.local/bin, and xmonad then recompiles xmonad.hs with Stack.
 if ! command -v stack >/dev/null; then
+    step "Installing stack..."
     ghcup install stack recommended --set
 fi
 xmonad_dir="$HOME/.xmonad"
@@ -456,6 +480,7 @@ xm_checkout() {
     fi
 }
 
+step "Checking xmonad for updates..."
 xm_latest="$(latest_tag https://github.com/xmonad/xmonad.git)"
 xmc_latest="$(latest_tag https://github.com/xmonad/xmonad-contrib.git)"
 xm_current="$(xm_version xmonad)"
@@ -475,6 +500,7 @@ elif is_newer "$xm_latest" "$xm_current" || is_newer "$xmc_latest" "$xmc_current
 fi
 xmonad_checkout_failed=0
 if [ "$xmonad_move" = 1 ]; then
+    step "Downloading xmonad $xm_latest + xmonad-contrib $xmc_latest..."
     xm_prev="$(git -C "$xmonad_dir/xmonad" rev-parse HEAD 2>/dev/null || :)"
     if ! xm_checkout xmonad "$xm_latest"; then
         failed_installs+=("xmonad (git checkout of xmonad $xm_latest)")
@@ -499,6 +525,7 @@ if [ "$xmonad_checkout_failed" = 0 ] &&
         echo "$xmonad_want" >"$xmonad_stamp"
     fi
     if [ "$(cat "$xmonad_stamp" 2>/dev/null)" != "$xmonad_want" ] || [ ! -x "$xmonad_bin" ]; then
+        step "Building xmonad with Stack (can take a while)..."
         if [ ! -f "$xmonad_dir/stack.yaml" ] && ! (cd "$xmonad_dir" && stack init); then
             failed_installs+=("xmonad (stack init in ~/.xmonad; retried next run)")
         elif (cd "$xmonad_dir" && stack install); then
@@ -532,9 +559,11 @@ DesktopNames=XMonad
 DESKTOP
 fi
 
-xmobar_latest="$(curl -fsS -H 'Accept: application/json' https://hackage.haskell.org/package/xmobar/preferred 2>/dev/null |
+step "Checking xmobar for updates..."
+xmobar_latest="$(curl -fsS --max-time "$lookup_timeout" -H 'Accept: application/json' https://hackage.haskell.org/package/xmobar/preferred 2>/dev/null |
     jq -r '."normal-version"[0] // empty' || :)"
 if want_install xmobar "$(ver xmobar --version)" "$xmobar_latest"; then
+    step "Building xmobar $xmobar_latest with cabal (can take a while)..."
     cabal update
     cabal install xmobar -fall_extensions --overwrite-policy=always
 fi
@@ -542,12 +571,14 @@ fi
 # dunst: built from the latest release into /usr/local. The outdated distro
 # package is purged only once that build exists, so a failed build or lookup
 # never leaves you without a notification daemon.
+step "Checking dunst for updates..."
 dunst_latest="$(latest_tag https://github.com/dunst-project/dunst.git)"
 build_dunst() {
     make
     sudo make install
 }
 if want_install dunst "$(ver /usr/local/bin/dunst --version)" "$dunst_latest" need_latest; then
+    step "Building dunst $dunst_latest..."
     build_from_tag https://github.com/dunst-project/dunst.git "$dunst_latest" build_dunst
 fi
 # Its binary and D-Bus service file would shadow the build.
@@ -567,6 +598,7 @@ fi
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     # Assigning first makes a failed download stop the script; inside
     # sh -c "$(curl ...)" it would run an empty script and carry on.
+    step "Installing oh-my-zsh..."
     omz_installer="$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     RUNZSH=no CHSH=no sh -c "$omz_installer" "" --unattended
     # The installer replaces .zshrc; restore ours. Only here, so later runs
@@ -577,6 +609,7 @@ fi
 for plugin in zsh-users/zsh-autosuggestions Aloxaf/fzf-tab zsh-users/zsh-syntax-highlighting; do
     plugin_dir="$HOME/.oh-my-zsh/custom/plugins/${plugin#*/}"
     if [ ! -d "$plugin_dir" ]; then
+        step "Installing ${plugin#*/}..."
         git clone "https://github.com/$plugin.git" "$plugin_dir"
     else
         git_repo_update "${plugin#*/}" "$plugin_dir"
@@ -586,6 +619,7 @@ done
 # picom: built from the latest release into /usr/local. The outdated distro
 # package is purged only once that build exists, so a failed build or lookup
 # never leaves you without a compositor.
+step "Checking picom for updates..."
 picom_latest="$(latest_tag https://github.com/yshui/picom.git)"
 build_picom() {
     meson setup --buildtype=release build
@@ -593,6 +627,7 @@ build_picom() {
     sudo ninja -C build install
 }
 if want_install picom "$(ver /usr/local/bin/picom --version)" "$picom_latest" need_latest; then
+    step "Building picom $picom_latest..."
     build_from_tag https://github.com/yshui/picom.git "$picom_latest" build_picom
 fi
 # It could shadow the build or reappear on upgrades.
@@ -605,6 +640,7 @@ build_xkblayout_state() {
     sudo install -m755 xkblayout-state /usr/local/bin/xkblayout-state
 }
 if ! command -v xkblayout-state >/dev/null; then
+    step "Building xkblayout-state..."
     build_from_tag https://github.com/nonpop/xkblayout-state.git "" build_xkblayout_state
 fi
 
@@ -618,25 +654,31 @@ install_font_awesome() {
     fc-cache -f
 }
 if [ ! -d "$HOME/.font-awesome" ]; then
+    step "Installing Font Awesome..."
     in_temp_dir install_font_awesome
 fi
 
 if [ ! -f "$HOME/.nerd-fonts" ]; then
+    step "Installing Nerd Fonts (large download, can take a long while)..."
     build_from_tag https://github.com/ryanoasis/nerd-fonts "" ./install.sh
     touch "$HOME/.nerd-fonts"
 fi
 
 if ! command -v cargo >/dev/null; then
+    step "Installing Rust (rustup)..."
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 
 
 # fd: the crate is published as fd-find; cargo builds the latest release once.
+step "Checking fd for updates..."
 fd_latest="$(latest_tag https://github.com/sharkdp/fd.git)"
 if want_install fd "$(ver fd --version)" "$fd_latest"; then
+    step "Building fd $fd_latest with cargo (can take a while)..."
     cargo install fd-find --locked
 fi
 
+step "Checking alacritty for updates..."
 alacritty_latest="$(latest_tag https://github.com/alacritty/alacritty.git)"
 build_alacritty() {
     cargo build --release
@@ -648,11 +690,14 @@ build_alacritty() {
     cp extra/completions/_alacritty "${ZDOTDIR:-$HOME}/.zsh_functions/_alacritty"
 }
 if want_install alacritty "$(ver alacritty --version)" "$alacritty_latest"; then
+    step "Building alacritty $alacritty_latest (can take a while)..."
     build_from_tag https://github.com/alacritty/alacritty.git "$alacritty_latest" build_alacritty
 fi
 
+step "Checking starship for updates..."
 starship_latest="$(latest_tag https://github.com/starship/starship.git)"
 if want_install starship "$(ver starship --version)" "$starship_latest"; then
+    step "Installing starship $starship_latest..."
     starship_installer="$(curl -fsSL https://starship.rs/install.sh)"
     sh -c "$starship_installer" -- --yes
 fi
@@ -664,6 +709,7 @@ if command -v node >/dev/null; then
     node_major=$(node --version | sed 's/^v\([0-9]*\).*/\1/')
 fi
 if [ "$node_major" -lt 22 ]; then
+    step "Installing Node.js 22..."
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key |
         sudo gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
@@ -681,7 +727,8 @@ npm_tool bash-language-server
 # pnpm self-installs into $PNPM_HOME, which comes first on PATH; upgrading the
 # npm-installed copy would leave the one actually in use untouched.
 if [ -x "$PNPM_HOME/pnpm" ]; then
-    if want_install pnpm "$(ver "$PNPM_HOME/pnpm" --version)" "$(npm view @pnpm/exe version 2>/dev/null || :)"; then
+    step "Checking pnpm for updates..."
+    if want_install pnpm "$(ver "$PNPM_HOME/pnpm" --version)" "$(timeout "$lookup_timeout" npm view @pnpm/exe version 2>/dev/null || :)"; then
         "$PNPM_HOME/pnpm" self-update
     fi
 else
@@ -700,6 +747,7 @@ fi
 
 # deno: prebuilt release binary instead of a cargo build (seconds, not tens of
 # minutes). An existing install upgrades itself in place, wherever it lives.
+step "Checking deno for updates..."
 deno_latest="$(latest_tag https://github.com/denoland/deno.git)"
 install_deno() {
     curl -fsSLO "https://github.com/denoland/deno/releases/download/$deno_latest/deno-x86_64-unknown-linux-gnu.zip"
@@ -709,8 +757,10 @@ install_deno() {
 }
 if want_install deno "$(ver deno --version)" "$deno_latest" need_latest; then
     if command -v deno >/dev/null; then
+        step "Upgrading deno to $deno_latest..."
         deno upgrade "${deno_latest#v}"
     else
+        step "Installing deno $deno_latest..."
         in_temp_dir install_deno
     fi
 fi
@@ -718,6 +768,7 @@ fi
 # Go stays on the version pinned in go-update.sh (work projects need it),
 # so it is only installed when missing, never offered for upgrade.
 if ! command -v go >/dev/null; then
+    step "Installing Go..."
     ~/scripts/go-update.sh
 fi
 
@@ -728,6 +779,7 @@ for pkg in $(sed -nE 's/^go install ([^@ ]+)@latest.*/\1/p' ~/scripts/go-utils.s
 done
 
 if [ ! -d "$HOME/.diff-so-fancy" ]; then
+    step "Installing diff-so-fancy..."
     git clone https://github.com/so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
 else
     git_repo_update diff-so-fancy "$HOME/.diff-so-fancy"
@@ -739,6 +791,7 @@ if ! command -v bat >/dev/null && command -v batcat >/dev/null; then
     ln -s "$(command -v batcat)" ~/.local/bin/bat
 fi
 
+step "Checking delta for updates..."
 delta_latest="$(latest_tag https://github.com/dandavison/delta.git)"
 install_delta() {
     curl -fsSL "https://github.com/dandavison/delta/releases/download/$delta_latest/delta-$delta_latest-x86_64-unknown-linux-musl.tar.gz" | tar xz
@@ -746,9 +799,11 @@ install_delta() {
     install -m755 delta-*/delta ~/.local/bin/delta
 }
 if want_install delta "$(ver delta --version)" "$delta_latest" need_latest; then
+    step "Installing delta $delta_latest..."
     in_temp_dir install_delta
 fi
 
+step "Checking atuin for updates..."
 atuin_current="$(ver atuin --version)"
 atuin_latest="$(latest_tag https://github.com/atuinsh/atuin.git)"
 install_atuin() {
@@ -760,27 +815,33 @@ install_atuin() {
     fi
 }
 if want_install atuin "$atuin_current" "$atuin_latest" need_latest; then
+    step "Installing atuin $atuin_latest..."
     in_temp_dir install_atuin
 fi
 
 if ! command -v fzf >/dev/null; then
+    step "Installing fzf..."
     git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     # No prompts and no rc edits: .zshrc already sources ~/.fzf.zsh.
     ~/.fzf/install --key-bindings --completion --no-update-rc
 elif [ -d ~/.fzf/.git ]; then
+    step "Checking fzf for updates..."
     fzf_latest="$(latest_tag https://github.com/junegunn/fzf.git)"
     if want_install fzf "$(ver fzf --version)" "$fzf_latest"; then
+        step "Upgrading fzf to $fzf_latest..."
         git -C ~/.fzf pull --ff-only --quiet
         ~/.fzf/install --bin
     fi
 fi
 
+step "Checking ripgrep for updates..."
 rg_latest="$(latest_tag https://github.com/BurntSushi/ripgrep.git)"
 install_rg() {
     curl -fsSLO "https://github.com/BurntSushi/ripgrep/releases/download/$rg_latest/ripgrep_${rg_latest}-1_amd64.deb"
     sudo dpkg -i "ripgrep_${rg_latest}-1_amd64.deb"
 }
 if want_install ripgrep "$(ver rg --version)" "$rg_latest" need_latest; then
+    step "Installing ripgrep $rg_latest..."
     in_temp_dir install_rg
 fi
 
@@ -789,6 +850,7 @@ fi
 # The latest non-beta release with a Linux binary comes from the GitHub
 # releases API: tag and download URL in one step, both empty if either is
 # missing.
+step "Checking telegram for updates..."
 IFS=$'\t' read -r telegram_latest telegram_url < <(curl -fsS --max-time 10 \
     https://api.github.com/repos/telegramdesktop/tdesktop/releases/latest 2>/dev/null |
     jq -r '.tag_name as $tag
@@ -823,9 +885,11 @@ install_telegram() {
     echo "telegram: installed $telegram_latest (restart Telegram if it's running)"
 }
 if want_install telegram "$telegram_current" "$telegram_latest" need_latest; then
+    step "Installing telegram $telegram_latest..."
     in_temp_dir install_telegram
 fi
 
+step "Checking yazi for updates..."
 yazi_current="$(ver yazi --version)"
 yazi_latest="$(latest_tag https://github.com/sxyazi/yazi.git)"
 build_yazi() {
@@ -843,26 +907,40 @@ build_yazi() {
     fi
 }
 if want_install yazi "$yazi_current" "$yazi_latest"; then
+    step "Building yazi $yazi_latest (can take a while)..."
     build_from_tag https://github.com/sxyazi/yazi.git "$yazi_latest" build_yazi
 fi
 
 # Emacs is installed manually; only report whether it's missing or outdated.
 emacs_current="$(ver emacs --version)"
-emacs_latest="$(git ls-remote --tags --refs https://git.savannah.gnu.org/git/emacs.git 2>/dev/null |
-    sed 's|.*refs/tags/||' | grep -E '^emacs-[0-9]+(\.[0-9]+)*$' | sed 's/^emacs-//' | sort -V | tail -1 || :)"
 if [ -z "$emacs_current" ]; then
     echo "emacs: not installed, install it manually" >&2
     skipped_updates+=("emacs: not installed, install it manually")
-elif [ -n "$emacs_latest" ] && is_newer "$emacs_latest" "$emacs_current"; then
-    echo "emacs: new version $emacs_latest available (installed $emacs_current), install it manually"
-    skipped_updates+=("emacs: new version $emacs_latest available (installed $emacs_current), install it manually")
+else
+    step "Checking emacs for updates..."
+    # Release tarballs on GNU's download server (git.savannah.gnu.org is far
+    # too slow to list tags: minutes, often timing out).
+    emacs_latest="$(curl -fsSL --max-time "$lookup_timeout" https://ftp.gnu.org/gnu/emacs/ 2>/dev/null |
+        grep -oE 'emacs-[0-9]+(\.[0-9]+)*\.tar\.xz' | grep -oE '[0-9]+(\.[0-9]+)*' | sort -V | tail -1 || :)"
+    if [ -z "$emacs_latest" ]; then
+        echo "emacs: could not look up the latest version, skipping update check" >&2
+    elif is_newer "$emacs_latest" "$emacs_current"; then
+        echo "emacs: new version $emacs_latest available (installed $emacs_current), install it manually"
+        skipped_updates+=("emacs: new version $emacs_latest available (installed $emacs_current), install it manually")
+    fi
 fi
 
-rust_updates="$(rustup check 2>/dev/null | grep 'Update available' || :)"
-if [ -n "$rust_updates" ]; then
-    echo "$rust_updates"
-    if confirm "rust: updates available (listed above). Do you want to upgrade?"; then
-        rustup update
+# Only with rustup (a distro cargo is updated by apt).
+if command -v rustup >/dev/null; then
+    step "Checking rust for updates..."
+    # rustup prints e.g. "stable-... - update available: 1.98.1 -> 1.99.0".
+    rust_updates="$(timeout "$lookup_timeout" rustup check 2>/dev/null | grep -i 'update available' || :)"
+    if [ -n "$rust_updates" ]; then
+        echo "$rust_updates"
+        if confirm "rust: updates available (listed above). Do you want to upgrade?"; then
+            step "Upgrading rust..."
+            rustup update
+        fi
     fi
 fi
 
