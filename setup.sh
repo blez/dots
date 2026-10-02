@@ -356,6 +356,9 @@ apt_packages=(
     libuchardet-dev
     libxerces-c-dev
     libxi-dev
+    libxft-dev # X11-xft, needed to build xmonad
+    libxinerama-dev # X11, needed to build xmonad
+    libxrandr-dev # X11, needed to build xmonad
     libpng-dev
     libgif-dev
     libgtk2.0-dev
@@ -427,10 +430,106 @@ if want_install cabal "$(ver cabal --version)" "$cabal_latest"; then
     ghcup install cabal --set "${cabal_latest:-latest}"
 fi
 
-if ! command -v xmonad >/dev/null; then
-    echo "Install xmonad" >&2
-    exit 1
+# xmonad, built with Stack like the guide this setup follows:
 # https://github.com/NapoleonWils0n/cerberus/blob/master/xmonad/xmonad-ubuntu-stack-install.org
+# ~/.xmonad holds checkouts of xmonad and xmonad-contrib at their release
+# tags, plus the stack.yaml from `stack init`; `stack install` puts the xmonad
+# binary in ~/.local/bin, and xmonad then recompiles xmonad.hs with Stack.
+if ! command -v stack >/dev/null; then
+    ghcup install stack recommended --set
+fi
+xmonad_dir="$HOME/.xmonad"
+xmonad_bin="$HOME/.local/bin/xmonad"
+# Versions of the last successful `stack install`, so a failed or interrupted
+# build is retried on the next run even though the checkouts already moved.
+xmonad_stamp="$xmonad_dir/.setup-built"
+
+xm_version() { sed -nE 's/^version:[[:space:]]*//p' "$xmonad_dir/$1/$1.cabal" 2>/dev/null || :; }
+# xm_checkout REPO TAG -- shallow clone, or move an existing checkout, to TAG.
+xm_checkout() {
+    local dir="$xmonad_dir/$1" url="https://github.com/xmonad/$1.git"
+    if [ -d "$dir/.git" ]; then
+        git -C "$dir" fetch --quiet --depth 1 "$url" tag "$2" &&
+            git -C "$dir" -c advice.detachedHead=false checkout --quiet "$2"
+    else
+        git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$2" "$url" "$dir"
+    fi
+}
+
+xm_latest="$(latest_tag https://github.com/xmonad/xmonad.git)"
+xmc_latest="$(latest_tag https://github.com/xmonad/xmonad-contrib.git)"
+xm_current="$(xm_version xmonad)"
+xmc_current="$(xm_version xmonad-contrib)"
+# xmonad-contrib only works with a matching xmonad range, so the two are
+# installed and upgraded together, with one prompt for the pair.
+xmonad_move=0
+if [ -z "$xm_latest" ] || [ -z "$xmc_latest" ]; then
+    echo "xmonad: could not look up the latest versions, skipping" >&2
+elif [ -z "$xm_current" ] || [ -z "$xmc_current" ]; then
+    echo "xmonad: not installed, installing xmonad $xm_latest + xmonad-contrib $xmc_latest"
+    xmonad_move=1
+elif is_newer "$xm_latest" "$xm_current" || is_newer "$xmc_latest" "$xmc_current"; then
+    if confirm "xmonad: new versions xmonad $xm_latest + xmonad-contrib $xmc_latest available (installed $xm_current + $xmc_current). Do you want to upgrade?"; then
+        xmonad_move=1
+    fi
+fi
+xmonad_checkout_failed=0
+if [ "$xmonad_move" = 1 ]; then
+    xm_prev="$(git -C "$xmonad_dir/xmonad" rev-parse HEAD 2>/dev/null || :)"
+    if ! xm_checkout xmonad "$xm_latest"; then
+        failed_installs+=("xmonad (git checkout of xmonad $xm_latest)")
+        xmonad_checkout_failed=1
+    elif ! xm_checkout xmonad-contrib "$xmc_latest"; then
+        failed_installs+=("xmonad (git checkout of xmonad-contrib $xmc_latest)")
+        xmonad_checkout_failed=1
+        # Keep the pair consistent: put xmonad back where it was, so this
+        # run and later ones never build a new xmonad with an old contrib.
+        if [ -n "$xm_prev" ]; then
+            git -C "$xmonad_dir/xmonad" -c advice.detachedHead=false checkout --quiet "$xm_prev" || :
+        fi
+    fi
+fi
+
+if [ "$xmonad_checkout_failed" = 0 ] &&
+    [ -d "$xmonad_dir/xmonad/.git" ] && [ -d "$xmonad_dir/xmonad-contrib/.git" ]; then
+    xmonad_want="$(xm_version xmonad) $(xm_version xmonad-contrib)"
+    # Existing install from before the stamp: count it as built if its
+    # version matches the checkout, instead of rebuilding it.
+    if [ ! -f "$xmonad_stamp" ] && [ "$(ver "$xmonad_bin" --version)" = "$(xm_version xmonad)" ]; then
+        echo "$xmonad_want" >"$xmonad_stamp"
+    fi
+    if [ "$(cat "$xmonad_stamp" 2>/dev/null)" != "$xmonad_want" ] || [ ! -x "$xmonad_bin" ]; then
+        if [ ! -f "$xmonad_dir/stack.yaml" ] && ! (cd "$xmonad_dir" && stack init); then
+            failed_installs+=("xmonad (stack init in ~/.xmonad; retried next run)")
+        elif (cd "$xmonad_dir" && stack install); then
+            echo "$xmonad_want" >"$xmonad_stamp"
+            # Rebuild the config against the new libraries; the running
+            # xmonad picks it up on the next restart (Mod+Shift+R).
+            if [ -f "$xmonad_dir/xmonad.hs" ] && ! "$xmonad_bin" --recompile; then
+                failed_installs+=("xmonad config (xmonad --recompile, see ~/.xmonad/xmonad.errors)")
+            fi
+        else
+            # The snapshot in stack.yaml is never changed by upgrades, so a new
+            # release that needs newer dependencies fails here every run.
+            failed_installs+=("xmonad (stack install in ~/.xmonad; retried next run. If it keeps failing after an upgrade, the snapshot in ~/.xmonad/stack.yaml may be too old: run 'stack init --force' there)")
+        fi
+    fi
+fi
+if [ ! -x "$xmonad_bin" ]; then
+    failed_installs+=("xmonad (not installed; see the output above)")
+fi
+
+# Login-screen entry for the XMonad session (no package ships one here).
+# Exec relies on ~/.local/bin being on the session's PATH (~/.profile adds it).
+if [ ! -f /usr/share/xsessions/xmonad.desktop ]; then
+    sudo tee /usr/share/xsessions/xmonad.desktop >/dev/null <<'DESKTOP'
+[Desktop Entry]
+Name=XMonad
+Comment=Lightweight tiling window manager
+Exec=xmonad
+Type=Application
+DesktopNames=XMonad
+DESKTOP
 fi
 
 xmobar_latest="$(curl -fsS -H 'Accept: application/json' https://hackage.haskell.org/package/xmobar/preferred 2>/dev/null |
