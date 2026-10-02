@@ -21,16 +21,33 @@ function dots {
     /usr/bin/git --git-dir="$HOME/dots/" --work-tree="$HOME" "$@"
 }
 
+cd "$HOME"
 if dots checkout; then
     echo "Checked out config."
 else
-    mkdir -p ~/.config-backup
-    echo "Removing up pre-existing dot files."
-    dots checkout 2>&1 | grep -iEv "error|please|aborting" | awk '{print $1}' | xargs -I{} rm {}
+    # Files already on this machine that the checkout would overwrite: move
+    # them to ~/.config-backup (same relative paths) instead of deleting them.
+    echo "Backing up pre-existing dot files to ~/.config-backup."
+    dots checkout 2>&1 | grep -iEv "error|please|aborting" | awk '{print $1}' |
+        while IFS= read -r f; do
+            [ -n "$f" ] && [ -e "$f" ] || continue
+            mkdir -p "$HOME/.config-backup/$(dirname "$f")"
+            mv "$f" "$HOME/.config-backup/$f"
+        done
 fi
 
 dots checkout
 dots config status.showUntrackedFiles no
+
+# Some dotfiles are encrypted with git-crypt (Claude Code settings and notes,
+# listed in ~/.gitattributes); the key is in 1Password. git-crypt is in
+# Ubuntu's universe component, so enable it and refresh the package lists
+# first. On a new machine op usually isn't installed yet: the files then stay
+# encrypted until setup.sh installs it and unlocks them.
+sudo add-apt-repository -y -n universe
+sudo apt update
+sudo apt install -y git-crypt
+"$HOME/scripts/dots-unlock.sh" || :
 
 # Desktop theming the checked-out configs assume: GTK theme/icons
 # (~/.config/gtk-3.0, gtk-4.0, .gtkrc-2.0). picom is built from source in setup.sh.

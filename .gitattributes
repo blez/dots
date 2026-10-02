@@ -1,0 +1,18 @@
+# Files encrypted with git-crypt before they're stored in this (public) repo.
+# The key is in 1Password (personal account) as the document "dots git-crypt
+# key"; scripts/dots-unlock.sh (run by dotsetup.sh and setup.sh) uses it to
+# unlock a fresh clone.
+# Add a path here BEFORE its first `dots add`: a file committed while it isn't
+# listed is stored in plain text, and stays readable in the history.
+# List the encrypted files with: dots ls-files ':(attr:filter=git-crypt)'
+# (not `dots-crypt status`: it scans every untracked file in the home folder)
+
+# Claude Code settings (the work one holds a telemetry auth header)
+.claude/settings.json filter=git-crypt diff=git-crypt
+.claude-personal/settings.json filter=git-crypt diff=git-crypt
+
+# Claude Code rules and saved notes (memory)
+.claude/rules/** filter=git-crypt diff=git-crypt
+.claude-personal/rules/** filter=git-crypt diff=git-crypt
+.claude/projects/*/memory/** filter=git-crypt diff=git-crypt
+.claude-personal/projects/*/memory/** filter=git-crypt diff=git-crypt

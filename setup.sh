@@ -254,6 +254,37 @@ apt_get() {
 
 # -n: don't refresh the package index here; apt_get update below does it once.
 sudo add-apt-repository -y -n universe
+
+# 1Password app and CLI (op) come from 1Password's own apt repository, set up
+# as in https://support.1password.com/install-linux/ . The deb822 file below is
+# the one the 1password package manages afterwards, so it's only written when
+# no 1Password source exists yet. The debsig policy lets dpkg verify the
+# packages' signatures.
+add_1password_repo() {
+    local key
+    key="$(curl -fsS --max-time "$lookup_timeout" https://downloads.1password.com/linux/keys/1password.asc)" || return 1
+    sudo gpg --dearmor --yes --output /usr/share/keyrings/1password-archive-keyring.gpg <<<"$key" || return 1
+    sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22 /usr/share/debsig/keyrings/AC2D62742012EA22 || return 1
+    curl -fsS --max-time "$lookup_timeout" https://downloads.1password.com/linux/debian/debsig/1password.pol |
+        sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol >/dev/null || return 1
+    sudo gpg --dearmor --yes --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg <<<"$key" || return 1
+    # Written last: this file is what marks the repository as set up, so a
+    # failure above makes the next run try the whole thing again.
+    sudo tee /etc/apt/sources.list.d/1password.sources >/dev/null <<'SOURCES' || return 1
+Types: deb
+URIs: https://downloads.1password.com/linux/debian/amd64
+Suites: stable
+Components: main
+Architectures: amd64
+Signed-By: /usr/share/keyrings/1password-archive-keyring.gpg
+SOURCES
+}
+if [ ! -e /etc/apt/sources.list.d/1password.sources ] && [ ! -e /etc/apt/sources.list.d/1password.list ]; then
+    step "Adding the 1Password apt repository..."
+    if ! add_1password_repo; then
+        failed_installs+=("1Password apt repository (download or setup failed; retried next run)")
+    fi
+fi
 # apt always runs in full, with no prompt (also with --ignore-updates).
 step "Updating apt packages..."
 apt_get update
@@ -261,6 +292,8 @@ apt_get full-upgrade
 apt_get autoremove
 
 apt_packages=(
+    1password
+    1password-cli # op: fetches the dotfiles' git-crypt key
     alsa-utils
     apache2-utils
     autoconf
@@ -290,6 +323,7 @@ apt_packages=(
     g++
     g++-14
     git
+    git-crypt # decrypts the encrypted dotfiles (see ~/.gitattributes)
     gnupg
     graphviz
     glslang-tools
@@ -435,9 +469,26 @@ apt_missing=()
 for pkg in "${apt_packages[@]}"; do
     [ -n "${apt_installed[$pkg]:-}" ] || apt_missing+=("$pkg")
 done
-if [ ${#apt_missing[@]} -gt 0 ]; then
-    echo "apt: installing ${apt_missing[*]}"
-    apt_get install "${apt_missing[@]}"
+# A package apt has no candidate for (e.g. 1Password's, when adding its repo
+# failed) would make the whole install fail; report it instead.
+apt_installable=()
+for pkg in "${apt_missing[@]}"; do
+    if apt-cache policy "$pkg" 2>/dev/null | grep -q 'Candidate: [^(]'; then
+        apt_installable+=("$pkg")
+    else
+        failed_installs+=("apt: $pkg (no installable version found)")
+    fi
+done
+if [ ${#apt_installable[@]} -gt 0 ]; then
+    echo "apt: installing ${apt_installable[*]}"
+    apt_get install "${apt_installable[@]}"
+fi
+
+# Encrypted dotfiles (git-crypt, paths in ~/.gitattributes): unlock them if
+# they're still locked, e.g. on a new machine where dotsetup.sh ran before op
+# was installed. dots-unlock.sh does nothing when there's nothing to unlock.
+if ! "$HOME/scripts/dots-unlock.sh"; then
+    failed_installs+=("dotfiles: encrypted files still locked (see the dots-unlock message above)")
 fi
 
 if ! command -v ghcup >/dev/null; then
