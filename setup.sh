@@ -3,11 +3,16 @@ set -euo pipefail
 
 usage() {
     cat <<'USAGE'
-Usage: setup.sh [-i|--ignore-updates]
+Usage: setup.sh [-y|--yes | -i|--ignore-updates]
 
 Installs missing tools and offers available upgrades with a [Y/n] prompt.
 apt packages are always upgraded (update + full-upgrade), without a prompt.
+If both -y and -i are given, the last one wins.
 
+  -y, --yes             Answer yes to every upgrade prompt. Emacs is still only
+                        reported (it's installed manually) and Go stays pinned.
+                        sudo may still ask for your password: run it from a
+                        terminal, or have sudo credentials cached (sudo -v).
   -i, --ignore-updates  Only report available tool upgrades; don't ask, don't
                         upgrade them. Missing tools are still installed, and apt
                         packages are still upgraded.
@@ -15,10 +20,13 @@ apt packages are always upgraded (update + full-upgrade), without a prompt.
 USAGE
 }
 
-ignore_updates=0
+# What to do with available tool upgrades: ask (default), yes (--yes) or
+# report (--ignore-updates). The last of these flags wins.
+update_mode=ask
 while [ $# -gt 0 ]; do
     case "$1" in
-        -i | --ignore-updates) ignore_updates=1 ;;
+        -i | --ignore-updates) update_mode=report ;;
+        -y | --yes) update_mode=yes ;;
         -h | --help)
             usage
             exit 0
@@ -51,8 +59,9 @@ export PATH
 # ---------------------------------------------------------------------------
 # Update helpers. Missing tools are installed without asking; for installed
 # ones a newer upstream version is offered with a [Y/n] prompt. The prompt
-# reads from the terminal; with no terminal, or with --ignore-updates, the
-# upgrade is only reported and listed again in a summary at the end.
+# reads from the terminal. With --yes every upgrade is installed without
+# asking (terminal or not); with --ignore-updates, or with no terminal to ask
+# on, the upgrade is only reported and listed again in a summary at the end.
 # apt packages are the exception: they are always upgraded, without a prompt.
 # ---------------------------------------------------------------------------
 
@@ -70,13 +79,44 @@ step() {
 # server makes the lookup fail ("could not look up ...") instead of hanging.
 lookup_timeout=30
 
-# confirm QUESTION -- yes unless the answer starts with n/N. QUESTION reads
+# try NAME CMD... -- run an install/upgrade step without letting its failure
+# end the whole script: the failure is listed under "Failed to install" at the
+# end and the next tool is checked. CMD still stops at its own first failing
+# command (errexit stays on inside the subshell); running it in an `if` or with
+# `||` instead would silently turn that off for everything CMD runs.
+try() {
+    local name=$1 rc
+    shift
+    set +e
+    (set -e; "$@")
+    rc=$?
+    set -e
+    if [ "$rc" != 0 ]; then
+        echo "$name: failed (exit $rc), continuing" >&2
+        failed_installs+=("$name (exit $rc)")
+    fi
+}
+
+# run_in_dir DIR CMD... -- run CMD with DIR as working directory (used with
+# try, whose subshell keeps the cd from leaking out).
+run_in_dir() {
+    cd "$1"
+    shift
+    "$@"
+}
+
+# confirm QUESTION -- yes unless the answer starts with n/N (always yes with
+# --yes, without asking). QUESTION reads
 # "<what is available>. Do you want to ...?"; when not asking, only the first
 # part is reported and remembered for the summary.
 skipped_updates=()
 confirm() {
     local answer
-    if [ "$ignore_updates" = 0 ] && (exec </dev/tty) 2>/dev/null &&
+    if [ "$update_mode" = yes ]; then
+        echo "${1% Do you want*} Upgrading (--yes)."
+        return 0
+    fi
+    if [ "$update_mode" = ask ] && (exec </dev/tty) 2>/dev/null &&
         read -r -p "$1 [Y/n] " answer </dev/tty; then
         case "$answer" in
             [nN]*) return 1 ;;
@@ -84,7 +124,7 @@ confirm() {
         esac
     fi
     skipped_updates+=("${1% Do you want*}")
-    if [ "$ignore_updates" = 1 ]; then
+    if [ "$update_mode" = report ]; then
         echo "${1% Do you want*}"
     else
         echo "$1 [no terminal, skipped]"
@@ -156,9 +196,9 @@ git_repo_update() {
     [ "$behind" -gt 0 ] || return 0
     if confirm "$name: $behind new upstream commits available. Do you want to update?"; then
         if [ $# -gt 0 ]; then
-            (cd "$dir" && "$@")
+            try "$name" run_in_dir "$dir" "$@"
         else
-            git -C "$dir" pull --ff-only --quiet
+            try "$name" git -C "$dir" pull --ff-only --quiet
         fi
     fi
 }
@@ -203,7 +243,7 @@ npm_tool() {
     current="$(jq -r --arg p "$pkg" '.dependencies[$p].version // empty' <<<"$npm_json" || :)"
     latest="$(timeout "$lookup_timeout" npm view "$pkg" version 2>/dev/null || :)"
     if want_install "$pkg" "$current" "$latest"; then
-        sudo npm install -g "$pkg@latest"
+        try "$pkg (npm)" sudo npm install -g "$pkg@latest"
         npm_json=""
     fi
 }
@@ -218,9 +258,9 @@ pipx_tool() {
     latest="$(curl -fsS --max-time "$lookup_timeout" "https://pypi.org/pypi/$pkg/json" 2>/dev/null | jq -r '.info.version // empty' || :)"
     if want_install "$pkg" "$current" "$latest"; then
         if [ -z "$current" ]; then
-            pipx install "$pkg"
+            try "$pkg (pipx)" pipx install "$pkg"
         else
-            pipx upgrade "$pkg"
+            try "$pkg (pipx)" pipx upgrade "$pkg"
         fi
     fi
 }
@@ -502,7 +542,7 @@ step "Checking cabal for updates..."
 cabal_latest="$(timeout "$lookup_timeout" ghcup list -t cabal -r 2>/dev/null | awk '$3 ~ /(^|,)latest(,|$)/ {print $2}' || :)"
 if want_install cabal "$(ver cabal --version)" "$cabal_latest"; then
     step "Installing cabal ${cabal_latest:-latest}..."
-    ghcup install cabal --set "${cabal_latest:-latest}"
+    try cabal ghcup install cabal --set "${cabal_latest:-latest}"
 fi
 
 # xmonad, built with Stack like the guide this setup follows:
@@ -616,8 +656,11 @@ xmobar_latest="$(curl -fsS --max-time "$lookup_timeout" -H 'Accept: application/
     jq -r '."normal-version"[0] // empty' || :)"
 if want_install xmobar "$(ver xmobar --version)" "$xmobar_latest"; then
     step "Building xmobar $xmobar_latest with cabal (can take a while)..."
-    cabal update
-    cabal install xmobar -fall_extensions --overwrite-policy=always
+    build_xmobar() {
+        cabal update
+        cabal install xmobar -fall_extensions --overwrite-policy=always
+    }
+    try xmobar build_xmobar
 fi
 
 # dunst: built from the latest release into /usr/local. The outdated distro
@@ -631,7 +674,7 @@ build_dunst() {
 }
 if want_install dunst "$(ver /usr/local/bin/dunst --version)" "$dunst_latest" need_latest; then
     step "Building dunst $dunst_latest..."
-    build_from_tag https://github.com/dunst-project/dunst.git "$dunst_latest" build_dunst
+    try dunst build_from_tag https://github.com/dunst-project/dunst.git "$dunst_latest" build_dunst
 fi
 # Its binary and D-Bus service file would shadow the build.
 if [ -x /usr/local/bin/dunst ] && dpkg -s dunst >/dev/null 2>&1; then
@@ -680,7 +723,7 @@ build_picom() {
 }
 if want_install picom "$(ver /usr/local/bin/picom --version)" "$picom_latest" need_latest; then
     step "Building picom $picom_latest..."
-    build_from_tag https://github.com/yshui/picom.git "$picom_latest" build_picom
+    try picom build_from_tag https://github.com/yshui/picom.git "$picom_latest" build_picom
 fi
 # It could shadow the build or reappear on upgrades.
 if [ -x /usr/local/bin/picom ] && dpkg -s picom >/dev/null 2>&1; then
@@ -693,7 +736,7 @@ build_xkblayout_state() {
 }
 if ! command -v xkblayout-state >/dev/null; then
     step "Building xkblayout-state..."
-    build_from_tag https://github.com/nonpop/xkblayout-state.git "" build_xkblayout_state
+    try xkblayout-state build_from_tag https://github.com/nonpop/xkblayout-state.git "" build_xkblayout_state
 fi
 
 # Font Awesome stays on v5 on purpose. ~/.font-awesome is kept as the install marker.
@@ -707,13 +750,18 @@ install_font_awesome() {
 }
 if [ ! -d "$HOME/.font-awesome" ]; then
     step "Installing Font Awesome..."
-    in_temp_dir install_font_awesome
+    try "font awesome" in_temp_dir install_font_awesome
 fi
 
 if [ ! -f "$HOME/.nerd-fonts" ]; then
     step "Installing Nerd Fonts (large download, can take a long while)..."
-    build_from_tag https://github.com/ryanoasis/nerd-fonts "" ./install.sh
-    touch "$HOME/.nerd-fonts"
+    # The marker is written only after a successful install, so a failed one
+    # is tried again on the next run.
+    install_nerd_fonts() {
+        build_from_tag https://github.com/ryanoasis/nerd-fonts "" ./install.sh
+        touch "$HOME/.nerd-fonts"
+    }
+    try "nerd fonts" install_nerd_fonts
 fi
 
 if ! command -v cargo >/dev/null; then
@@ -727,7 +775,7 @@ step "Checking fd for updates..."
 fd_latest="$(latest_tag https://github.com/sharkdp/fd.git)"
 if want_install fd "$(ver fd --version)" "$fd_latest"; then
     step "Building fd $fd_latest with cargo (can take a while)..."
-    cargo install fd-find --locked
+    try fd cargo install fd-find --locked
 fi
 
 step "Checking alacritty for updates..."
@@ -743,15 +791,19 @@ build_alacritty() {
 }
 if want_install alacritty "$(ver alacritty --version)" "$alacritty_latest"; then
     step "Building alacritty $alacritty_latest (can take a while)..."
-    build_from_tag https://github.com/alacritty/alacritty.git "$alacritty_latest" build_alacritty
+    try alacritty build_from_tag https://github.com/alacritty/alacritty.git "$alacritty_latest" build_alacritty
 fi
 
 step "Checking starship for updates..."
 starship_latest="$(latest_tag https://github.com/starship/starship.git)"
 if want_install starship "$(ver starship --version)" "$starship_latest"; then
     step "Installing starship $starship_latest..."
-    starship_installer="$(curl -fsSL https://starship.rs/install.sh)"
-    sh -c "$starship_installer" -- --yes
+    install_starship() {
+        local installer
+        installer="$(curl -fsSL https://starship.rs/install.sh)"
+        sh -c "$installer" -- --yes
+    }
+    try starship install_starship
 fi
 
 # https://github.com/nodesource/distributions
@@ -781,7 +833,7 @@ npm_tool bash-language-server
 if [ -x "$PNPM_HOME/pnpm" ]; then
     step "Checking pnpm for updates..."
     if want_install pnpm "$(ver "$PNPM_HOME/pnpm" --version)" "$(timeout "$lookup_timeout" npm view @pnpm/exe version 2>/dev/null || :)"; then
-        "$PNPM_HOME/pnpm" self-update
+        try pnpm "$PNPM_HOME/pnpm" self-update
     fi
 else
     npm_tool @pnpm/exe
@@ -810,10 +862,10 @@ install_deno() {
 if want_install deno "$(ver deno --version)" "$deno_latest" need_latest; then
     if command -v deno >/dev/null; then
         step "Upgrading deno to $deno_latest..."
-        deno upgrade "${deno_latest#v}"
+        try deno deno upgrade "${deno_latest#v}"
     else
         step "Installing deno $deno_latest..."
-        in_temp_dir install_deno
+        try deno in_temp_dir install_deno
     fi
 fi
 
@@ -852,7 +904,7 @@ install_delta() {
 }
 if want_install delta "$(ver delta --version)" "$delta_latest" need_latest; then
     step "Installing delta $delta_latest..."
-    in_temp_dir install_delta
+    try delta in_temp_dir install_delta
 fi
 
 step "Checking atuin for updates..."
@@ -868,7 +920,7 @@ install_atuin() {
 }
 if want_install atuin "$atuin_current" "$atuin_latest" need_latest; then
     step "Installing atuin $atuin_latest..."
-    in_temp_dir install_atuin
+    try atuin in_temp_dir install_atuin
 fi
 
 if ! command -v fzf >/dev/null; then
@@ -881,8 +933,11 @@ elif [ -d ~/.fzf/.git ]; then
     fzf_latest="$(latest_tag https://github.com/junegunn/fzf.git)"
     if want_install fzf "$(ver fzf --version)" "$fzf_latest"; then
         step "Upgrading fzf to $fzf_latest..."
-        git -C ~/.fzf pull --ff-only --quiet
-        ~/.fzf/install --bin
+        upgrade_fzf() {
+            git -C ~/.fzf pull --ff-only --quiet
+            ~/.fzf/install --bin
+        }
+        try fzf upgrade_fzf
     fi
 fi
 
@@ -894,7 +949,7 @@ install_rg() {
 }
 if want_install ripgrep "$(ver rg --version)" "$rg_latest" need_latest; then
     step "Installing ripgrep $rg_latest..."
-    in_temp_dir install_rg
+    try ripgrep in_temp_dir install_rg
 fi
 
 # Telegram Desktop: official prebuilt binary in /usr/local/bin, owned by you
@@ -938,7 +993,7 @@ install_telegram() {
 }
 if want_install telegram "$telegram_current" "$telegram_latest" need_latest; then
     step "Installing telegram $telegram_latest..."
-    in_temp_dir install_telegram
+    try telegram in_temp_dir install_telegram
 fi
 
 # Viber: the official .deb. It adds no apt repository, so apt never updates
@@ -956,7 +1011,7 @@ install_viber() {
 }
 if want_install viber "$viber_current" "$viber_latest" need_latest; then
     step "Installing viber $viber_latest..."
-    in_temp_dir install_viber
+    try viber in_temp_dir install_viber
 fi
 
 # WhatsApp: there's no official Linux app. ZapZap is a maintained desktop
@@ -977,7 +1032,7 @@ else
         grep -qxF "$zapzap_id"; then
         if confirm "whatsapp (ZapZap): an update is available. Do you want to upgrade?"; then
             step "Upgrading whatsapp (ZapZap)..."
-            flatpak update --user -y --noninteractive "$zapzap_id"
+            try "whatsapp (ZapZap)" flatpak update --user -y --noninteractive "$zapzap_id"
         fi
     fi
 fi
@@ -991,8 +1046,12 @@ claude_latest="$(curl -fsS --max-time "$lookup_timeout" \
     grep -xE '[0-9]+\.[0-9]+\.[0-9]+' || :)"
 if want_install "claude code" "$(ver claude --version)" "$claude_latest" need_latest; then
     step "Installing claude code $claude_latest..."
-    claude_installer="$(curl -fsSL --max-time 60 https://claude.ai/install.sh)"
-    bash -s -- "$claude_latest" <<<"$claude_installer"
+    install_claude_code() {
+        local installer
+        installer="$(curl -fsSL --max-time 60 https://claude.ai/install.sh)"
+        bash -s -- "$claude_latest" <<<"$installer"
+    }
+    try "claude code" install_claude_code
 fi
 
 step "Checking yazi for updates..."
@@ -1014,7 +1073,7 @@ build_yazi() {
 }
 if want_install yazi "$yazi_current" "$yazi_latest"; then
     step "Building yazi $yazi_latest (can take a while)..."
-    build_from_tag https://github.com/sxyazi/yazi.git "$yazi_latest" build_yazi
+    try yazi build_from_tag https://github.com/sxyazi/yazi.git "$yazi_latest" build_yazi
 fi
 
 # Emacs is installed manually; only report whether it's missing or outdated.
@@ -1045,7 +1104,7 @@ if command -v rustup >/dev/null; then
         echo "$rust_updates"
         if confirm "rust: updates available (listed above). Do you want to upgrade?"; then
             step "Upgrading rust..."
-            rustup update
+            try rust rustup update
         fi
     fi
 fi
