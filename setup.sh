@@ -369,6 +369,7 @@ apt_packages=(
     graphviz
     glslang-tools
     i3lock
+    xss-lock # locks before sleep / on loginctl lock-session (xmonad startup hook)
     imagemagick
     isync
     jq

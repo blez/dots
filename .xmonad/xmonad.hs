@@ -120,9 +120,9 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       -- launch gmrun
       ((modm .|. shiftMask, xK_p), spawn "gmrun"),
       -- lock
-      ((modm .|. shiftMask, xK_l), spawn "i3lock -i ~/wallpapers/lock.png"),
+      ((modm .|. shiftMask, xK_l), spawn "~/scripts/lock-now.sh"),
       -- sleep
-      ((modm .|. shiftMask, xK_s), spawn "i3lock -i ~/wallpapers/lock.png && systemctl suspend"),
+      ((modm .|. shiftMask, xK_s), spawn "~/scripts/lock-now.sh suspend"),
       -- keyboard layout
       ((modm, xK_space), spawn "~/scripts/kb-switch.sh"),
       -- close focused window
@@ -419,6 +419,7 @@ myStartupHook = do
   spawnOnce "picom --config ~/.config/picom.conf"
   spawnOnce "dunst"
   spawnOnce "xfce4-power-manager"
+  spawnOnce "xss-lock --transfer-sleep-lock -- ~/scripts/lock.sh"
   spawnOnce "/usr/local/bin/emacs"
   -- spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
   spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/lenovo.kbd &"
