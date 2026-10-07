@@ -20,6 +20,20 @@ If both -y and -i are given, the last one wins.
 USAGE
 }
 
+# One run at a time: a second setup.sh would race this one on apt's package
+# cache (missing packages then look uninstallable) and on the tools being
+# installed. The script re-runs itself under flock, which holds the lock for
+# the whole run; -o keeps the lock out of child processes (ssh-agent).
+setup_lock="${XDG_RUNTIME_DIR:-/tmp}/setup.sh.lock"
+if [ -z "${SETUP_SH_LOCKED:-}" ]; then
+    rc=0
+    SETUP_SH_LOCKED=1 flock -n -o -E 200 "$setup_lock" bash "$0" "$@" || rc=$?
+    if [ "$rc" = 200 ]; then
+        echo "setup.sh: another run is still going (maybe waiting at a prompt). Finish that one first." >&2
+    fi
+    exit "$rc"
+fi
+
 # What to do with available tool upgrades: ask (default), yes (--yes) or
 # report (--ignore-updates). The last of these flags wins.
 update_mode=ask
@@ -51,7 +65,7 @@ for dir in "$PNPM_HOME/bin" "$PNPM_HOME" "$HOME/.local/bin" "$HOME/.cargo/bin"; 
     case ":$PATH:" in *":$dir:"*) ;; *) path_front="$path_front$dir:" ;; esac
 done
 PATH="$path_front$PATH"
-for dir in "$HOME/.cabal/bin" "$HOME/.ghcup/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin"; do
+for dir in "$HOME/.cabal/bin" "$HOME/.ghcup/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin" "$HOME/.krew/bin"; do
     case ":$PATH:" in *":$dir:"*) ;; *) PATH="$PATH:$dir" ;; esac
 done
 export PATH
@@ -149,8 +163,16 @@ latest_tag() {
 # is_newer A B -- true if version A is newer than B (leading "v" ignored).
 # A pre-release/dev build of A (0.17.0-dev, 0.17.0-rc1) counts as older than A;
 # a build N commits after release A (git describe: 1.13.2-15) counts as newer.
+# x.y and x.y.0 name the same release (calibre prints 9.15 for its v9.15.0).
+strip_zero() {
+    local base=${1%%-*} rest=${1#"${1%%-*}"}
+    while [[ $base == *.0 ]]; do base=${base%.0}; done
+    echo "$base$rest"
+}
 is_newer() {
-    local a=${1#v} b=${2#v}
+    local a b
+    a="$(strip_zero "${1#v}")"
+    b="$(strip_zero "${2#v}")"
     [ "$a" != "$b" ] || return 1
     if [ "${b%%-*}" = "$a" ]; then
         case "${b#*-}" in
@@ -265,17 +287,91 @@ pipx_tool() {
     fi
 }
 
+# go_tool [GO-INSTALL-FLAGS...] PKG -- flags (e.g. -tags=postgres) go to go install.
 go_tool() {
-    local pkg=$1 bin=${1##*/} path mod="" current="" latest=""
+    local pkg=${*: -1} flags=("${@:1:$#-1}") bin path mod="" current="" latest=""
+    bin=${pkg##*/}
     step "Checking $bin (go) for updates..."
     if path="$(command -v "$bin")"; then
         read -r mod current < <(go version -m "$path" 2>/dev/null | awk '$1 == "mod" {print $2, $3; exit}') || :
         [ -z "$mod" ] || latest="$(timeout "$lookup_timeout" go list -m -f '{{.Version}}' "$mod@latest" 2>/dev/null || :)"
     fi
     if want_install "$bin" "$current" "$latest"; then
-        if ! go install "$pkg@latest"; then
+        if ! go install "${flags[@]}" "$pkg@latest"; then
             echo "$bin: go install failed" >&2
-            failed_installs+=("$bin (go install $pkg@latest)")
+            failed_installs+=("$bin (go install ${flags[*]} $pkg@latest)")
+        fi
+    fi
+}
+
+# cargo_tool BIN CRATE -- Rust tools built from crates.io. The latest version
+# is crates.io's (a GitHub tag may be published there only later).
+cargo_list=""
+cargo_tool() {
+    local bin=$1 crate=$2 current latest
+    step "Checking $bin for updates..."
+    # cargo's own list first, since not every tool has a --version (kalker);
+    # --version for a copy that came from elsewhere (apt, a binary).
+    [ -n "$cargo_list" ] || cargo_list="$(cargo install --list 2>/dev/null || echo none)"
+    current="$(sed -n "s/^$crate v\([0-9][^ :]*\).*/\1/p" <<<"$cargo_list" | head -1 || :)"
+    [ -n "$current" ] || current="$(ver "$bin" --version)"
+    latest="$(curl -fsS --max-time "$lookup_timeout" -A setup.sh "https://crates.io/api/v1/crates/$crate" 2>/dev/null |
+        jq -r '.crate.max_stable_version // empty' || :)"
+    if want_install "$bin" "$current" "$latest"; then
+        step "Building $bin $latest with cargo (can take a while)..."
+        try "$bin" cargo install "$crate" --locked
+    fi
+}
+
+# deb_version PKG -- installed version of an apt package, "" if not installed.
+deb_version() {
+    dpkg-query -W -f='${db:Status-Status} ${Version}' "$1" 2>/dev/null | sed -n 's/^installed //p' || :
+}
+
+# install_deb URL -- download a .deb and install it with apt (which also
+# pulls in its dependencies). Run inside in_temp_dir.
+install_deb() {
+    curl -fsSLo pkg.deb "$1"
+    # mktemp's directory is 700; let apt's _apt user read the package, or
+    # apt warns that it downloads unsandboxed as root.
+    chmod 755 . && chmod 644 pkg.deb
+    apt_get install ./pkg.deb
+}
+
+# flatpak_app NAME ID -- Flathub app. Missing ones are installed for this
+# user (no sudo); an existing system-wide install is updated as such.
+# Version labels aren't reliable (ZapZap's new builds keep an old number), so
+# flatpak itself decides whether an update is available. The lookup runs
+# once (both scopes) and is cached in flatpak_updates.
+flatpak_list=""
+flatpak_app() {
+    local name=$1 id=$2 scope
+    [ -n "$flatpak_list" ] || flatpak_list="$(flatpak list --app --columns=application,installation 2>/dev/null || echo none)"
+    scope="$(awk -F'\t' -v id="$id" '$1 == id {print $2; exit}' <<<"$flatpak_list" || :)"
+    if [ -z "$scope" ]; then
+        step "Installing $name..."
+        if ! flatpak install --user -y --noninteractive flathub "$id"; then
+            failed_installs+=("$name (flatpak install $id)")
+        fi
+        return 0
+    fi
+    step "Checking $name for updates..."
+    if [ -z "${flatpak_updates+set}" ]; then
+        flatpak_updates="$(
+            timeout "$lookup_timeout" flatpak remote-ls --user --updates --app --columns=application 2>/dev/null || echo "lookup failed: user"
+            timeout "$lookup_timeout" flatpak remote-ls --system --updates --app --columns=application 2>/dev/null || echo "lookup failed: system"
+        )"
+    fi
+    if grep -qxF "lookup failed: $scope" <<<"$flatpak_updates"; then
+        echo "$name: could not look up updates, skipping update check" >&2
+    elif grep -qxF "$id" <<<"$flatpak_updates"; then
+        if confirm "$name: an update is available. Do you want to upgrade?"; then
+            step "Upgrading $name..."
+            if [ "$scope" = system ]; then
+                try "$name" sudo flatpak update --system -y --noninteractive "$id"
+            else
+                try "$name" flatpak update --user -y --noninteractive "$id"
+            fi
         fi
     fi
 }
@@ -294,6 +390,54 @@ apt_get() {
 
 # -n: don't refresh the package index here; apt_get update below does it once.
 sudo add-apt-repository -y -n universe
+sudo add-apt-repository -y -n multiverse # unrar
+
+# add_apt_repo NAME KEY_URL SOURCE_LINE -- a third-party apt repository: the
+# signing key goes to /usr/share/keyrings/NAME-archive-keyring.gpg (@KEYRING@
+# in SOURCE_LINE) and the source line to /etc/apt/sources.list.d/NAME.list.
+# Only when no NAME.list or NAME.sources exists yet, so a repository the
+# package manages itself afterwards (Slack) is left alone.
+install_apt_repo() {
+    local name=$1 key_url=$2 line=$3 keyring="/usr/share/keyrings/$1-archive-keyring.gpg"
+    local list="/etc/apt/sources.list.d/$1.list"
+    curl -fsSL --max-time "$lookup_timeout" -o key "$key_url"
+    if grep -q 'BEGIN PGP' key; then
+        gpg --dearmor <key >key.gpg
+    else
+        mv key key.gpg
+    fi
+    # A bad download (empty file, HTML error page) must not become a keyring
+    # and source list that break every apt update from then on.
+    gpg --show-keys key.gpg >/dev/null
+    sudo install -m644 key.gpg "$keyring"
+    echo "${line//@KEYRING@/$keyring}" | sudo tee "$list" >/dev/null
+    # Refresh only this source. A repository with no release for this Ubuntu
+    # version (a vendor lagging a release upgrade) would otherwise make every
+    # later apt update fail, so it's removed again and retried next run.
+    if ! apt_get update -o Dir::Etc::sourcelist="$list" -o Dir::Etc::sourceparts=- \
+        -o APT::Get::List-Cleanup=0 >/dev/null; then
+        sudo rm -f "$list" "$keyring"
+        echo "$name: apt can't use the repository (no release for $distro_codename?), removed it again" >&2
+        return 1
+    fi
+}
+add_apt_repo() {
+    if [ ! -e "/etc/apt/sources.list.d/$1.list" ] && [ ! -e "/etc/apt/sources.list.d/$1.sources" ]; then
+        step "Adding the $1 apt repository..."
+        try "$1 apt repository (retried next run)" in_temp_dir install_apt_repo "$@"
+    fi
+}
+distro_codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+add_apt_repo docker https://download.docker.com/linux/ubuntu/gpg \
+    "deb [arch=amd64 signed-by=@KEYRING@] https://download.docker.com/linux/ubuntu $distro_codename stable"
+add_apt_repo slack https://packagecloud.io/slacktechnologies/slack/gpgkey \
+    "deb [signed-by=@KEYRING@] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main"
+add_apt_repo tailscale "https://pkgs.tailscale.com/stable/ubuntu/$distro_codename.noarmor.gpg" \
+    "deb [signed-by=@KEYRING@] https://pkgs.tailscale.com/stable/ubuntu $distro_codename main"
+add_apt_repo nordvpn-app https://repo.nordvpn.com/gpg/nordvpn_public.asc \
+    "deb [signed-by=@KEYRING@] https://repo.nordvpn.com/deb/nordvpn/debian stable main"
+add_apt_repo dropbox https://linux.dropbox.com/fedora/rpm-public-key.asc \
+    "deb [arch=amd64 signed-by=@KEYRING@] http://linux.dropbox.com/ubuntu $distro_codename main"
 
 # 1Password app and CLI (op) come from 1Password's own apt repository, set up
 # as in https://support.1password.com/install-linux/ . The deb822 file below is
@@ -343,15 +487,19 @@ apt_packages=(
     bluez
     build-essential
     ca-certificates
+    caffeine
     clang
     clangd
     clang-format
     cmake
+    corectrl
     curl
     default-jdk
     deluge
     direnv
     suckless-tools # provides dmenu
+    docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    dropbox
     dsniff
     dh-autoreconf
     editorconfig
@@ -359,20 +507,30 @@ apt_packages=(
     fonts-symbola
     ffmpeg
     flameshot
-    flatpak # WhatsApp (ZapZap) comes from Flathub
+    flatpak # WhatsApp (ZapZap), Bottles and Lutris come from Flathub
     gawk
     g++
     g++-14
+    gh
     git
     git-crypt # decrypts the encrypted dotfiles (see ~/.gitattributes)
     gnupg
     graphviz
     glslang-tools
+    htop
+    ibus-table-cangjie3
+    ibus-table-cangjie5
+    ibus-table-cangjie-big
+    m17n-db
     i3lock
     xss-lock # locks before sleep / on loginctl lock-session (xmonad startup hook)
     imagemagick
     isync
     jq
+    libcli11-dev # ueberzugpp (otherwise fetched at build time)
+    libfmt-dev # ueberzugpp
+    nlohmann-json3-dev # ueberzugpp (otherwise fetched at build time)
+    librange-v3-dev # ueberzugpp (otherwise fetched at build time)
     libvips-dev
     libxcb-res0-dev
     libopencv-dev
@@ -460,18 +618,26 @@ apt_packages=(
     libxss-dev
     libwebkit2gtk-4.1-dev libayatana-appindicator3-dev
     lldb
+    lm-sensors
     lxappearance
+    lxc
     maildir-utils
     meson
     m4
+    mysql-client
+    nasm
     net-tools
     ninja-build
     ncdu
     nitrogen
+    nordvpn
+    nordvpn-gui
+    pandoc
     pavucontrol
     pcmanfm
     pipx
     poppler-utils
+    postgresql-client
     pkg-config
     playerctl
     pulseaudio
@@ -480,15 +646,24 @@ apt_packages=(
     pipenv
     protobuf-compiler
     python3
+    python3-netifaces
     python3-pip
+    python3-pymysql
+    qemu-user
     ranger
     rofi
     shellcheck
+    slack-desktop
+    speedtest-cli
+    tailscale
     texinfo
     texlive-full
     tidy
     tmux
+    tree
+    unrar
     unzip
+    valgrind
     vim
     vlc
     xwallpaper
@@ -496,6 +671,7 @@ apt_packages=(
     xfce4-power-manager
     xournalpp
     xmlto
+    yq
     zoxide
     zsh
     7zip
@@ -512,10 +688,12 @@ for pkg in "${apt_packages[@]}"; do
     [ -n "${apt_installed[$pkg]:-}" ] || apt_missing+=("$pkg")
 done
 # A package apt has no candidate for (e.g. 1Password's, when adding its repo
-# failed) would make the whole install fail; report it instead.
+# failed) would make the whole install fail; report it instead. grep reads
+# the whole output on purpose: with pipefail, grep -q quitting early gives
+# apt-cache a broken pipe and the check fails for every package.
 apt_installable=()
 for pkg in "${apt_missing[@]}"; do
-    if apt-cache policy "$pkg" 2>/dev/null | grep -q 'Candidate: [^(]'; then
+    if apt-cache policy "$pkg" 2>/dev/null | grep 'Candidate: [^(]' >/dev/null; then
         apt_installable+=("$pkg")
     else
         failed_installs+=("apt: $pkg (no installable version found)")
@@ -771,13 +949,10 @@ if ! command -v cargo >/dev/null; then
 fi
 
 
-# fd: the crate is published as fd-find; cargo builds the latest release once.
-step "Checking fd for updates..."
-fd_latest="$(latest_tag https://github.com/sharkdp/fd.git)"
-if want_install fd "$(ver fd --version)" "$fd_latest"; then
-    step "Building fd $fd_latest with cargo (can take a while)..."
-    try fd cargo install fd-find --locked
-fi
+# Rust tools from crates.io; cargo builds each release once.
+cargo_tool fd fd-find
+cargo_tool hwatch hwatch
+cargo_tool kalker kalker
 
 step "Checking alacritty for updates..."
 alacritty_latest="$(latest_tag https://github.com/alacritty/alacritty.git)"
@@ -829,12 +1004,12 @@ if command -v npm >/dev/null; then
 fi
 
 npm_tool bash-language-server
-# pnpm self-installs into $PNPM_HOME, which comes first on PATH; upgrading the
-# npm-installed copy would leave the one actually in use untouched.
-if [ -x "$PNPM_HOME/pnpm" ]; then
+# pnpm self-installs into $PNPM_HOME/bin, which comes first on PATH; upgrading
+# the npm-installed copy would leave the one actually in use untouched.
+if [ -x "$PNPM_HOME/bin/pnpm" ]; then
     step "Checking pnpm for updates..."
-    if want_install pnpm "$(ver "$PNPM_HOME/pnpm" --version)" "$(timeout "$lookup_timeout" npm view @pnpm/exe version 2>/dev/null || :)"; then
-        try pnpm "$PNPM_HOME/pnpm" self-update
+    if want_install pnpm "$(ver "$PNPM_HOME/bin/pnpm" --version)" "$(timeout "$lookup_timeout" npm view @pnpm/exe version 2>/dev/null || :)"; then
+        try pnpm "$PNPM_HOME/bin/pnpm" self-update
     fi
 else
     npm_tool @pnpm/exe
@@ -846,7 +1021,7 @@ npm_tool js-beautify
 # component itself, not the command.
 # Only with rustup: a distro cargo has no rustup to add components with.
 if command -v rustup >/dev/null &&
-    ! rustup component list --installed 2>/dev/null | grep -q '^rust-analyzer'; then
+    ! rustup component list --installed 2>/dev/null | grep '^rust-analyzer' >/dev/null; then
     rustup component add rust-analyzer
 fi
 
@@ -877,17 +1052,26 @@ if ! command -v go >/dev/null; then
     ~/scripts/go-update.sh
 fi
 
-# Go tools: the list lives in go-utils.sh. Each is installed if missing and
-# offered for upgrade when its module has a newer release.
-for pkg in $(sed -nE 's/^go install ([^@ ]+)@latest.*/\1/p' ~/scripts/go-utils.sh); do
-    go_tool "$pkg"
-done
+# Go tools: the list lives in go-utils.sh ("go install [flags] PKG@latest"
+# lines). Each is installed if missing and offered for upgrade when its
+# module has a newer release.
+while read -ra go_args; do
+    go_tool "${go_args[@]}"
+done < <(sed -nE 's/^go install (.*)@latest.*/\1/p' ~/scripts/go-utils.sh)
 
 if [ ! -d "$HOME/.diff-so-fancy" ]; then
     step "Installing diff-so-fancy..."
     git clone https://github.com/so-fancy/diff-so-fancy.git "$HOME/.diff-so-fancy"
 else
     git_repo_update diff-so-fancy "$HOME/.diff-so-fancy"
+fi
+
+# zsh-autopair: sourced by .zshrc.
+if [ ! -d "$HOME/.zsh-autopair" ]; then
+    step "Installing zsh-autopair..."
+    git clone https://github.com/hlissner/zsh-autopair.git "$HOME/.zsh-autopair"
+else
+    git_repo_update zsh-autopair "$HOME/.zsh-autopair"
 fi
 
 # Ubuntu/Debian ship bat as "batcat".
@@ -953,6 +1137,251 @@ if want_install ripgrep "$(ver rg --version)" "$rg_latest" need_latest; then
     try ripgrep in_temp_dir install_rg
 fi
 
+# ---------------------------------------------------------------------------
+# Prebuilt release binaries (no package or repository): system-wide ones go
+# to /usr/local/bin, personal ones to ~/.local/bin.
+# ---------------------------------------------------------------------------
+
+step "Checking kubectl for updates..."
+kubectl_latest="$(curl -fsS --max-time "$lookup_timeout" https://dl.k8s.io/release/stable.txt 2>/dev/null |
+    grep -xE 'v[0-9]+(\.[0-9]+)*' || :)"
+install_kubectl() {
+    curl -fsSLO "https://dl.k8s.io/release/$kubectl_latest/bin/linux/amd64/kubectl"
+    sudo install -m755 kubectl /usr/local/bin/kubectl
+}
+if want_install kubectl "$(ver kubectl version --client)" "$kubectl_latest" need_latest; then
+    step "Installing kubectl $kubectl_latest..."
+    try kubectl in_temp_dir install_kubectl
+fi
+
+# krew (kubectl plugin manager, in ~/.krew) and the plugins in use. "krew
+# upgrade" updates krew itself together with every installed plugin; it's
+# offered when krew or any plugin has a newer release.
+if command -v kubectl >/dev/null; then
+    step "Checking krew for updates..."
+    krew_latest="$(latest_tag https://github.com/kubernetes-sigs/krew.git)"
+    krew_current="$(kubectl krew version 2>/dev/null | awk '$1 == "GitTag" {print $2}' || :)"
+    install_krew() {
+        curl -fsSL "https://github.com/kubernetes-sigs/krew/releases/download/$krew_latest/krew-linux_amd64.tar.gz" | tar xz
+        ./krew-linux_amd64 install krew
+    }
+    if want_install krew "$krew_current" "$krew_latest" need_latest; then
+        if [ -z "$krew_current" ]; then
+            step "Installing krew $krew_latest..."
+            try krew in_temp_dir install_krew
+        else
+            step "Upgrading krew and its plugins..."
+            try krew kubectl krew upgrade
+        fi
+    fi
+    if command -v kubectl-krew >/dev/null; then
+        krew_installed="$(kubectl krew list 2>/dev/null | awk '{print $1}' || :)"
+        for plugin in ctx ns oidc-login; do
+            if ! grep -qxF "$plugin" <<<"$krew_installed"; then
+                step "Installing krew plugin $plugin..."
+                try "krew plugin $plugin" kubectl krew install "$plugin"
+            fi
+        done
+        # Plugin updates: refresh the index, then compare each installed
+        # plugin's receipt (what's installed) with the index (what's available).
+        step "Checking krew plugins for updates..."
+        if timeout "$lookup_timeout" kubectl krew update >/dev/null 2>&1; then
+            krew_outdated=()
+            for receipt in "$HOME"/.krew/receipts/*.yaml; do
+                [ -e "$receipt" ] || continue # no receipts: the glob stays literal
+                plugin="$(basename "$receipt" .yaml)"
+                [ "$plugin" != krew ] || continue
+                installed="$(sed -n 's/^  version: //p' "$receipt" | head -1)"
+                available="$(sed -n 's/^  version: //p' "$HOME/.krew/index/default/plugins/$plugin.yaml" 2>/dev/null | head -1 || :)"
+                if [ -n "$available" ] && is_newer "$available" "$installed"; then
+                    krew_outdated+=("$plugin $installed -> $available")
+                fi
+            done
+            if [ ${#krew_outdated[@]} -gt 0 ] &&
+                confirm "krew plugins: new versions available (${krew_outdated[*]}). Do you want to upgrade?"; then
+                step "Upgrading krew plugins..."
+                try "krew plugins" kubectl krew upgrade
+            fi
+        else
+            echo "krew: could not refresh the plugin index, skipping the plugin update check" >&2
+        fi
+    fi
+fi
+
+step "Checking k9s for updates..."
+k9s_latest="$(latest_tag https://github.com/derailed/k9s.git)"
+install_k9s() {
+    curl -fsSL "https://github.com/derailed/k9s/releases/download/$k9s_latest/k9s_Linux_amd64.tar.gz" | tar xz
+    sudo install -m755 k9s /usr/local/bin/k9s
+}
+if want_install k9s "$(ver k9s version -s)" "$k9s_latest" need_latest; then
+    step "Installing k9s $k9s_latest..."
+    try k9s in_temp_dir install_k9s
+fi
+
+step "Checking golangci-lint for updates..."
+golangci_latest="$(latest_tag https://github.com/golangci/golangci-lint.git)"
+install_golangci_lint() {
+    curl -fsSL "https://github.com/golangci/golangci-lint/releases/download/$golangci_latest/golangci-lint-${golangci_latest#v}-linux-amd64.tar.gz" | tar xz
+    sudo install -m755 golangci-lint-*/golangci-lint /usr/local/bin/golangci-lint
+}
+if want_install golangci-lint "$(ver golangci-lint --version)" "$golangci_latest" need_latest; then
+    step "Installing golangci-lint $golangci_latest..."
+    try golangci-lint in_temp_dir install_golangci_lint
+fi
+
+step "Checking grype for updates..."
+grype_latest="$(latest_tag https://github.com/anchore/grype.git)"
+install_grype() {
+    curl -fsSL "https://github.com/anchore/grype/releases/download/$grype_latest/grype_${grype_latest#v}_linux_amd64.tar.gz" | tar xz
+    sudo install -m755 grype /usr/local/bin/grype
+}
+if want_install grype "$(ver grype version)" "$grype_latest" need_latest; then
+    step "Installing grype $grype_latest..."
+    try grype in_temp_dir install_grype
+fi
+
+# AWS CLI v2: the official installer puts it in /usr/local/aws-cli and links
+# aws into /usr/local/bin. The repository's newest tag is the latest release.
+step "Checking aws cli for updates..."
+aws_latest="$(latest_tag https://github.com/aws/aws-cli.git)"
+install_aws() {
+    curl -fsSLo awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    unzip -q awscliv2.zip
+    sudo ./aws/install --update
+}
+if want_install "aws cli" "$(ver aws --version)" "$aws_latest"; then
+    step "Installing aws cli $aws_latest..."
+    try "aws cli" in_temp_dir install_aws
+fi
+
+step "Checking age for updates..."
+age_latest="$(latest_tag https://github.com/FiloSottile/age.git)"
+install_age() {
+    curl -fsSL "https://github.com/FiloSottile/age/releases/download/$age_latest/age-$age_latest-linux-amd64.tar.gz" | tar xz
+    mkdir -p ~/.local/bin
+    install -m755 age/age age/age-keygen ~/.local/bin/
+}
+if want_install age "$(ver age --version)" "$age_latest" need_latest; then
+    step "Installing age $age_latest..."
+    try age in_temp_dir install_age
+fi
+
+step "Checking sops for updates..."
+sops_latest="$(latest_tag https://github.com/getsops/sops.git)"
+install_sops() {
+    curl -fsSLo sops "https://github.com/getsops/sops/releases/download/$sops_latest/sops-$sops_latest.linux.amd64"
+    mkdir -p ~/.local/bin
+    install -m755 sops ~/.local/bin/sops
+}
+if want_install sops "$(ver sops --version)" "$sops_latest" need_latest; then
+    step "Installing sops $sops_latest..."
+    try sops in_temp_dir install_sops
+fi
+
+# ueberzugpp (image previews in yazi): built from the latest release into
+# /usr/local, with the X11 and OpenCV backends.
+step "Checking ueberzugpp for updates..."
+ueberzugpp_latest="$(latest_tag https://github.com/jstkdng/ueberzugpp.git)"
+build_ueberzugpp() {
+    cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENCV=ON -B build
+    cmake --build build -j "$(nproc)"
+    sudo cmake --install build
+}
+if want_install ueberzugpp "$(ver ueberzugpp --version)" "$ueberzugpp_latest" need_latest; then
+    step "Building ueberzugpp $ueberzugpp_latest (can take a while)..."
+    try ueberzugpp build_from_tag https://github.com/jstkdng/ueberzugpp.git "$ueberzugpp_latest" build_ueberzugpp
+fi
+
+# kmonad remaps the laptop's built-in keyboard (xmonad.hs starts it with
+# lenovo.kbd), so it's only set up on a laptop (or 2-in-1): the static release binary,
+# plus access to /dev/uinput, which is root-only by default. The udev rule
+# and uinput group below open it to this user, as in kmonad's FAQ; the group
+# membership takes effect at the next login.
+install_kmonad() {
+    curl -fsSLo kmonad "https://github.com/kmonad/kmonad/releases/download/$kmonad_latest/kmonad"
+    sudo install -m755 kmonad /usr/local/bin/kmonad
+}
+setup_uinput() {
+    getent group uinput >/dev/null || sudo groupadd uinput
+    sudo usermod -aG input,uinput "$(id -un)"
+    echo uinput | sudo tee /etc/modules-load.d/uinput.conf >/dev/null
+    sudo modprobe uinput
+    echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' |
+        sudo tee /etc/udev/rules.d/90-uinput.rules >/dev/null
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger --name-match=uinput
+}
+case "$(hostnamectl chassis 2>/dev/null)" in laptop | convertible) kmonad_wanted=1 ;; *) kmonad_wanted=0 ;; esac
+if [ "$kmonad_wanted" = 1 ]; then
+    step "Checking kmonad for updates..."
+    kmonad_latest="$(latest_tag https://github.com/kmonad/kmonad.git)"
+    if want_install kmonad "$(ver kmonad --version)" "$kmonad_latest" need_latest; then
+        step "Installing kmonad $kmonad_latest..."
+        try kmonad in_temp_dir install_kmonad
+    fi
+    if [ ! -f /etc/udev/rules.d/90-uinput.rules ]; then
+        step "Setting up uinput access for kmonad (log in again for it to apply)..."
+        try "kmonad uinput setup" setup_uinput
+    fi
+fi
+
+# umu-launcher (runs Windows games under Proton, used by the battlenet
+# script): the zipapp release, one self-contained file.
+step "Checking umu-launcher for updates..."
+umu_latest="$(latest_tag https://github.com/Open-Wine-Components/umu-launcher.git)"
+install_umu() {
+    curl -fsSL "https://github.com/Open-Wine-Components/umu-launcher/releases/download/$umu_latest/umu-launcher-$umu_latest-zipapp.tar" | tar x
+    mkdir -p ~/.local/bin
+    install -m755 umu/umu-run ~/.local/bin/umu-run
+}
+if want_install umu-launcher "$(ver umu-run --version)" "$umu_latest" need_latest; then
+    step "Installing umu-launcher $umu_latest..."
+    try umu-launcher in_temp_dir install_umu
+fi
+
+# GalaxyBudsClient: the portable binary in ~/.local/bin plus a launcher
+# entry. It has no --version flag, so the installed version is recorded in a
+# marker file.
+step "Checking galaxy buds client for updates..."
+gbc_latest="$(latest_tag https://github.com/timschneeb/GalaxyBudsClient.git)"
+gbc_bin="$HOME/.local/bin/GalaxyBudsClient.bin"
+gbc_marker="${XDG_STATE_HOME:-$HOME/.local/state}/galaxybudsclient-version"
+gbc_current=""
+if [ -x "$gbc_bin" ]; then
+    gbc_current="$(grep -xE '[0-9]+(\.[0-9]+)*' "$gbc_marker" 2>/dev/null || echo "0 (unknown)")"
+fi
+install_gbc() {
+    local apps="$HOME/.local/share/applications" icons="$HOME/.local/share/icons"
+    curl -fsSLo GalaxyBudsClient.bin \
+        "https://github.com/timschneeb/GalaxyBudsClient/releases/download/$gbc_latest/GalaxyBudsClient_Linux_64bit_Portable.bin"
+    mkdir -p ~/.local/bin "$apps" "$icons"
+    # install(1) replaces the file instead of writing into it, so this also
+    # works while the app is running ("Text file busy" otherwise).
+    install -m755 GalaxyBudsClient.bin "$gbc_bin"
+    curl -fsSLo "$icons/galaxybudsclient.png" \
+        https://raw.githubusercontent.com/timschneeb/GalaxyBudsClient/master/GalaxyBudsClient/Resources/icon_small.png || :
+    cat >"$apps/galaxybudsclient.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Galaxy Buds Client
+Comment=Unofficial manager for Samsung Galaxy Buds
+Exec=$gbc_bin
+Icon=$icons/galaxybudsclient.png
+Terminal=false
+Categories=Utility;AudioVideo;
+Keywords=galaxy;buds;samsung;earbuds;bluetooth;
+StartupWMClass=GalaxyBudsClient
+DESKTOP
+    update-desktop-database "$apps" 2>/dev/null || :
+    mkdir -p "$(dirname "$gbc_marker")"
+    echo "$gbc_latest" >"$gbc_marker"
+}
+if want_install "galaxy buds client" "$gbc_current" "$gbc_latest" need_latest; then
+    step "Installing galaxy buds client $gbc_latest..."
+    try "galaxy buds client" in_temp_dir install_gbc
+fi
+
 # Telegram Desktop: official prebuilt binary in /usr/local/bin, owned by you
 # (not root) so Telegram's built-in updater can still replace it.
 # The latest non-beta release with a Linux binary comes from the GitHub
@@ -1002,41 +1431,84 @@ fi
 # control data comes first), so checking doesn't download the whole ~130 MB.
 step "Checking viber for updates..."
 viber_url="https://download.cdn.viber.com/cdn/desktop/Linux/viber.deb"
-viber_current="$(dpkg-query -W -f='${db:Status-Status} ${Version}' viber 2>/dev/null |
-    sed -n 's/^installed //p' || :)"
 viber_latest="$(curl -fsS --max-time "$lookup_timeout" -r 0-262143 "$viber_url" 2>/dev/null |
     dpkg-deb -f /dev/stdin Version 2>/dev/null || :)"
-install_viber() {
-    curl -fsSLo viber.deb "$viber_url"
-    apt_get install ./viber.deb
-}
-if want_install viber "$viber_current" "$viber_latest" need_latest; then
+if want_install viber "$(deb_version viber)" "$viber_latest" need_latest; then
     step "Installing viber $viber_latest..."
-    try viber in_temp_dir install_viber
+    try viber in_temp_dir install_deb "$viber_url"
 fi
 
-# WhatsApp: there's no official Linux app. ZapZap is a maintained desktop
-# client for WhatsApp Web, from Flathub, installed for this user (no sudo).
-# Its version label isn't reliable (new builds keep an old number), so flatpak
-# itself decides whether an update is available.
-zapzap_id="com.rtosta.zapzap"
+# Google Chrome: the official .deb. Installing it sets up Google's apt
+# repository, which keeps it updated from then on.
+if [ -z "$(deb_version google-chrome-stable)" ]; then
+    step "Installing google chrome..."
+    try "google chrome" in_temp_dir install_deb \
+        https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+fi
+
+# Discord and Zoom: official .debs with no apt repository. Their "latest"
+# download URLs redirect to a versioned one, which gives the latest version
+# without downloading the package.
+step "Checking discord for updates..."
+discord_url="https://discord.com/api/download?platform=linux&format=deb"
+discord_latest="$(curl -fsS --max-time "$lookup_timeout" -o /dev/null -w '%{redirect_url}' "$discord_url" 2>/dev/null |
+    sed -nE 's|.*/discord-([0-9]+(\.[0-9]+)*)\.deb$|\1|p' || :)"
+if want_install discord "$(deb_version discord)" "$discord_latest" need_latest; then
+    step "Installing discord $discord_latest..."
+    try discord in_temp_dir install_deb "$discord_url"
+fi
+
+step "Checking zoom for updates..."
+zoom_url="https://zoom.us/client/latest/zoom_amd64.deb"
+zoom_latest="$(curl -fsS --max-time "$lookup_timeout" -o /dev/null -w '%{redirect_url}' "$zoom_url" 2>/dev/null |
+    sed -nE 's|.*/prod/([0-9]+(\.[0-9]+)*)/.*|\1|p' || :)"
+if want_install zoom "$(deb_version zoom)" "$zoom_latest" need_latest; then
+    step "Installing zoom $zoom_latest..."
+    try zoom in_temp_dir install_deb "$zoom_url"
+fi
+
+# LocalSend: the .deb from its GitHub releases (no apt repository).
+step "Checking localsend for updates..."
+localsend_latest="$(latest_tag https://github.com/localsend/localsend.git)"
+if want_install localsend "$(deb_version localsend)" "$localsend_latest" need_latest; then
+    step "Installing localsend $localsend_latest..."
+    try localsend in_temp_dir install_deb \
+        "https://github.com/localsend/localsend/releases/download/$localsend_latest/LocalSend-${localsend_latest#v}-linux-x86-64.deb"
+fi
+
+# Plex Media Server: the .deb from Plex's downloads API (the package ships
+# an apt source, but disabled). Version and URL come in one step, both empty
+# if either is missing.
+step "Checking plex for updates..."
+IFS=$'\t' read -r plex_latest plex_url < <(curl -fsS --max-time "$lookup_timeout" \
+    https://plex.tv/api/downloads/5.json 2>/dev/null |
+    jq -r '.computer.Linux | .version as $v
+        | first(.releases[] | select(.build == "linux-x86_64" and .distro == "debian"))
+        | select($v != null and .url != null)
+        | [$v, .url] | @tsv' 2>/dev/null) || :
+if want_install plex "$(deb_version plexmediaserver)" "$plex_latest" need_latest; then
+    step "Installing plex $plex_latest..."
+    try plex in_temp_dir install_deb "$plex_url"
+fi
+
+# calibre: the official installer (binary build into /opt/calibre).
+step "Checking calibre for updates..."
+calibre_latest="$(latest_tag https://github.com/kovidgoyal/calibre.git)"
+if want_install calibre "$(ver calibre --version)" "$calibre_latest"; then
+    step "Installing calibre ${calibre_latest#v}..."
+    install_calibre() {
+        curl -fsSL --max-time 60 https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin
+    }
+    try calibre install_calibre
+fi
+
+# Flathub apps, installed for this user (no sudo). WhatsApp has no official
+# Linux app: ZapZap is a maintained desktop client for WhatsApp Web.
 timeout "$lookup_timeout" flatpak remote-add --user --if-not-exists \
     flathub https://dl.flathub.org/repo/flathub.flatpakrepo || :
-if ! flatpak info --user "$zapzap_id" >/dev/null 2>&1; then
-    step "Installing whatsapp (ZapZap)..."
-    if ! flatpak install --user -y --noninteractive flathub "$zapzap_id"; then
-        failed_installs+=("whatsapp (flatpak install $zapzap_id)")
-    fi
-else
-    step "Checking whatsapp (ZapZap) for updates..."
-    if timeout "$lookup_timeout" flatpak remote-ls --user --updates --app --columns=application 2>/dev/null |
-        grep -qxF "$zapzap_id"; then
-        if confirm "whatsapp (ZapZap): an update is available. Do you want to upgrade?"; then
-            step "Upgrading whatsapp (ZapZap)..."
-            try "whatsapp (ZapZap)" flatpak update --user -y --noninteractive "$zapzap_id"
-        fi
-    fi
-fi
+flatpak_app "whatsapp (ZapZap)" com.rtosta.zapzap
+flatpak_app bottles com.usebottles.bottles
+flatpak_app lutris net.lutris.Lutris
 
 # Claude Code: the native install (~/.local/bin/claude). Its own auto-update
 # is turned off here, so setup.sh offers updates. "latest" is the installer's

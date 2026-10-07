@@ -13,3 +13,12 @@ go install golang.org/x/tools/cmd/guru@latest
 go install mvdan.cc/sh/v3/cmd/shfmt@latest
 go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 go install github.com/jessfraz/dockfmt@latest
+go install github.com/go-delve/delve/cmd/dlv@latest
+go install go.k6.io/k6@latest
+go install -tags=postgres github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+go install mvdan.cc/gofumpt@latest
+go install github.com/rinchsan/gosimports/cmd/gosimports@latest
+go install gotest.tools/gotestsum@latest
+go install github.com/dmarkham/enumer@latest
+go install github.com/Khan/genqlient@latest
+go install github.com/vektah/dataloaden@latest
