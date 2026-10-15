@@ -30,7 +30,7 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "__BAT__battery" 600
                     , Run Com "/bin/bash" ["-c", "~/scripts/vpn.sh | xargs echo '<fn=2>\xf3ed</fn>'"] "vpn" 10
                     , Run Com "/bin/bash" ["-c", "playerctl metadata 2>/dev/null --format '<fn=2>\xf001</fn> {{ artist }} - {{ title }}' | awk '{print substr($0,1,50)}'"] "music" 10
-                    , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt list -q --upgradable 2>/dev/null | grep -v 'Listing...' | wc -l)"] "upd" 600
+                    , Run Com "/bin/bash" ["-c", "echo '<fn=2>\xf35b</fn>' $(apt-get -s -o Debug::NoLocking=1 full-upgrade 2>/dev/null | grep -c '^Inst')"] "upd" 600
                     , Run Com "/bin/bash" ["-c", "d=$(~/scripts/blue-connected.sh); echo \"__BOX__<fn=2>\xf3fa</fn>${d:+ $d}__XOB__\""] "blue" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf0a0</fn> $(~/scripts/disk-usage.sh)\""] "disk" 100
                     , Run Com "/bin/bash" ["-c", "b=$(~/scripts/brightness.sh); echo \"__BOX__<fn=2>\xf185</fn>${b:+ $b}__XOB__\""] "__BL__bright" 60

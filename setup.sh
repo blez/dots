@@ -383,8 +383,19 @@ flatpak_app() {
 # to keep, and without a terminal it can't get an answer and leaves the package
 # half-configured. Instead: keep your version (the new one is saved next to it
 # as .dpkg-dist), or take the new one if you never changed it.
+#
+# apt-get fails at once when another apt process holds a lock (and set -e then
+# ends the script), so first wait for the background apt jobs (the hourly
+# index refresh, unattended-upgrades) to finish. Lock::Timeout covers any other
+# holder of the dpkg lock. The services are oneshot: "activating" while running.
 apt_get() {
-    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y \
+    if systemctl is-active apt-daily.service apt-daily-upgrade.service 2>/dev/null | grep -qx 'activating\|deactivating'; then
+        echo "Waiting for the background apt job to finish..."
+        while systemctl is-active apt-daily.service apt-daily-upgrade.service 2>/dev/null | grep -qx 'activating\|deactivating'; do
+            sleep 5
+        done
+    fi
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y -o DPkg::Lock::Timeout=300 \
         -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$@"
 }
 
@@ -995,8 +1006,8 @@ if [ "$node_major" -lt 22 ]; then
         sudo gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" |
         sudo tee /etc/apt/sources.list.d/nodesource.list
-    sudo apt-get update
-    sudo apt-get install nodejs -y
+    apt_get update
+    apt_get install nodejs
 fi
 
 if command -v npm >/dev/null; then
@@ -1128,13 +1139,9 @@ fi
 
 step "Checking ripgrep for updates..."
 rg_latest="$(latest_tag https://github.com/BurntSushi/ripgrep.git)"
-install_rg() {
-    curl -fsSLO "https://github.com/BurntSushi/ripgrep/releases/download/$rg_latest/ripgrep_${rg_latest}-1_amd64.deb"
-    sudo dpkg -i "ripgrep_${rg_latest}-1_amd64.deb"
-}
 if want_install ripgrep "$(ver rg --version)" "$rg_latest" need_latest; then
     step "Installing ripgrep $rg_latest..."
-    try ripgrep in_temp_dir install_rg
+    try ripgrep in_temp_dir install_deb "https://github.com/BurntSushi/ripgrep/releases/download/$rg_latest/ripgrep_${rg_latest}-1_amd64.deb"
 fi
 
 # ---------------------------------------------------------------------------
@@ -1589,6 +1596,29 @@ for pkg in pyflakes isort pytest black python-lsp-server yt-dlp qmk tldr \
     cmake-language-server Pygments curl_cffi; do
     pipx_tool "$pkg"
 done
+
+# Refresh the apt package index hourly instead of about once a day, so the
+# xmobar update count (a dry-run full-upgrade over the local index) stays close
+# to what setup.sh's full-upgrade would install. apt-daily.timer starts the job;
+# "always" makes apt.systemd.daily skip its once-a-day stamp check. Files are
+# only (re)written when their contents differ. This runs last because
+# restarting the timer starts a catch-up refresh right away.
+setup_hourly_apt_update() {
+    local timer=/etc/systemd/system/apt-daily.timer.d/hourly.conf
+    local conf=/etc/apt/apt.conf.d/99update-lists-always
+    local timer_body=$'[Timer]\nOnCalendar=\nOnCalendar=hourly\nRandomizedDelaySec=5m'
+    local conf_body='APT::Periodic::Update-Package-Lists "always";'
+    if [ "$(cat "$conf" 2>/dev/null)" != "$conf_body" ]; then
+        echo "$conf_body" | sudo tee "$conf" >/dev/null
+    fi
+    if [ "$(cat "$timer" 2>/dev/null)" != "$timer_body" ]; then
+        sudo mkdir -p "${timer%/*}"
+        echo "$timer_body" | sudo tee "$timer" >/dev/null
+        sudo systemctl daemon-reload
+        sudo systemctl restart apt-daily.timer
+    fi
+}
+try "hourly apt index refresh" setup_hourly_apt_update
 
 if [ ${#skipped_updates[@]} -gt 0 ]; then
     echo
