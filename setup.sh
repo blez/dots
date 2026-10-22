@@ -146,6 +146,13 @@ confirm() {
     return 1
 }
 
+# join_list ITEM... -- "a, b, c", for the "updates available for ..." prompts.
+join_list() {
+    local out
+    printf -v out '%s, ' "$@"
+    echo "${out%, }"
+}
+
 # ver CMD... -- first version-looking token of CMD's output, "" if CMD is missing.
 # Takes the first version on any line, not just the first line: some tools
 # (yazi 26.9+) print only their name on the first line.
@@ -338,41 +345,17 @@ install_deb() {
     apt_get install ./pkg.deb
 }
 
-# flatpak_app NAME ID -- Flathub app. Missing ones are installed for this
-# user (no sudo); an existing system-wide install is updated as such.
-# Version labels aren't reliable (ZapZap's new builds keep an old number), so
-# flatpak itself decides whether an update is available. The lookup runs
-# once (both scopes) and is cached in flatpak_updates.
+# flatpak_app NAME ID -- Flathub app, installed for this user (no sudo) when
+# missing. Updates are offered for all flatpaks together (see "Checking
+# flatpaks for updates" below).
 flatpak_list=""
 flatpak_app() {
-    local name=$1 id=$2 scope
-    [ -n "$flatpak_list" ] || flatpak_list="$(flatpak list --app --columns=application,installation 2>/dev/null || echo none)"
-    scope="$(awk -F'\t' -v id="$id" '$1 == id {print $2; exit}' <<<"$flatpak_list" || :)"
-    if [ -z "$scope" ]; then
-        step "Installing $name..."
-        if ! flatpak install --user -y --noninteractive flathub "$id"; then
-            failed_installs+=("$name (flatpak install $id)")
-        fi
-        return 0
-    fi
-    step "Checking $name for updates..."
-    if [ -z "${flatpak_updates+set}" ]; then
-        flatpak_updates="$(
-            timeout "$lookup_timeout" flatpak remote-ls --user --updates --app --columns=application 2>/dev/null || echo "lookup failed: user"
-            timeout "$lookup_timeout" flatpak remote-ls --system --updates --app --columns=application 2>/dev/null || echo "lookup failed: system"
-        )"
-    fi
-    if grep -qxF "lookup failed: $scope" <<<"$flatpak_updates"; then
-        echo "$name: could not look up updates, skipping update check" >&2
-    elif grep -qxF "$id" <<<"$flatpak_updates"; then
-        if confirm "$name: an update is available. Do you want to upgrade?"; then
-            step "Upgrading $name..."
-            if [ "$scope" = system ]; then
-                try "$name" sudo flatpak update --system -y --noninteractive "$id"
-            else
-                try "$name" flatpak update --user -y --noninteractive "$id"
-            fi
-        fi
+    local name=$1 id=$2
+    [ -n "$flatpak_list" ] || flatpak_list="$(flatpak list --app --columns=application 2>/dev/null || echo none)"
+    grep -qxF "$id" <<<"$flatpak_list" && return 0
+    step "Installing $name..."
+    if ! flatpak install --user -y --noninteractive flathub "$id"; then
+        failed_installs+=("$name (flatpak install $id)")
     fi
 }
 
@@ -657,6 +640,7 @@ apt_packages=(
     pipenv
     protobuf-compiler
     python3
+    python3-gpg # lets the dropbox CLI verify the daemon download's signature
     python3-netifaces
     python3-pip
     python3-pymysql
@@ -728,22 +712,60 @@ if ! command -v ghcup >/dev/null; then
         BOOTSTRAP_HASKELL_NONINTERACTIVE=1 sh
 fi
 
-step "Checking cabal for updates..."
-cabal_latest="$(timeout "$lookup_timeout" ghcup list -t cabal -r 2>/dev/null | awk '$3 ~ /(^|,)latest(,|$)/ {print $2}' || :)"
-if want_install cabal "$(ver cabal --version)" "$cabal_latest"; then
-    step "Installing cabal ${cabal_latest:-latest}..."
-    try cabal ghcup install cabal --set "${cabal_latest:-latest}"
+# ghcup and the tools it manages. One `ghcup list` gives the available
+# versions of every tool, ghcup itself included (raw format: "tool version
+# tags date"). ghcup is upgraded first and the listing refreshed, so the tool
+# installs use the versions the new ghcup knows about.
+ghcup_list() {
+    ghcup_out="$(timeout "$lookup_timeout" ghcup list -r 2>/dev/null </dev/null || :)"
+}
+# ghcup_latest TOOL TAG -- version of TOOL that the listing tags TAG.
+ghcup_latest() {
+    awk -v tool="$1" -v tag="$2" '$1 == tool && $3 ~ "(^|,)" tag "(,|$)" {print $2}' <<<"$ghcup_out" | head -1
+}
+step "Checking ghcup for updates..."
+ghcup_list
+if want_install ghcup "$(ver ghcup --version)" "$(ghcup_latest ghcup latest)"; then
+    step "Upgrading ghcup to $(ghcup_latest ghcup latest)..."
+    try ghcup ghcup upgrade
+    ghcup_list
 fi
+
+# ghcup_tool TOOL TAG VERSION_CMD... -- keep TOOL at the version ghcup tags
+# TAG (latest or recommended); VERSION_CMD prints the installed version.
+ghcup_tool() {
+    local tool=$1 tag=$2 current latest
+    shift 2
+    step "Checking $tool for updates..."
+    current="$(ver "$@")"
+    latest="$(ghcup_latest "$tool" "$tag")"
+    if want_install "$tool" "$current" "$latest"; then
+        step "Installing $tool ${latest:-$tag}..."
+        try "$tool" ghcup install "$tool" --set "${latest:-$tag}"
+    fi
+}
+ghcup_tool cabal latest cabal --version
+# ghc follows "recommended" rather than "latest": the latest GHC is often
+# ahead of what hls supports, and Stack picks its own GHC from the snapshot
+# in stack.yaml anyway (xmonad below).
+ghcup_tool ghc recommended ghc --version
+ghcup_tool stack latest stack --version
+# `stack upgrade` puts its own copy in ~/.local/bin, which shadows ghcup's
+# stack. Once ghcup's is at least as new (after the upgrade above, or a
+# later one), the copy goes; until then it stays, so declining the upgrade
+# (or --ignore-updates) doesn't downgrade stack.
+if [ -x ~/.ghcup/bin/stack ] && [ -f ~/.local/bin/stack ] && [ ! -L ~/.local/bin/stack ] &&
+    ! is_newer "$(ver ~/.local/bin/stack --version)" "$(ver ~/.ghcup/bin/stack --version)"; then
+    echo "stack: removing ~/.local/bin/stack (from 'stack upgrade'), it shadowed ghcup's stack"
+    rm ~/.local/bin/stack
+fi
+ghcup_tool hls latest haskell-language-server-wrapper --version
 
 # xmonad, built with Stack like the guide this setup follows:
 # https://github.com/NapoleonWils0n/cerberus/blob/master/xmonad/xmonad-ubuntu-stack-install.org
 # ~/.xmonad holds checkouts of xmonad and xmonad-contrib at their release
 # tags, plus the stack.yaml from `stack init`; `stack install` puts the xmonad
 # binary in ~/.local/bin, and xmonad then recompiles xmonad.hs with Stack.
-if ! command -v stack >/dev/null; then
-    step "Installing stack..."
-    ghcup install stack recommended --set
-fi
 xmonad_dir="$HOME/.xmonad"
 xmonad_bin="$HOME/.local/bin/xmonad"
 # Versions of the last successful `stack install`, so a failed or interrupted
@@ -1509,6 +1531,89 @@ if want_install calibre "$(ver calibre --version)" "$calibre_latest"; then
     try calibre install_calibre
 fi
 
+# Dropbox daemon: the dropbox apt package (above) is only the CLI and the
+# Nautilus extension; the proprietary daemon (~/.dropbox-dist) is downloaded
+# by the CLI and updates itself while it runs, so this mostly matters on a new
+# machine and after a long time without Dropbox running. The download URL
+# redirects to a versioned tarball, which gives the latest version without
+# downloading it. With DISPLAY unset the CLI asks its one question ("you must
+# download the proprietary daemon") on the console instead of in a Gtk
+# dialog; the here-string answers it. Replacing the files under a running
+# daemon is asking for trouble, so a running daemon is stopped first and
+# started again afterwards, also when the update failed.
+if command -v dropbox >/dev/null; then
+    step "Checking dropbox daemon for updates..."
+    dropbox_latest="$(curl -fsS --max-time "$lookup_timeout" -o /dev/null -w '%{redirect_url}' \
+        'https://www.dropbox.com/download?plat=lnx.x86_64' 2>/dev/null |
+        sed -nE 's|.*/dropbox-lnx\.x86_64-([0-9]+(\.[0-9]+)*)\.tar\.gz$|\1|p' || :)"
+    dropbox_dist_version() { grep -m1 -oE '^[0-9]+(\.[0-9]+)*' ~/.dropbox-dist/VERSION 2>/dev/null || :; }
+    dropbox_current="$(dropbox_dist_version)"
+    # dropbox_state -- 0: the daemon is running, 1: it isn't, 2: the CLI itself
+    # failed (`dropbox running` exits 1 when running and 0 when not).
+    dropbox_state() {
+        local rc=0
+        dropbox running >/dev/null 2>&1 || rc=$?
+        case "$rc" in
+            1) return 0 ;;
+            0) return 1 ;;
+            *) echo "dropbox daemon: 'dropbox running' failed (exit $rc), is the dropbox CLI broken?" >&2; return 2 ;;
+        esac
+    }
+    install_dropbox_daemon() {
+        local was_running=0 state=0 rc=0 new_version dir _
+        local -a daemon_env=()
+        dropbox_state || state=$?
+        [ "$state" != 2 ] || return 1
+        if [ "$state" = 0 ]; then
+            was_running=1
+            # The restarted daemon gets the old one's session (display, X
+            # authority, the D-Bus session bus for the tray icon), not
+            # setup.sh's, which may be an ssh session without any of it. When
+            # nothing can be read, it inherits setup.sh's environment.
+            mapfile -t daemon_env < <(tr '\0' '\n' 2>/dev/null <"/proc/$(cat ~/.dropbox/dropbox.pid 2>/dev/null)/environ" |
+                grep -E '^(DISPLAY|XAUTHORITY|DBUS_SESSION_BUS_ADDRESS|XDG_RUNTIME_DIR)=' || :)
+            # Returns before the daemon has exited; fails if it exited by itself
+            # since the check above, which the wait below sorts out.
+            dropbox stop || :
+            for _ in $(seq 30); do
+                state=0
+                dropbox_state || state=$?
+                [ "$state" = 0 ] || break
+                sleep 1
+            done
+            [ "$state" != 2 ] || return 1
+            if [ "$state" = 0 ]; then
+                echo "dropbox daemon: still running 30 s after 'dropbox stop', leaving its files alone" >&2
+                return 1
+            fi
+        fi
+        DISPLAY='' dropbox update <<<y || rc=$?
+        # The new daemon is unpacked next to the old one, and only the daemon's
+        # own self-update removes old versions (each is a few hundred MB).
+        new_version="$(dropbox_dist_version)"
+        if [ "$rc" = 0 ] && [ -n "$new_version" ]; then
+            for dir in ~/.dropbox-dist/dropbox-lnx.x86_64-*/; do
+                if [ -d "$dir" ] && [ "${dir%/}" != "$HOME/.dropbox-dist/dropbox-lnx.x86_64-$new_version" ]; then
+                    rm -rf "$dir"
+                fi
+            done
+        fi
+        if [ "$was_running" = 1 ]; then
+            # dropboxd inherits the CLI's stderr; without the redirect it keeps
+            # setup.sh's output open (a run piped through tee wouldn't end).
+            env "${daemon_env[@]}" dropbox start 2>/dev/null || :
+        elif [ "$rc" = 0 ] && [ -z "$dropbox_current" ]; then
+            echo "dropbox: daemon installed; link this computer with 'dropbox start -i'"
+        fi
+        return "$rc"
+    }
+    # No need_latest: `dropbox update` finds the latest version by itself.
+    if want_install "dropbox daemon" "$dropbox_current" "$dropbox_latest"; then
+        step "Installing dropbox daemon ${dropbox_latest:-latest}..."
+        try "dropbox daemon" install_dropbox_daemon
+    fi
+fi
+
 # Flathub apps, installed for this user (no sudo). WhatsApp has no official
 # Linux app: ZapZap is a maintained desktop client for WhatsApp Web.
 timeout "$lookup_timeout" flatpak remote-add --user --if-not-exists \
@@ -1516,6 +1621,68 @@ timeout "$lookup_timeout" flatpak remote-add --user --if-not-exists \
 flatpak_app "whatsapp (ZapZap)" com.rtosta.zapzap
 flatpak_app bottles com.usebottles.bottles
 flatpak_app lutris net.lutris.Lutris
+
+# Updates for all flatpaks, apps and runtimes, in both installations (the
+# user one needs no sudo). Version labels aren't reliable (ZapZap's new
+# builds keep an old number), so flatpak itself decides what has an update.
+step "Checking flatpaks for updates..."
+flatpak_updates=()
+flatpak_scopes=()
+for scope in user system; do
+    # sort -u: an extension installed in two branches is listed twice.
+    if updates="$(timeout "$lookup_timeout" flatpak remote-ls "--$scope" --updates --columns=application 2>/dev/null | sort -u)"; then
+        if [ -n "$updates" ]; then
+            mapfile -t -O "${#flatpak_updates[@]}" flatpak_updates <<<"$updates"
+            flatpak_scopes+=("$scope")
+        fi
+    else
+        echo "flatpak ($scope): could not look up updates, skipping update check" >&2
+    fi
+done
+if [ ${#flatpak_scopes[@]} -gt 0 ] &&
+    confirm "flatpak: updates available for $(printf '%s\n' "${flatpak_updates[@]}" | sort -u | paste -sd, | sed 's/,/, /g'). Do you want to upgrade?"; then
+    for scope in "${flatpak_scopes[@]}"; do
+        step "Upgrading $scope flatpaks..."
+        if [ "$scope" = system ]; then
+            try "flatpak ($scope)" sudo flatpak update --system -y --noninteractive
+        else
+            try "flatpak ($scope)" flatpak update --user -y --noninteractive
+        fi
+    done
+fi
+
+# Snaps: snapd refreshes them on its own a few times a day; this offers what
+# is pending right now. The lookup needs no sudo and prints a table with a
+# header line (or "All snaps up to date." on stderr). Snaps are refreshed one
+# at a time: snapd refuses to refresh a snap whose apps are running, and that
+# must not stop the others, nor count as a failure.
+if command -v snap >/dev/null; then
+    step "Checking snaps for updates..."
+    snap_updates=()
+    # Only rows that look like table rows with a snap name (a notice snapd
+    # might print must not become a snap to refresh).
+    if snap_list="$(timeout "$lookup_timeout" snap refresh --list 2>/dev/null |
+        awk 'NR > 1 && NF >= 3 && $1 ~ /^[a-z0-9-]+$/ {print $1}')"; then
+        [ -z "$snap_list" ] || mapfile -t snap_updates <<<"$snap_list"
+    else
+        echo "snap: could not look up updates, skipping update check" >&2
+    fi
+    if [ ${#snap_updates[@]} -gt 0 ] &&
+        confirm "snap: updates available for $(join_list "${snap_updates[@]}"). Do you want to upgrade?"; then
+        for snap in "${snap_updates[@]}"; do
+            step "Upgrading snap $snap..."
+            if snap_out="$(sudo snap refresh "$snap" 2>&1)"; then
+                printf '%s\n' "$snap_out"
+            elif grep -q 'has running apps' <<<"$snap_out"; then
+                echo "snap: $snap has running apps, not refreshed (close it and run setup.sh again)"
+                skipped_updates+=("snap: $snap not refreshed, it has running apps")
+            else
+                printf '%s\n' "$snap_out" >&2
+                failed_installs+=("snap $snap (snap refresh)")
+            fi
+        done
+    fi
+fi
 
 # Claude Code: the native install (~/.local/bin/claude). Its own auto-update
 # is turned off here, so setup.sh offers updates. "latest" is the installer's
