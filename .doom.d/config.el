@@ -169,7 +169,7 @@
     :desc "Test this file (builtin)"         "t F" #'go-ts-mode-test-this-file
     :desc "Test this package (builtin)"      "t p" #'go-ts-mode-test-this-package)
 
-(add-hook! '(sh-mode-lsp-hook sh-ts-mode-lsp-hook) #'sh-flycheck-setup)
+(add-hook! 'sh-mode-lsp-hook #'sh-flycheck-setup)
 (defun sh-flycheck-setup ()
     (flycheck-add-next-checker 'lsp 'sh-bash)
     (flycheck-add-next-checker 'sh-bash 'sh-shellcheck))
@@ -212,11 +212,11 @@
     :config
     (add-hook! '(
                     go-mode-hook go-ts-mode-hook
-                    sh-mode-hook sh-ts-mode-hook
+                    sh-mode-hook
                     dart-mode-hook dart-ts-mode-hook
                     yaml-mode-hook yaml-ts-mode-hook
-                    org-mode-hook org-ts-mode-hook
-                    rustic-mode-hook rustic-ts-mode-hook
+                    org-mode-hook
+                    rustic-mode-hook
                     python-mode-hook python-ts-mode-hook
                     c++-mode-hook c++-ts-mode-hook
                     emacs-lisp-mode-hook
