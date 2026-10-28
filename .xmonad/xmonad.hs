@@ -9,7 +9,7 @@ import XMonad.Hooks.StatusBar (statusBarProp, withSB)
 import XMonad.Hooks.StatusBar.PP (PP (..), wrap, xmobarColor, xmobarPP)
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.ManageDocks (docks, avoidStruts, manageDocks)
-import XMonad.Hooks.ManageHelpers (doCenterFloat, doFullFloat, isDialog, isFullscreen)
+import XMonad.Hooks.ManageHelpers (doCenterFloat, doFullFloat, doRectFloat, isDialog, isFullscreen)
 
 import XMonad.Layout.GridVariants (Grid (Grid))
 import XMonad.Layout.LayoutModifier
@@ -363,6 +363,8 @@ myManageHook =
       className =? "Pavucontrol" --> doFloat,
       className =? "peek" --> doFloat,
       className =? "flameshot" --> doFloat,
+      -- yazi as the file dialog (xdg-desktop-portal-termfilechooser): centered, 80% of the screen
+      className =? "termfilechooser" --> doRectFloat (W.RationalRect 0.1 0.1 0.8 0.8),
       className =? "Slack" --> doShift wsChat,
       className =? "Emacs" --> doShift wsEmacs,
       className =? "zoom" --> doShift wsZoom

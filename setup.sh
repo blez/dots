@@ -558,6 +558,10 @@ apt_packages=(
     libjansson-dev
     libgtk-3-dev
     libgtk-layer-shell-dev
+    libinih-dev # termfilechooser
+    libsystemd-dev # termfilechooser
+    scdoc # termfilechooser (man page)
+    python3-gi # ~/scripts/filemanager1-yazi.py ("Show in folder" -> yazi)
     libpango1.0-dev
     libwxgtk3.2-dev
     libcairo2-dev
@@ -1721,6 +1725,75 @@ build_yazi() {
 if want_install yazi "$yazi_current" "$yazi_latest"; then
     step "Building yazi $yazi_latest (can take a while)..."
     try yazi build_from_tag https://github.com/sxyazi/yazi.git "$yazi_latest" build_yazi
+fi
+
+# xdg-desktop-portal-termfilechooser: the "Save as" / "Open file" dialogs of
+# portal-aware apps (Chrome, GTK apps) as yazi in an alacritty window. Picked
+# in ~/.config/xdg-desktop-portal/xmonad-portals.conf; its config and the yazi
+# wrapper are in ~/.config/xdg-desktop-portal-termfilechooser. Built from the
+# latest release into /usr/local.
+step "Checking termfilechooser for updates..."
+tfc_repo=https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser.git
+tfc_bin=/usr/local/libexec/xdg-desktop-portal-termfilechooser
+tfc_latest="$(latest_tag "$tfc_repo")"
+build_termfilechooser() {
+    meson setup --buildtype=release -Dlibexecdir=libexec build
+    ninja -C build
+    sudo ninja -C build install
+}
+tfc_before="$(ver "$tfc_bin" -v)"
+if want_install termfilechooser "$tfc_before" "$tfc_latest" need_latest; then
+    step "Building termfilechooser $tfc_latest..."
+    try termfilechooser build_from_tag "$tfc_repo" "$tfc_latest" build_termfilechooser
+fi
+# The portal services are restarted below only when something they loaded
+# changed; an unneeded restart would kill an open file dialog.
+restart_tfc=""
+restart_xdp=""
+[ "$(ver "$tfc_bin" -v)" = "$tfc_before" ] || restart_tfc=1
+
+# xdg-desktop-portal before 1.19 only looks for .portal files in /usr/share
+# (later versions also scan /usr/local/share, where the build put it): keep a
+# copy there for those, and remove it again after an upgrade past that.
+tfc_portal_src=/usr/local/share/xdg-desktop-portal/portals/termfilechooser.portal
+tfc_portal_copy=/usr/share/xdg-desktop-portal/portals/termfilechooser.portal
+xdp_version="$(ver /usr/libexec/xdg-desktop-portal --version)"
+if [ -f "$tfc_portal_src" ]; then
+    if [ -z "$xdp_version" ] || ! is_newer "$xdp_version" 1.18.99; then
+        if ! cmp -s "$tfc_portal_src" "$tfc_portal_copy"; then
+            sudo install -m644 "$tfc_portal_src" "$tfc_portal_copy"
+            restart_xdp=1
+        fi
+    elif [ -e "$tfc_portal_copy" ]; then
+        sudo rm -f "$tfc_portal_copy"
+        restart_xdp=1
+    fi
+fi
+
+# Folders open in yazi: xdg-open, and "Show in folder" in Chrome and other
+# apps (~/.local/share/applications/yazi.desktop; the FileManager1 D-Bus
+# service override in ~/.local/share/dbus-1/services keeps Nautilus out of it).
+if [ "$(xdg-mime query default inode/directory 2>/dev/null)" != yazi.desktop ]; then
+    xdg-mime default yazi.desktop inode/directory
+fi
+# Pick up the dotfiles the above relies on without a re-login: the user
+# manager re-reads ~/.config/environment.d (PATH with ~/.local/bin, so the
+# portal finds yazi), and the session bus its service files
+# (~/.local/share/dbus-1/services: yazi as org.freedesktop.FileManager1).
+# None of this exists outside a graphical session, hence the fallbacks.
+systemctl --user daemon-reload 2>/dev/null || :
+dbus-send --session --type=method_call --dest=org.freedesktop.DBus / org.freedesktop.DBus.ReloadConfig 2>/dev/null || :
+# A running termfilechooser backend keeps the PATH it was started with: restart
+# it (and the portal, when its .portal files changed) only when needed.
+tfc_pid="$(systemctl --user show -p MainPID --value xdg-desktop-portal-termfilechooser.service 2>/dev/null || echo 0)"
+if [ "${tfc_pid:-0}" != 0 ] && ! tr '\0' '\n' <"/proc/$tfc_pid/environ" 2>/dev/null | grep -q "^PATH=.*$HOME/.local/bin"; then
+    restart_tfc=1
+fi
+if [ -n "$restart_xdp" ]; then
+    systemctl --user try-restart xdg-desktop-portal.service 2>/dev/null || :
+fi
+if [ -n "$restart_tfc" ]; then
+    systemctl --user try-restart xdg-desktop-portal-termfilechooser.service 2>/dev/null || :
 fi
 
 # Emacs is installed manually; only report whether it's missing or outdated.

@@ -1,3 +1,27 @@
+# Keys of yazi as a file dialog (plugin chooser, started by
+# ~/.config/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh): q and Esc
+# cancel, Ctrl+S saves here or picks this folder, a saves under a typed name.
+# Outside a dialog the keys keep their usual meaning (the plugin's --fallback).
+[[mgr.prepend_keymap]]
+on   = "q"
+run  = "plugin chooser -- cancel --fallback=quit"
+desc = "Quit (in a file dialog: cancel)"
+
+[[mgr.prepend_keymap]]
+on   = "<Esc>"
+run  = "plugin chooser -- cancel --fallback=escape"
+desc = "Exit visual mode, clear selection (in a file dialog: cancel)"
+
+[[mgr.prepend_keymap]]
+on   = "<C-s>"
+run  = "plugin chooser -- confirm"
+desc = "In a file dialog: save here / choose this folder"
+
+[[mgr.prepend_keymap]]
+on   = "a"
+run  = "plugin chooser -- name"
+desc = "Create a file (in a save dialog: save under a typed name)"
+
 # Open shell with '!'
 [[mgr.prepend_keymap]]
 on   = "!"

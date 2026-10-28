@@ -1,0 +1,9 @@
+# Overrides /usr/share/dbus-1/services/org.freedesktop.FileManager1.service,
+# which would start Nautilus. Chrome's "Show in folder", xdg-desktop-portal's
+# OpenDirectory and other apps ask this D-Bus name to show a file; the script
+# opens yazi on it instead. D-Bus doesn't expand variables in Exec, hence sh.
+# Only while nothing else owns the name: a running Nautilus owns it itself and
+# gets those requests until it quits.
+[D-BUS Service]
+Name=org.freedesktop.FileManager1
+Exec=/bin/sh -c 'exec "$HOME/scripts/filemanager1-yazi.py"'

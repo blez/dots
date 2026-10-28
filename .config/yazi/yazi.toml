@@ -14,3 +14,9 @@ prepend_rules = [
 
 [mgr]
 show_hidden = false
+
+[tasks]
+# Don't count preview preloaders (PDF/image thumbnails of the current folder)
+# as unfinished work: otherwise q asks "quit anyway?" in a folder full of
+# PDFs, e.g. every time a file dialog is quit in ~/Downloads.
+suppress_preload = true

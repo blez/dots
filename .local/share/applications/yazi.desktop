@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Yazi
+Comment=Terminal file manager
+Exec=alacritty --class yazi,yazi -T yazi -e yazi %f
+Icon=folder
+Terminal=false
+MimeType=inode/directory;
+Categories=System;FileTools;FileManager;

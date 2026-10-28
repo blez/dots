@@ -1,0 +1,19 @@
+# xdg-desktop-portal-termfilechooser(5): file dialogs as yazi in a terminal.
+# yazi-wrapper.sh next to this file is what runs; it is found here before the
+# copy installed with the program.
+[filechooser]
+cmd=yazi-wrapper.sh
+default_dir=$HOME/Downloads
+# The wrapper handles the suggested file name itself, so no placeholder file
+# with instructions is created for the user to move around.
+create_help_file=0
+# The terminal that yazi runs in; the wrapper's command is appended after -e.
+# The class gets the window floated and centered by xmonad. It must start a
+# new terminal process that runs the command itself: the yazi keys of the
+# dialog (q/Esc cancel, Ctrl+S save, a: name) come from environment variables
+# the wrapper sets, which a terminal that hands the command to an already
+# running server (kitty --single-instance, footclient, gnome-terminal) drops.
+env=TERMCMD=alacritty --class termfilechooser,termfilechooser -T termfilechooser -e
+# Start where the app suggests (its current folder/file), else in default_dir.
+open_mode=suggested
+save_mode=suggested
