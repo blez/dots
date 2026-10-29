@@ -10,13 +10,40 @@ emacs-edit = [
 prepend_rules = [
     { mime = "video/*", use = "play" },
     { mime = "text/*", use = "emacs-edit" },
+    # Text files whose mime type is not text/* (yazi drops the "x-" prefix,
+    # so application/x-ndjson is matched as ndjson; empty files as inode/empty)
+    { mime = "application/{json,ndjson}", use = "emacs-edit" },
+    { mime = "inode/empty", use = "emacs-edit" },
 ]
 
 [mgr]
 show_hidden = false
+linemode    = "size"
+sort_by     = "natural"  # file2 before file10
 
 [tasks]
 # Don't count preview preloaders (PDF/image thumbnails of the current folder)
 # as unfinished work: otherwise q asks "quit anyway?" in a folder full of
 # PDFs, e.g. every time a file dialog is quit in ~/Downloads.
 suppress_preload = true
+
+# Git status signs in the file list (git.yazi, set up in init.lua).
+[[plugin.prepend_fetchers]]
+url   = "*"
+run   = "git"
+group = "git"
+
+[[plugin.prepend_fetchers]]
+url   = "*/"
+run   = "git"
+group = "git"
+
+# Markdown rendered with glow (piper.yazi).
+[[plugin.prepend_previewers]]
+url = "*.md"
+run = 'piper -- CLICOLOR_FORCE=1 glow -w=$w -s=dark "$1"'
+
+# Archive contents as a tree (ouch.yazi; J/K scroll).
+[[plugin.prepend_previewers]]
+mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}"
+run  = "ouch"

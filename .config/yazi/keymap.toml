@@ -37,18 +37,13 @@ desc = "Enter the child directory, or open the file"
 # Enter directory or open file with '<Enter>'
 [[mgr.prepend_keymap]]
 on   = [ "<Enter>" ]
-run  = "plugin --sync smart-enter"
+run  = "plugin smart-enter"
 desc = "Enter the child directory, or open the file"
-
-[[manager.prepend_keymap]]
-on   = [ "O" ] # Shift + o
-run  = "open"
-desc = "Open all selected files"
 
 # Paste into hovered directory with 'p'
 [[mgr.prepend_keymap]]
 on   = "p"
-run  = "plugin --sync smart-paste"
+run  = "plugin smart-paste"
 desc = "Paste into the hovered directory or CWD"
 
 [[input.prepend_keymap]]
@@ -66,7 +61,7 @@ on   = "T"
 run  = "plugin toggle-pane min-preview"
 desc = "Show or hide the preview pane"
 [[mgr.prepend_keymap]]
-on   = "T"
+on   = "<A-t>"
 run  = "plugin toggle-pane max-preview"
 desc = "Maximize or restore the preview pane"
 
@@ -82,7 +77,7 @@ on = "<Tab>"
 run = "plugin split-tabs spl_switch_tab"
 desc = "Split-tabs: switch to the other pane"
 [[mgr.prepend_keymap]]
-on = "P"
+on = "<A-p>"
 run = "plugin split-tabs spl_preview"
 desc = "Split-tabs: toggle preview pane"
 [[mgr.prepend_keymap]]
@@ -104,3 +99,18 @@ run  = [
 ]
 desc = "Move to the other pane without staying there"
 
+# <Tab> belongs to split-tabs, so the file info popup (spot) moves to I.
+[[mgr.prepend_keymap]]
+on   = "I"
+run  = "spot"
+desc = "Spot hovered file (type, size, dimensions)"
+
+[[mgr.prepend_keymap]]
+on   = "M"
+run  = "plugin mount"
+desc = "Mount, unmount or eject drives"
+
+[[mgr.prepend_keymap]]
+on   = "C"
+run  = "plugin ouch"
+desc = "Compress selected files (format from the name, zip by default)"

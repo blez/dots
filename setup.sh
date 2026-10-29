@@ -298,6 +298,8 @@ pipx_tool() {
 go_tool() {
     local pkg=${*: -1} flags=("${@:1:$#-1}") bin path mod="" current="" latest=""
     bin=${pkg##*/}
+    # A major-version suffix is not the binary name: .../glow/v2 installs glow.
+    [[ $bin =~ ^v[0-9]+$ ]] && bin=${pkg%/*} && bin=${bin##*/}
     step "Checking $bin (go) for updates..."
     if path="$(command -v "$bin")"; then
         read -r mod current < <(go version -m "$path" 2>/dev/null | awk '$1 == "mod" {print $2, $3; exit}') || :
@@ -482,6 +484,7 @@ apt_packages=(
     build-essential
     ca-certificates
     caffeine
+    chafa # yazi image previews without ueberzugpp (e.g. over ssh)
     clang
     clangd
     clang-format
@@ -990,6 +993,8 @@ fi
 cargo_tool fd fd-find
 cargo_tool hwatch hwatch
 cargo_tool kalker kalker
+cargo_tool resvg resvg # yazi SVG previews
+cargo_tool ouch ouch   # yazi archive previews and compression (ouch.yazi)
 
 step "Checking alacritty for updates..."
 alacritty_latest="$(latest_tag https://github.com/alacritty/alacritty.git)"
@@ -1712,19 +1717,26 @@ build_yazi() {
     cargo build --release --locked
     mkdir -p ~/.local/bin
     install -m755 target/release/yazi target/release/ya ~/.local/bin/
-
-    # Plugins only on a fresh install; "ya pkg add" fails if already added.
-    if [ -z "$yazi_current" ]; then
-        ya pkg add yazi-rs/plugins:full-border
-        ya pkg add yazi-rs/plugins:smart-enter
-        ya pkg add yazi-rs/plugins:smart-paste
-        ya pkg add yazi-rs/plugins:chmod
-        ya pkg add yazi-rs/plugins:toggle-pane
-    fi
 }
 if want_install yazi "$yazi_current" "$yazi_latest"; then
     step "Building yazi $yazi_latest (can take a while)..."
     try yazi build_from_tag https://github.com/sxyazi/yazi.git "$yazi_latest" build_yazi
+fi
+
+# Yazi plugins and flavors: the list is ~/.config/yazi/package.toml (in the
+# dotfiles). install fetches the missing ones, upgrade moves all to their
+# latest commit and records the new revs in package.toml (skipped with
+# --ignore-updates, which only reports).
+if command -v ya >/dev/null; then
+    step "Installing yazi plugins..."
+    try "yazi plugins" ya pkg install
+    if [ "$update_mode" = report ]; then
+        echo "yazi plugins: upgrade skipped (--ignore-updates)"
+        skipped_updates+=("yazi plugins: ya pkg upgrade")
+    else
+        step "Upgrading yazi plugins..."
+        try "yazi plugins upgrade" ya pkg upgrade
+    fi
 fi
 
 # xdg-desktop-portal-termfilechooser: the "Save as" / "Open file" dialogs of

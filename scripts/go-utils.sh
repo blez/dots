@@ -22,3 +22,4 @@ go install gotest.tools/gotestsum@latest
 go install github.com/dmarkham/enumer@latest
 go install github.com/Khan/genqlient@latest
 go install github.com/vektah/dataloaden@latest
+go install github.com/charmbracelet/glow/v2@latest # Markdown previews in yazi
