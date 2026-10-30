@@ -669,6 +669,7 @@ apt_packages=(
     unzip
     valgrind
     vim
+    virt-manager # KVM test VMs; Recommends bring libvirt + qemu, and it adds sudo users to the libvirt group
     vlc
     xwallpaper
     xclip
