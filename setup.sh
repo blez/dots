@@ -171,6 +171,8 @@ latest_tag() {
 # is_newer A B -- true if version A is newer than B (leading "v" ignored).
 # A pre-release/dev build of A (0.17.0-dev, 0.17.0-rc1) counts as older than A;
 # a build N commits after release A (git describe: 1.13.2-15) counts as newer.
+# A Go pseudo-version (0.8.2-0.20260825022638-8d029a3f38e6, a go install from
+# a branch) is a pre-release of A despite its leading digit.
 # x.y and x.y.0 name the same release (calibre prints 9.15 for its v9.15.0).
 strip_zero() {
     local base=${1%%-*} rest=${1#"${1%%-*}"}
@@ -183,6 +185,7 @@ is_newer() {
     b="$(strip_zero "${2#v}")"
     [ "$a" != "$b" ] || return 1
     if [ "${b%%-*}" = "$a" ]; then
+        [[ ${b#*-} =~ ^0\.[0-9]{14}-[0-9a-f]{12}$ ]] && return 0
         case "${b#*-}" in
             [0-9]*) return 1 ;;
             *) return 0 ;;
@@ -307,9 +310,17 @@ go_tool() {
         [ -z "$mod" ] || latest="$(timeout "$lookup_timeout" go list -m -f '{{.Version}}' "$mod@latest" 2>/dev/null || :)"
     fi
     if want_install "$bin" "$current" "$latest"; then
+        # A release can pin dependencies that no longer build with this Go
+        # (genqlient v0.8.1: an old x/tools); the default branch usually has
+        # the fix already. GOPROXY=direct because the proxy's @HEAD can be
+        # months stale. The pseudo-version this installs counts as newer than
+        # that release, so the next run doesn't offer it again.
         if ! go install "${flags[@]}" "$pkg@latest"; then
-            echo "$bin: go install failed" >&2
-            failed_installs+=("$bin (go install ${flags[*]} $pkg@latest)")
+            echo "$bin: go install of the latest release failed, trying the default branch" >&2
+            if ! GOPROXY=direct go install "${flags[@]}" "$pkg@HEAD"; then
+                echo "$bin: go install failed" >&2
+                failed_installs+=("$bin (go install ${flags[*]} $pkg@latest, and @HEAD)")
+            fi
         fi
     fi
 }
@@ -1730,15 +1741,47 @@ fi
 # dotfiles). install fetches the missing ones, upgrade moves all to their
 # latest commit and records the new revs in package.toml (skipped with
 # --ignore-updates, which only reports).
+# ya refuses to touch a package whose files don't match the hash in
+# package.toml: usually a stale copy from before package.toml moved on (it
+# comes from the dotfiles, the plugin dirs don't), sometimes a local edit.
+# ya_pkg moves such a package to ~/.local/state/yazi-package-backups/ and
+# retries, so nothing is lost. A package rejected again after that is a fresh
+# copy ya itself installed (e.g. a wrong hash in package.toml): it is left in
+# place and the run fails, rather than moved away again.
+ya_pkg() {
+    local out dir backup moved=()
+    backup="$HOME/.local/state/yazi-package-backups/$(date +%Y%m%d-%H%M%S)"
+    for _ in {1..30}; do
+        if out="$(ya pkg "$@" 2>&1)"; then
+            printf '%s\n' "$out"
+            return 0
+        fi
+        printf '%s\n' "$out"
+        dir="$(sed -n 's/^Please manually delete it from `\(.*\)` and re-run.*/\1/p' <<<"$out" | head -1)"
+        case "$dir" in
+            "$HOME/.config/yazi/"*) [ -d "$dir" ] || return 1 ;;
+            *) return 1 ;;
+        esac
+        if [[ " ${moved[*]} " == *" $dir "* ]]; then
+            echo "yazi plugins: ${dir##*/} still doesn't match package.toml after a fresh install, leaving it" >&2
+            return 1
+        fi
+        moved+=("$dir")
+        mkdir -p "$backup"
+        echo "yazi plugins: ${dir##*/} doesn't match package.toml, moved to $backup" >&2
+        mv "$dir" "$backup/"
+    done
+    return 1
+}
 if command -v ya >/dev/null; then
     step "Installing yazi plugins..."
-    try "yazi plugins" ya pkg install
+    try "yazi plugins" ya_pkg install
     if [ "$update_mode" = report ]; then
         echo "yazi plugins: upgrade skipped (--ignore-updates)"
         skipped_updates+=("yazi plugins: ya pkg upgrade")
     else
         step "Upgrading yazi plugins..."
-        try "yazi plugins upgrade" ya pkg upgrade
+        try "yazi plugins upgrade" ya_pkg upgrade
     fi
 fi
 
