@@ -9,8 +9,9 @@ Installs missing tools and offers available upgrades with a [Y/n] prompt.
 apt packages are always upgraded (update + full-upgrade), without a prompt.
 If both -y and -i are given, the last one wins.
 
-  -y, --yes             Answer yes to every upgrade prompt. Emacs is still only
-                        reported (it's installed manually) and Go stays pinned.
+  -y, --yes             Answer yes to every upgrade prompt, except Emacs: it is
+                        still asked about (a long build and a Doom package
+                        rebuild; restart its daemon afterwards). Go stays pinned.
                         sudo may still ask for your password: run it from a
                         terminal, or have sudo credentials cached (sudo -v).
   -i, --ignore-updates  Only report available tool upgrades; don't ask, don't
@@ -554,6 +555,7 @@ apt_packages=(
     libxcb-xfixes0-dev
     libxkbcommon-dev
     libgccjit-14-dev
+    libgccjit-13-dev # emacs native-comp: configure looks for libgccjit.h with the default gcc (13), not in -14's include dir
     libgnutls28-dev
     gnutls-bin
     libjson-c-dev
@@ -1788,6 +1790,11 @@ fi
 if [ "$(xdg-mime query default inode/directory 2>/dev/null)" != yazi.desktop ]; then
     xdg-mime default yazi.desktop inode/directory
 fi
+# mailto: links open in Chrome (Gmail, once allowed as its email handler).
+# Without a default they fall back to emacs-mail.desktop, a standalone Emacs.
+if [ "$(xdg-mime query default x-scheme-handler/mailto 2>/dev/null)" != google-chrome.desktop ]; then
+    xdg-mime default google-chrome.desktop x-scheme-handler/mailto
+fi
 # Pick up the dotfiles the above relies on without a re-login: the user
 # manager re-reads ~/.config/environment.d (PATH with ~/.local/bin, so the
 # portal finds yazi), and the session bus its service files
@@ -1808,24 +1815,54 @@ if [ -n "$restart_tfc" ]; then
     systemctl --user try-restart xdg-desktop-portal-termfilechooser.service 2>/dev/null || :
 fi
 
-# Emacs is installed manually; only report whether it's missing or outdated.
+# Emacs: built from the latest release tarball into /usr/local, with the
+# configure flags of scripts/emacs-install.sh. Installed when missing; an
+# upgrade is asked about even with --yes, since it's a long build and Doom then
+# has to rebuild its packages for the new version.
+step "Checking emacs for updates..."
+# Release tarballs on GNU's download server (git.savannah.gnu.org is far
+# too slow to list tags: minutes, often timing out).
+emacs_latest="$(curl -fsSL --max-time "$lookup_timeout" https://ftp.gnu.org/gnu/emacs/ 2>/dev/null |
+    grep -oE 'emacs-[0-9]+(\.[0-9]+)*\.tar\.xz' | grep -oE '[0-9]+(\.[0-9]+)*' | sort -V | tail -1 || :)"
+build_emacs() {
+    # The native-comp build can outlast sudo's timestamp (15 min): ask for the
+    # password up front, and keep it fresh until this build subshell exits.
+    sudo -v
+    local build_pid=$BASHPID
+    (while sleep 60 && kill -0 "$build_pid" 2>/dev/null; do sudo -n -v 2>/dev/null || :; done) >/dev/null 2>&1 &
+    curl -fsSL "https://ftp.gnu.org/gnu/emacs/emacs-$emacs_latest.tar.xz" | tar -xJ
+    cd "emacs-$emacs_latest"
+    ./configure \
+        --with-modules --with-native-compilation --without-pop --with-mailutils \
+        --with-sqlite3 --with-tree-sitter --with-x-toolkit=lucid
+    make -j"$(nproc)"
+    sudo make install
+}
+emacs_update_mode=$update_mode
+[ "$update_mode" != yes ] || update_mode=ask
 emacs_current="$(ver emacs --version)"
-if [ -z "$emacs_current" ]; then
-    echo "emacs: not installed, install it manually" >&2
-    skipped_updates+=("emacs: not installed, install it manually")
-else
-    step "Checking emacs for updates..."
-    # Release tarballs on GNU's download server (git.savannah.gnu.org is far
-    # too slow to list tags: minutes, often timing out).
-    emacs_latest="$(curl -fsSL --max-time "$lookup_timeout" https://ftp.gnu.org/gnu/emacs/ 2>/dev/null |
-        grep -oE 'emacs-[0-9]+(\.[0-9]+)*\.tar\.xz' | grep -oE '[0-9]+(\.[0-9]+)*' | sort -V | tail -1 || :)"
-    if [ -z "$emacs_latest" ]; then
-        echo "emacs: could not look up the latest version, skipping update check" >&2
-    elif is_newer "$emacs_latest" "$emacs_current"; then
-        echo "emacs: new version $emacs_latest available (installed $emacs_current), install it manually"
-        skipped_updates+=("emacs: new version $emacs_latest available (installed $emacs_current), install it manually")
+if want_install emacs "$emacs_current" "$emacs_latest" need_latest; then
+    step "Building emacs $emacs_latest..."
+    emacs_failed_before=${#failed_installs[@]}
+    try emacs in_temp_dir build_emacs
+    if [ "${#failed_installs[@]}" != "$emacs_failed_before" ]; then
+        : # try already reported the failure
+    elif ! is_newer "$emacs_latest" "$(ver emacs --version)"; then
+        # Byte-code isn't compatible across Emacs versions; --rebuild skips
+        # doom's "packages must be rebuilt" prompt.
+        if [ -x ~/.emacs.d/bin/doom ]; then
+            step "Rebuilding Doom packages for emacs $emacs_latest..."
+            try doom ~/.emacs.d/bin/doom sync --rebuild
+        fi
+        echo "emacs: installed $emacs_latest (restart Emacs and its daemon if they're running)"
+    else
+        echo "emacs: built $emacs_latest, but $(command -v emacs || echo emacs) reports '$(ver emacs --version)'; skipped doom sync --rebuild" >&2
     fi
+elif [ -z "$emacs_current" ]; then
+    # want_install only printed why; keep it in the end-of-run summary.
+    skipped_updates+=("emacs: not installed, and the latest version could not be looked up")
 fi
+update_mode=$emacs_update_mode
 
 # Only with rustup (a distro cargo is updated by apt).
 if command -v rustup >/dev/null; then

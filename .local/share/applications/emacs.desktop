@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Emacs
+GenericName=Text Editor
+Comment=Edit text in a new frame of the Emacs daemon (~/.emacs.d/server/server)
+MimeType=text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;
+Exec=sh -c "if [ -n \\"\\$*\\" ]; then exec emacsclient -n -a '' -s \\"\\$HOME/.emacs.d/server/server\\" --display=\\"\\$DISPLAY\\" \\"\\$@\\"; else exec emacsclient -c -n -a '' -s \\"\\$HOME/.emacs.d/server/server\\"; fi" sh %F
+Icon=emacs
+Type=Application
+Terminal=false
+Categories=Development;TextEditor;
+StartupWMClass=Emacs

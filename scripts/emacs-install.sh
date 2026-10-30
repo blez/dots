@@ -4,7 +4,7 @@ set -euo pipefail
 git clone git://git.savannah.gnu.org/emacs.git
 (
     cd emacs
-    git checkout emacs-30.2
+    git checkout emacs-31.1
     make clean
     ./autogen.sh
     ./configure \

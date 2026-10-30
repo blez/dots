@@ -423,7 +423,7 @@ myStartupHook = do
   spawnOnce "xfce4-power-manager"
   spawnOnce "xss-lock --transfer-sleep-lock -- ~/scripts/lock.sh"
   spawnOnce "1password --silent"
-  spawnOnce "/usr/local/bin/emacs"
+  spawnOnce "/usr/local/bin/emacsclient -c -n -a '' -s ~/.emacs.d/server/server"
   -- spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
   spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/lenovo.kbd &"
   -- Best-effort auto-timezone, re-run on every restart so travel is picked up.

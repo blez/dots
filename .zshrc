@@ -25,7 +25,7 @@ export PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"
 export ZSH="$HOME/.oh-my-zsh"
 
 # export EDITOR='emacsclient -nw -a "" -c -s ~/.emacs.d/server/server'
-export EDITOR='emacsclient -nw -a ""'
+export EDITOR="emacsclient -nw --alternate-editor= -s $HOME/.emacs.d/server/server"
 # export EDITOR='emacsclient -c -a ""'
 
 # export __GLX_VENDOR_LIBRARY_NAME=nvidia __NV_PRIME_RENDER_OFFLOAD=1 DRI_PRIME=1

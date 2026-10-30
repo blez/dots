@@ -63,7 +63,7 @@
 [url "git@github.com:"]
 	insteadOf = https://github.com/
 [core]
-	editor = emacs -nw
+	editor = emacsclient -nw --alternate-editor= -s ~/.emacs.d/server/server
 	pager = sh -c 'command -v delta >/dev/null && exec delta || exec less -RFX'
 [github]
 	user = blez
