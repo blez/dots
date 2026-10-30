@@ -16,3 +16,6 @@
 .claude-personal/rules/** filter=git-crypt diff=git-crypt
 .claude/projects/*/memory/** filter=git-crypt diff=git-crypt
 .claude-personal/projects/*/memory/** filter=git-crypt diff=git-crypt
+
+# Wallpaper (xmonad startup hook) and lock screen image (scripts/lock.sh)
+wallpapers/** filter=git-crypt diff=git-crypt
