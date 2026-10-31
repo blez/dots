@@ -424,8 +424,7 @@ myStartupHook = do
   spawnOnce "xss-lock --transfer-sleep-lock -- ~/scripts/lock.sh"
   spawnOnce "1password --silent"
   spawnOnce "/usr/local/bin/emacsclient -c -n -a '' -s ~/.emacs.d/server/server"
-  -- spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/kinesis.kbd &"
-  spawn "/usr/bin/killall kmonad || : && /usr/local/bin/kmonad ~/.config/kmonad/lenovo.kbd &"
+  spawn "/usr/bin/killall kmonad kanata || : && ~/.cargo/bin/kanata -c ~/.config/kanata/lenovo.kbd &"
   -- Best-effort auto-timezone, re-run on every restart so travel is picked up.
   -- Only sets it if the lookup actually returned one, so an offline boot doesn't
   -- run `timedatectl set-timezone ""`; capped with --max-time so it can't hang.

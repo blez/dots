@@ -1345,15 +1345,12 @@ if want_install ueberzugpp "$(ver ueberzugpp --version)" "$ueberzugpp_latest" ne
     try ueberzugpp build_from_tag https://github.com/jstkdng/ueberzugpp.git "$ueberzugpp_latest" build_ueberzugpp
 fi
 
-# kmonad remaps the laptop's built-in keyboard (xmonad.hs starts it with
-# lenovo.kbd), so it's only set up on a laptop (or 2-in-1): the static release binary,
-# plus access to /dev/uinput, which is root-only by default. The udev rule
-# and uinput group below open it to this user, as in kmonad's FAQ; the group
-# membership takes effect at the next login.
-install_kmonad() {
-    curl -fsSLo kmonad "https://github.com/kmonad/kmonad/releases/download/$kmonad_latest/kmonad"
-    sudo install -m755 kmonad /usr/local/bin/kmonad
-}
+# kanata remaps the laptop's built-in keyboard (xmonad.hs starts it with
+# ~/.config/kanata/lenovo.kbd), so it's only set up on a laptop (or 2-in-1):
+# built from crates.io, plus access to /dev/uinput, which is root-only by
+# default. The udev rule and uinput group below open it to this user, as in
+# kanata's Linux setup guide; the group membership takes effect at the next
+# login.
 setup_uinput() {
     getent group uinput >/dev/null || sudo groupadd uinput
     sudo usermod -aG input,uinput "$(id -un)"
@@ -1364,17 +1361,12 @@ setup_uinput() {
     sudo udevadm control --reload-rules
     sudo udevadm trigger --name-match=uinput
 }
-case "$(hostnamectl chassis 2>/dev/null)" in laptop | convertible) kmonad_wanted=1 ;; *) kmonad_wanted=0 ;; esac
-if [ "$kmonad_wanted" = 1 ]; then
-    step "Checking kmonad for updates..."
-    kmonad_latest="$(latest_tag https://github.com/kmonad/kmonad.git)"
-    if want_install kmonad "$(ver kmonad --version)" "$kmonad_latest" need_latest; then
-        step "Installing kmonad $kmonad_latest..."
-        try kmonad in_temp_dir install_kmonad
-    fi
+case "$(hostnamectl chassis 2>/dev/null)" in laptop | convertible) kanata_wanted=1 ;; *) kanata_wanted=0 ;; esac
+if [ "$kanata_wanted" = 1 ]; then
+    cargo_tool kanata kanata
     if [ ! -f /etc/udev/rules.d/90-uinput.rules ]; then
-        step "Setting up uinput access for kmonad (log in again for it to apply)..."
-        try "kmonad uinput setup" setup_uinput
+        step "Setting up uinput access for kanata (log in again for it to apply)..."
+        try "kanata uinput setup" setup_uinput
     fi
 fi
 

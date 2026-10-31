@@ -20,6 +20,5 @@ go install mvdan.cc/gofumpt@latest
 go install github.com/rinchsan/gosimports/cmd/gosimports@latest
 go install gotest.tools/gotestsum@latest
 go install github.com/dmarkham/enumer@latest
-go install github.com/Khan/genqlient@main # v0.8.1 pins an x/tools that doesn't build with current Go
 go install github.com/vektah/dataloaden@latest
 go install github.com/charmbracelet/glow/v2@latest # Markdown previews in yazi

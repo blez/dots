@@ -1,0 +1,63 @@
+;; Kanata port of ~/.config/kmonad/lenovo.kbd.
+;; The signs layer mirrors the SYM layer of the Piantor Pro QMK keymap
+;; (~/blez/qmk_firmware/keyboards/beekeeb/piantor_pro/keymaps/blez/keymap.c).
+
+(defcfg
+  linux-dev /dev/input/by-path/platform-i8042-serio-0-event-kbd
+  ;; Let kanata see every key, so tap-hold decisions account for keys outside defsrc too.
+  process-unmapped-keys yes
+)
+
+(defsrc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+  caps a    s    d    f    g    h    j    k    l    ;    '    ret
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft
+)
+
+(defvar
+  ;; Same as QMK's TAPPING_TERM and QUICK_TAP_TERM on the Piantor.
+  tap-time 200
+  hold-time 200
+)
+
+(deftemplate hrm (key mod)
+  ;; Plain tap-hold: hold only after hold-time, like QMK's default on the Piantor.
+  ;; For kmonad's tap-hold-next-release behavior (QMK Permissive Hold), use tap-hold-release.
+  (tap-hold $tap-time $hold-time $key $mod)
+)
+
+(defalias
+  met_a (t! hrm a lmet)
+  alt_s (t! hrm s lalt)
+  ctl_d (t! hrm d lctl)
+  sft_f (t! hrm f lsft)
+
+  sft_j (t! hrm j rsft)
+  ctl_k (t! hrm k rctl)
+  alt_l (t! hrm l lalt)
+  met_; (t! hrm ; rmet)
+
+  sign (layer-while-held signs)
+
+  ;; 5ms between keys, as in the kmonad macros.
+  goeq (macro S-; 5 =)
+  arrw (macro - 5 S-.)
+  lmbd (macro = 5 S-.)
+  noeq (macro S-1 5 =)
+)
+
+(deflayer homerowmods
+  tab   q      w      e      r      t    y    u      i      o      p      [    ]    \
+  @sign @met_a @alt_s @ctl_d @sft_f g    h    @sft_j @ctl_k @alt_l @met_; '    ret
+  esc   z      x      c      v      b    n    m      ,      .      /      rsft
+)
+
+;; Piantor SYM, key for key. The laptop's extra keys ([ ] \ ret) pass through.
+;; Left home row also passes through, so home-row mods still work after caps is held.
+;; rsft is blocked so it can't shift the = in the macros.
+;; -> is a thumb key on the Piantor base layer; here it sits on p, which is empty in SYM.
+(deflayer signs
+  del   S-1    S-2    S-3    S-4    S-5  S-6  S-9    S-0    S-7    @arrw  @lmbd _    _
+  _     _      _      _      _      _    S-'  S-[    S-]    S-\    S-8    '    _
+  XX    XX     XX     XX     XX     XX   @goeq [     ]      @noeq  \      XX
+)
