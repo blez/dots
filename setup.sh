@@ -1885,10 +1885,12 @@ if want_install emacs "$emacs_current" "$emacs_latest" need_latest; then
         : # try already reported the failure
     elif ! is_newer "$emacs_latest" "$(ver emacs --version)"; then
         # Byte-code isn't compatible across Emacs versions; --rebuild skips
-        # doom's "packages must be rebuilt" prompt.
+        # doom's "packages must be rebuilt" prompt. --env regenerates the
+        # envvar file (PATH etc. for the daemon, e.g. gopls in ~/go/bin) from
+        # this process's environment, minus this script's own lock variable.
         if [ -x ~/.emacs.d/bin/doom ]; then
             step "Rebuilding Doom packages for emacs $emacs_latest..."
-            try doom ~/.emacs.d/bin/doom sync --rebuild
+            try doom env -u SETUP_SH_LOCKED ~/.emacs.d/bin/doom sync --rebuild --env
         fi
         echo "emacs: installed $emacs_latest (restart Emacs and its daemon if they're running)"
     else
