@@ -1,3 +1,9 @@
+[general]
+# Per-machine font size. Later imports override earlier ones; this file overrides both,
+# so font.size must NOT be set here. hosts/current.toml -> hosts/<hostname>.toml
+# (setup.sh creates it; by hand: ln -sfn "$(hostname -s).toml" ~/.config/alacritty/hosts/current.toml).
+import = ["~/.config/alacritty/hosts/default.toml", "~/.config/alacritty/hosts/current.toml"]
+
 [colors.normal]
 black = "#000000"
 blue = "#3465a4"
@@ -21,9 +27,6 @@ persistent_logging = true
 
 [env]
 TERM = "xterm-256color"
-
-[font]
-size = 10
 
 [font.bold]
 style = "Bold"

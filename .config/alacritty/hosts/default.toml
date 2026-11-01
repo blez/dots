@@ -1,0 +1,3 @@
+# Fallback font size for machines without their own hosts/<hostname>.toml
+[font]
+size = 10

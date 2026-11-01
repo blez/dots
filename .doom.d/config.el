@@ -20,7 +20,14 @@
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "JetBrains Mono Medium" :size 20))
 ;; (setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 23))
-(setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 24))
+;; Per-machine font size (pixels), keyed on hostname; unknown hosts get the default.
+;; `let' (not `defvar') so edits take effect on `doom/reload' without a restart.
+(let ((font-size-by-host '(("pkasko-lenovo" . 20)))   ; 14" 4K laptop
+      (default-font-size 24))
+  (setq doom-font (font-spec :family "JetBrains Mono Nerd Font"
+                             :size (alist-get (car (split-string (system-name) "\\."))
+                                              font-size-by-host default-font-size
+                                              nil #'string=))))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the

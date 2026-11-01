@@ -1026,6 +1026,22 @@ if want_install alacritty "$(ver alacritty --version)" "$alacritty_latest"; then
     try alacritty build_from_tag https://github.com/alacritty/alacritty.git "$alacritty_latest" build_alacritty
 fi
 
+# Per-machine font size: alacritty.toml imports hosts/current.toml, which points
+# at hosts/<hostname>.toml. No file for this host -> drop the link so
+# hosts/default.toml applies (a link copied from another machine would be wrong).
+# A hand-made regular-file current.toml is an override and is left alone.
+alacritty_hosts=~/.config/alacritty/hosts
+alacritty_cur="$alacritty_hosts/current.toml"
+if [ -e "$alacritty_cur" ] && [ ! -L "$alacritty_cur" ]; then
+    echo "alacritty: $alacritty_cur is a regular file; leaving it" >&2
+elif [ -f "$alacritty_hosts/$(hostname -s).toml" ]; then
+    step "Linking alacritty font size for $(hostname -s)..."
+    ln -sfn "$(hostname -s).toml" "$alacritty_cur"
+elif [ -L "$alacritty_cur" ]; then
+    step "No alacritty font file for $(hostname -s); using hosts/default.toml..."
+    rm -f "$alacritty_cur"
+fi
+
 step "Checking starship for updates..."
 starship_latest="$(latest_tag https://github.com/starship/starship.git)"
 if want_install starship "$(ver starship --version)" "$starship_latest"; then
