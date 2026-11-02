@@ -423,7 +423,9 @@ myStartupHook = do
   spawnOnce "xfce4-power-manager"
   spawnOnce "xss-lock --transfer-sleep-lock -- ~/scripts/lock.sh"
   spawnOnce "1password --silent"
-  spawnOnce "/usr/local/bin/emacsclient -c -n -a '' -s ~/.emacs.d/server/server"
+  spawnOnce "/usr/local/bin/emacs"
+  -- Daemon for terminal emacsclient ($EDITOR, git); GUI Emacs stays standalone.
+  spawnOnce "/usr/local/bin/emacs --daemon=$HOME/.emacs.d/server/server"
   spawn "/usr/bin/killall kmonad kanata || : && ~/.cargo/bin/kanata -c ~/.config/kanata/lenovo.kbd &"
   -- Best-effort auto-timezone, re-run on every restart so travel is picked up.
   -- Only sets it if the lookup actually returned one, so an offline boot doesn't
