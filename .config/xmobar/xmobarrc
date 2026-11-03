@@ -24,7 +24,7 @@ Config { font = "JetBrains Mono Nerd Font 15"
                     , Run Wireless "__WIFI__" ["-t","<fn=2>\xf1eb</fn> <essid> <quality>"] 10
                     , Run Memory ["-t","RAM: <usedratio>%"] 10
                     , Run Swap ["-t","SWAP: <usedratio>%"] 100
-                    , Run Date "<fn=2>\xf017</fn> %a %b %_d %Y %H:%M:%S" "date" 10
+                    , Run Date "<fn=2>\xf017</fn> %a %b %-d %Y %H:%M:%S" "date" 10
                     , Run Com "xkblayout-state" ["print", "<fn=2>\xf0ac</fn> %s"] "layout" 10
                     , Run Com "/bin/bash" ["-c", "echo \"<fn=2>\xf028</fn> $(~/scripts/get-volume.sh)\""] "myvolume" 10
                     , Run Com "/bin/bash" ["-c", "~/scripts/charge-status.sh"] "__BAT__battery" 600
