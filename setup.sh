@@ -1656,12 +1656,19 @@ flatpak_app lutris net.lutris.Lutris
 # Updates for all flatpaks, apps and runtimes, in both installations (the
 # user one needs no sudo). Version labels aren't reliable (ZapZap's new
 # builds keep an old number), so flatpak itself decides what has an update.
+# --foreground: flatpak registers a polkit text agent on the terminal (there
+# is no desktop agent under xmonad), so when polkit wants an admin password
+# for the system lookup (its actions are only auto-allowed for an active local
+# session) the agent prompts on the tty. A plain timeout runs the command in a
+# background process group, so that prompt stops it with SIGTTOU for good and
+# timeout cannot kill it any more (2026-11-03). -k: in case flatpak does not
+# exit on TERM while prompting.
 step "Checking flatpaks for updates..."
 flatpak_updates=()
 flatpak_scopes=()
 for scope in user system; do
     # sort -u: an extension installed in two branches is listed twice.
-    if updates="$(timeout "$lookup_timeout" flatpak remote-ls "--$scope" --updates --columns=application 2>/dev/null | sort -u)"; then
+    if updates="$(timeout --foreground -k 5 "$lookup_timeout" flatpak remote-ls "--$scope" --updates --columns=application 2>/dev/null | sort -u)"; then
         if [ -n "$updates" ]; then
             mapfile -t -O "${#flatpak_updates[@]}" flatpak_updates <<<"$updates"
             flatpak_scopes+=("$scope")
