@@ -9,10 +9,10 @@
 #
 # Saving: the file to be saved is shown hovered in its folder, as a
 # placeholder (holding one line that says so) that is removed again before
-# the app writes the real file.
+# the app writes the real file. It follows you to every folder you open (the
+# chooser plugin's setup moves it, keeping a name given with r).
 #   Ctrl+S  save here, under the suggested name (name_1, name_2, ... if taken)
 #   r       rename the placeholder, then Ctrl+S: save under that name
-#   x, p    move the placeholder to another folder, then Ctrl+S there
 #   a       type a name (or a path), Enter: save under it; "name/" creates
 #           that folder instead
 #   o/Enter on an existing file: save over it
@@ -41,16 +41,62 @@ fi
 path="$(printf '%s' "$path" | sed "s/'\\\\''/'/g")"
 
 # yazi writes the folder it was quit from here (Ctrl+S, and cancel too, for
-# the cleanup), the chooser plugin a typed file name and a cancel flag. Never
-# trust leftovers. The save placeholder is removed on exit too, as long as it
-# still is one.
+# the cleanup), the chooser plugin a typed file name, a cancel flag and where
+# the save placeholder is now (it follows the current folder). Never trust
+# leftovers. The save placeholder is removed on exit too, wherever it went, as
+# long as it still is one.
 cwd_file="$out.1"
 save_as="$out.2"
 cancel_file="$out.3"
+state_file="$out.4"
 placeholder=""
+moved=""
+start_folder=""
 marker="The file will be saved here (xdg-desktop-portal-termfilechooser)."
-rm -f "$cwd_file" "$save_as" "$cancel_file"
-trap 'rm -f "$cwd_file" "$save_as" "$cancel_file"; [ -n "$placeholder" ] && is_placeholder "$placeholder" && rm -f "$placeholder"' EXIT
+rm -f "$cwd_file" "$save_as" "$cancel_file" "$state_file"
+cleanup() {
+    remove_placeholders "$placeholder" "$moved"
+    sweep_placeholders "$start_folder" "$(final_dir)"
+    rm -f "$cwd_file" "$save_as" "$cancel_file" "$state_file"
+}
+trap cleanup EXIT
+# Killed (the app cancelled the dialog, the session ends): clean up too.
+trap 'exit 1' HUP INT TERM
+
+# current_placeholder -- where the chooser plugin last put the placeholder
+# (first line of its state file; empty when there is none right now).
+current_placeholder() {
+    if [ -s "$state_file" ]; then
+        head -n 1 "$state_file"
+    fi
+}
+
+# sweep_placeholders DIR... -- remove every placeholder directly in DIRs,
+# also ones the plugin lost track of (renamed by another program, say).
+sweep_placeholders() {
+    for d in "$@"; do
+        [ -n "$d" ] && [ -d "$d" ] || continue
+        find "$d" -maxdepth 1 -type f -size -200c -print 2>/dev/null | while IFS= read -r f; do
+            if is_placeholder "$f"; then
+                rm -f "$f"
+            fi
+        done
+    done
+}
+
+# remove_placeholders [FILE...] -- remove FILEs and every placeholder the
+# plugin recorded (its current one and any copies), each only while it still
+# is a placeholder: a real file put under its name stays.
+remove_placeholders() {
+    {
+        for p in "$@"; do printf '%s\n' "$p"; done
+        [ -f "$state_file" ] && cat "$state_file"
+    } | while IFS= read -r p; do
+        if [ -n "$p" ] && is_placeholder "$p"; then
+            rm -f "$p"
+        fi
+    done
+}
 
 # is_placeholder FILE -- a regular file holding just the marker line.
 is_placeholder() {
@@ -133,34 +179,37 @@ if [ "$save" = 1 ]; then
     name="$(basename "$path")"
     if [ -f "$path" ]; then
         start="$path" # an existing file: hover it (o saves over it)
+        start_folder="$(dirname "$path")"
     else
         # The file to be saved, hovered: a placeholder (unique name, also
         # when a folder of the suggested name exists).
         start="$(unique_path "$(start_dir "$(dirname "$path")")" "$name")"
+        start_folder="$(dirname "$start")"
         if printf '%s\n' "$marker" 2>/dev/null >"$start"; then
             placeholder="$start"
         else
-            start="$(dirname "$start")" # read-only folder: no placeholder
+            start="$start_folder" # read-only folder: no placeholder
         fi
     fi
     TERMFILECHOOSER_MODE=save TERMFILECHOOSER_CANCEL="$cancel_file" \
         TERMFILECHOOSER_SAVE_AS="$save_as" TERMFILECHOOSER_NAME="$name" \
+        TERMFILECHOOSER_PLACEHOLDER="$placeholder" TERMFILECHOOSER_DIR="$start_folder" \
+        TERMFILECHOOSER_STATE="$state_file" TERMFILECHOOSER_MARKER="$marker" \
         "$@" yazi --chooser-file="$out" --cwd-file="$cwd_file" "$start"
     chosen="$(chosen_path)"
 
-    # The placeholder's current place names the file when it was renamed or
-    # moved; either way it is removed (only while it still is the marker
-    # file: a real file put under its old name stays), the app writes the
-    # real file.
-    moved=""
-    if [ -n "$placeholder" ]; then
+    # The placeholder's current place names the file (it follows the folder
+    # and may have been renamed): as the plugin last recorded it (it also
+    # makes one when there was none, e.g. after leaving the folder of an
+    # existing file), else searched for (plugin not set up). The cleanup on
+    # exit removes it and any other placeholder (only while it still is the
+    # marker file: a real file put under its name stays), then the app writes
+    # the real file.
+    current="$(current_placeholder)"
+    if [ -n "$current" ] && is_placeholder "$current"; then
+        moved="$current"
+    elif [ -n "$placeholder" ]; then
         moved="$(find_placeholder "$(dirname "$placeholder")" "$(final_dir)" "$chosen" "$(dirname "${chosen:-/}")")"
-        if is_placeholder "$placeholder"; then
-            rm -f "$placeholder"
-        fi
-        if [ -n "$moved" ] && is_placeholder "$moved"; then
-            rm -f "$moved"
-        fi
     fi
 
     if [ -s "$save_as" ]; then
