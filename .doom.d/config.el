@@ -175,6 +175,15 @@
     :desc "Test function at point (builtin)" "t ." #'go-ts-mode-test-function-at-point
     :desc "Test this file (builtin)"         "t F" #'go-ts-mode-test-this-file
     :desc "Test this package (builtin)"      "t p" #'go-ts-mode-test-this-package)
+;; tree-sitter-go (v0.23.4 installed; upstream master too) cannot parse the Go 1.26
+;; `new(expr)' form that helios uses, and at treesit-font-lock-level 4 the `error'
+;; feature paints every unparsable statement in font-lock-warning-face (yellow).
+;; Drop that feature: LSP/flycheck already report real errors. Proper fix is the
+;; grammar from tree-sitter/tree-sitter-go PR #193 (nvlbg:new_expressions_support).
+(add-hook! 'go-ts-mode-hook
+  (defun +go-ts-drop-error-feature-h ()
+    "Stop painting tree-sitter ERROR nodes yellow in Go buffers."
+    (treesit-font-lock-recompute-features nil '(error))))
 
 (add-hook! 'sh-mode-lsp-hook #'sh-flycheck-setup)
 (defun sh-flycheck-setup ()
