@@ -202,6 +202,8 @@ myKeys conf@(XConfig {XMonad.modMask = modm}) =
       -- requires `sudo apt-get install bluez-tools`
       ((modm, xK_b), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh pause)\""),
       ((modm .|. shiftMask, xK_b), spawn "notify-send -t 3000 --app-name 'bluetooth' \"$(~/scripts/blue-cmd.sh play)\""),
+      -- Slack/Chrome frozen on paste: answer the clipboard request they're stuck on
+      ((modm .|. shiftMask, xK_v), spawn "~/scripts/clipboard-unstick.py"),
 
       --take a screenshot of entire display
       ((0, xK_Print), spawn "flameshot gui"),

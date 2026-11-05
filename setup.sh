@@ -578,6 +578,7 @@ apt_packages=(
     libsystemd-dev # termfilechooser
     scdoc # termfilechooser (man page)
     python3-gi # ~/scripts/filemanager1-yazi.py ("Show in folder" -> yazi)
+    python3-xlib # ~/scripts/clipboard-unstick.py (mod+shift+v)
     libpango1.0-dev
     libwxgtk3.2-dev
     libcairo2-dev
