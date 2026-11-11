@@ -252,10 +252,12 @@ else
         "$@" yazi --chooser-file="$out" "$(start_dir "$path")"
     # yazi writes every selected entry, folders included (o on a folder):
     # keep the files, and only the first unless several were asked for.
+    # yazi ends the list without a newline, which makes read fail on the last
+    # entry while still filling in $f: hence the [ -n "$f" ].
     if [ -e "$cancel_file" ]; then
         : >"$out"
     elif [ -s "$out" ]; then
-        files="$(while IFS= read -r f; do [ -d "$f" ] || printf '%s\n' "$f"; done <"$out")"
+        files="$(while IFS= read -r f || [ -n "$f" ]; do [ -d "$f" ] || printf '%s\n' "$f"; done <"$out")"
         if [ "$multiple" != 1 ]; then
             files="$(printf '%s\n' "$files" | head -n 1)"
         fi
