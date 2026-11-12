@@ -132,7 +132,7 @@ alias dots="git --git-dir=$HOME/dots/ --work-tree=$HOME"
 alias dotsadd='dots add -u'
 # git-crypt for the dotfiles repo (encrypted files are listed in ~/.gitattributes)
 alias dots-crypt="GIT_DIR=$HOME/dots GIT_WORK_TREE=$HOME git-crypt"
-dots config --local status.showUntrackedFiles no
+[[ $(dots config --local status.showUntrackedFiles) == no ]] || dots config --local status.showUntrackedFiles no
 
 alias src="source ~/.zshrc"
 alias claude-personal="CLAUDE_CONFIG_DIR=~/.claude-personal $HOME/.local/bin/claude"
