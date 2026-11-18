@@ -66,7 +66,8 @@ for dir in "$PNPM_HOME/bin" "$PNPM_HOME" "$HOME/.local/bin" "$HOME/.cargo/bin"; 
     case ":$PATH:" in *":$dir:"*) ;; *) path_front="$path_front$dir:" ;; esac
 done
 PATH="$path_front$PATH"
-for dir in "$HOME/.cabal/bin" "$HOME/.ghcup/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin" "$HOME/.krew/bin"; do
+for dir in "$HOME/.cabal/bin" "$HOME/.ghcup/bin" /usr/local/go/bin "$GOPATH/bin" "$HOME/.fzf/bin" "$HOME/.krew/bin" \
+    "$HOME/Downloads/google-cloud-sdk/bin"; do
     case ":$PATH:" in *":$dir:"*) ;; *) PATH="$PATH:$dir" ;; esac
 done
 export PATH
@@ -1937,6 +1938,28 @@ if command -v rustup >/dev/null; then
             step "Upgrading rust..."
             try rust rustup update
         fi
+    fi
+fi
+
+# Google Cloud CLI: the self-managed SDK in ~/Downloads/google-cloud-sdk (not
+# installed by this script). Its components are listed with their installed
+# and latest versions; the lookup's version banner goes to stderr.
+if command -v gcloud >/dev/null; then
+    step "Checking gcloud components for updates..."
+    if gcloud_list="$(timeout "$lookup_timeout" gcloud components list --quiet \
+        --filter='state.name="Update Available"' \
+        --format='value(id,current_version_string,latest_version_string)' 2>/dev/null </dev/null)"; then
+        gcloud_updates=()
+        while read -r id current latest; do
+            [ -n "$id" ] && gcloud_updates+=("$id $current -> $latest")
+        done <<<"$gcloud_list"
+        if [ ${#gcloud_updates[@]} -gt 0 ] &&
+            confirm "gcloud: updates available for $(join_list "${gcloud_updates[@]}"). Do you want to upgrade?"; then
+            step "Upgrading gcloud components..."
+            try gcloud gcloud components update --quiet
+        fi
+    else
+        echo "gcloud: could not look up updates, skipping update check" >&2
     fi
 fi
 
