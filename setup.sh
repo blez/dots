@@ -648,6 +648,7 @@ apt_packages=(
     nitrogen
     nordvpn
     nordvpn-gui
+    okular # default PDF viewer (xdg-mime below)
     pandoc
     pavucontrol
     pcmanfm
@@ -1855,6 +1856,11 @@ fi
 # Without a default they fall back to emacs-mail.desktop, a standalone Emacs.
 if [ "$(xdg-mime query default x-scheme-handler/mailto 2>/dev/null)" != google-chrome.desktop ]; then
     xdg-mime default google-chrome.desktop x-scheme-handler/mailto
+fi
+# PDFs open in Okular. Without a default, calibre's viewer wins: its
+# /usr/local/share/applications registration comes first in XDG_DATA_DIRS.
+if [ "$(xdg-mime query default application/pdf 2>/dev/null)" != okularApplication_pdf.desktop ]; then
+    xdg-mime default okularApplication_pdf.desktop application/pdf
 fi
 # Pick up the dotfiles the above relies on without a re-login: the user
 # manager re-reads ~/.config/environment.d (PATH with ~/.local/bin, so the
