@@ -1973,9 +1973,17 @@ npm_tool @github/copilot-language-server
 
 # python3 -m pip install --upgrade pip
 for pkg in pyflakes isort pytest black python-lsp-server yt-dlp qmk tldr \
-    cmake-language-server Pygments curl_cffi; do
+    cmake-language-server Pygments; do
     pipx_tool "$pkg"
 done
+
+# yt-dlp's optional dependencies have to live in yt-dlp's own pipx venv (a
+# separate `pipx install curl_cffi` is invisible to it). Installing them as
+# extras keeps yt-dlp's version pins: curl-cffi gives browser impersonation,
+# secretstorage lets --cookies-from-browser chrome+gnomekeyring decrypt cookies.
+# A no-op when already satisfied; rerun after upgrades in case the pins moved.
+try "yt-dlp extras (pipx)" pipx runpip yt-dlp install -q \
+    'yt-dlp[default,curl-cffi,secretstorage]'
 
 # Refresh the apt package index hourly instead of about once a day, so the
 # xmobar update count (a dry-run full-upgrade over the local index) stays close

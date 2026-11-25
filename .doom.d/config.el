@@ -22,12 +22,12 @@
 ;; (setq doom-font (font-spec :family "JetBrains Mono Nerd Font" :size 23))
 ;; Per-machine font size (pixels), keyed on hostname; unknown hosts get the default.
 ;; `let' (not `defvar') so edits take effect on `doom/reload' without a restart.
-(let ((font-size-by-host '(("pkasko-lenovo" . 20)))   ; 14" 4K laptop
-      (default-font-size 24))
-  (setq doom-font (font-spec :family "JetBrains Mono Nerd Font"
-                             :size (alist-get (car (split-string (system-name) "\\."))
-                                              font-size-by-host default-font-size
-                                              nil #'string=))))
+(let ((font-size-by-host '(("pkasko-lenovo" . 28)))   ; 14" 4K laptop
+         (default-font-size 24))
+    (setq doom-font (font-spec :family "JetBrains Mono Nerd Font"
+                        :size (alist-get (car (split-string (system-name) "\\."))
+                                  font-size-by-host default-font-size
+                                  nil #'string=))))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -37,8 +37,8 @@
 ;; modus-themes 5.x (Emacs 31) dims tree-sitter "use"/"call" faces to slate/pink.
 ;; Map them back to the full-strength definition colors used in Emacs 30.
 (setq modus-themes-common-palette-overrides
-      '((variable-use variable)
-        (fnname-call fnname)))
+    '((variable-use variable)
+         (fnname-call fnname)))
 
 (setq fancy-splash-image "~/.emacs-e-logo.png")
 
@@ -181,9 +181,9 @@
 ;; Drop that feature: LSP/flycheck already report real errors. Proper fix is the
 ;; grammar from tree-sitter/tree-sitter-go PR #193 (nvlbg:new_expressions_support).
 (add-hook! 'go-ts-mode-hook
-  (defun +go-ts-drop-error-feature-h ()
-    "Stop painting tree-sitter ERROR nodes yellow in Go buffers."
-    (treesit-font-lock-recompute-features nil '(error))))
+    (defun +go-ts-drop-error-feature-h ()
+        "Stop painting tree-sitter ERROR nodes yellow in Go buffers."
+        (treesit-font-lock-recompute-features nil '(error))))
 
 (add-hook! 'sh-mode-lsp-hook #'sh-flycheck-setup)
 (defun sh-flycheck-setup ()
